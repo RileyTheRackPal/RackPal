@@ -10,8 +10,10 @@
 // drift.
 import 'package:rackpal_core/src/catalog/seed_registries.dart';
 import 'package:rackpal_core/src/library/loaded_library.dart';
+import 'package:rackpal_core/src/library/rmda_codec.dart';
 import 'package:rackpal_core/src/model/registries.dart';
 import 'package:rackpal_core/src/model/template.dart';
+import 'package:rackpal_core/src/persistence/json_codec.dart';
 import 'package:rackpal_core/src/units/ids.dart';
 
 /// The families [bodies]' ports name, through `signalFamily` AND
@@ -63,3 +65,78 @@ List<LibraryFamily> libraryFamiliesOf(Iterable<LoadedLibrary> libraries) =>
       final byLib = a.libraryName.compareTo(b.libraryName);
       return byLib != 0 ? byLib : a.family.id.v.compareTo(b.family.id.v);
     });
+
+/// What the personal library on the shelf is called (DR-245 §11.244.2):
+/// the user's name for it, and the palette chip it shows as.
+const String kMyLibraryName = 'My library';
+
+/// [library] with [family] added for the shelf, or null when it already
+/// holds it (DR-245 §11.244.2, SFE-C4).
+///
+/// [library] null means the shelf has no personal library yet, and one is
+/// started holding only this family. The THREE CASES again, against what
+/// the library holds rather than what a project does: absent is added;
+/// identical, by id or as an earlier copy under another id, is nothing to
+/// write; a DIFFERENT family under the same id, the same name cloned twice
+/// on two jobs, is added under a fresh id and a numbered name. NEVER an
+/// overwrite: the one already there is somebody's work too, and a project
+/// somewhere may have been built from it.
+DeviceLibraryFile? shelveFamily(
+  DeviceLibraryFile? library,
+  SignalFamilyDef family,
+) {
+  final held = library?.signalFamilies ?? const <SignalFamilyDef>[];
+  String json(SignalFamilyDef f) => '${signalFamilyDefToJson(f)}';
+  String shape(SignalFamilyDef f) =>
+      '${signalFamilyDefToJson(f)
+        ..remove('id')
+        ..remove('displayName')}';
+
+  if (held.any((f) => f.id == family.id && json(f) == json(family))) {
+    return null;
+  }
+  if (held.any((f) => shape(f) == shape(family))) return null;
+
+  var placed = family;
+  if (held.any((f) => f.id == family.id)) {
+    final shipped = buildSeedSignalFamilies();
+    final prefix = family.id.v.split('.').first;
+    final base = family.id.v.substring(prefix.length + 1);
+    var n = 2;
+    var id = SignalFamilyId('$prefix.${base}_$n');
+    while (held.any((f) => f.id == id) || shipped.containsKey(id)) {
+      n++;
+      id = SignalFamilyId('$prefix.${base}_$n');
+    }
+    var name = family.displayName;
+    var m = 2;
+    while (held.any(
+      (f) => f.domain == family.domain && f.displayName == name,
+    )) {
+      name = '${family.displayName} $m';
+      m++;
+    }
+    // CONSTRUCTED IN THE OPEN, so refused_surfaces_test's census of
+    // construction sites can see it. Round-tripping through the codec with
+    // a new id would build the same family where no census looks.
+    placed = SignalFamilyDef(
+      id: id,
+      displayName: name,
+      domain: family.domain,
+      defaultConnector: family.defaultConnector,
+      defaultDirection: family.defaultDirection,
+      defaultTopology: family.defaultTopology,
+      aliases: family.aliases,
+      shortTag: family.shortTag,
+      dashOverride: family.dashOverride,
+      lineWeightPermilleOverride: family.lineWeightPermilleOverride,
+      glyphOverride: family.glyphOverride,
+      clonedFrom: family.clonedFrom,
+    );
+  }
+  return DeviceLibraryFile(
+    name: library?.name ?? kMyLibraryName,
+    templates: library?.templates ?? const [],
+    signalFamilies: [...held, placed],
+  );
+}

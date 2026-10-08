@@ -118,6 +118,17 @@ final class LibraryIo {
     context: context,
   );
 
+  /// Puts a cloned [family] into `My library` on the shelf (SFE-C4).
+  /// See [shelveFamilyToMyLibrary].
+  Future<String> shelveFamily(SignalFamilyDef family) =>
+      shelveFamilyToMyLibrary(
+        fs: fs,
+        writer: writer,
+        dataRoot: dataRoot,
+        family: family,
+        context: context,
+      );
+
   /// Every library on the shelf, decoded (`#242`, DR-102 §11.101.3).
   ///
   /// **THE DEGRADED SESSION IS AN EMPTY SHELF AND NOT AN ERROR**, the
@@ -389,4 +400,89 @@ FileErrorView _refused(p.Context ctx, String path, Object error) {
       FileErrorAction(id: FileErrorActionId.ok, label: 'OK', isPrimary: true),
     ],
   );
+}
+
+/// The sentence for a clone that is in the project and could not reach the
+/// shelf, ending with why.
+String _notShelved(SignalFamilyDef family, String why) =>
+    '${family.displayName} is in this project. $why';
+
+/// Writes [family] into `My library` on the shelf, creating it if absent,
+/// and returns the sentence the status line shows (SFE-C4, DR-245
+/// §11.244.2).
+///
+/// **NOT A COMMAND, AND A FAILURE IS A NOTICE, NEVER A REFUSAL** (DR-123
+/// §11.122.4). The clone is already on the document's undo stack when
+/// this runs; the shelf is a directory shared by every project this person
+/// opens, so undoing the clone does not reach into it, and a library
+/// directory that is missing or unwritable must not cost anybody the
+/// family they just made. Every outcome is a sentence, none is an error.
+///
+/// **AN UNREADABLE `My library` IS LEFT EXACTLY AS IT IS.** Writing a
+/// fresh one over a file this build cannot read would save one family by
+/// destroying everything else in it, which is the worst trade on offer.
+///
+/// The read goes through [loadLibraryShelf], which already caps the size
+/// before reading (`#237`), so this adds no byte-reading site of its own.
+Future<String> shelveFamilyToMyLibrary({
+  required FileStore fs,
+  required AtomicWriter writer,
+  required String? dataRoot,
+  required SignalFamilyDef family,
+  p.Context? context,
+}) async {
+  final ctx = context ?? p.context;
+  final root = dataRoot;
+  if (root == null) {
+    return _notShelved(
+      family,
+      'This session has no library folder, so it was not added to '
+      '$kMyLibraryName.',
+    );
+  }
+  final shelf = await loadLibraryShelf(fs, root, context: ctx);
+  final mine = shelf.where((e) => e.id == kMyLibraryName).firstOrNull;
+  if (mine != null && mine.library == null) {
+    return _notShelved(
+      family,
+      '$kMyLibraryName could not be read, so it was left as it is and the '
+      'family was not added to it.',
+    );
+  }
+  final existing = mine?.library;
+  final merged = shelveFamily(
+    existing == null
+        ? null
+        : DeviceLibraryFile(
+            name: existing.name,
+            templates: existing.templates,
+            signalFamilies: existing.signalFamilies,
+          ),
+    family,
+  );
+  if (merged == null) {
+    return '${family.displayName} is in this project and already in '
+        '$kMyLibraryName.';
+  }
+  final dir = libraryDirectoryPath(root, context: ctx);
+  try {
+    await fs.createDirectory(dir);
+  } on Object {
+    return _notShelved(family, 'The library folder could not be made.');
+  }
+  final result = await writer.write(
+    paths: SavePaths.forTarget(
+      ctx.join(dir, '$kMyLibraryName$kDeviceLibraryExtension'),
+      context: ctx,
+      extensions: kDeviceLibraryExtensions,
+    ),
+    // THE BACKUP IS KEPT (the writer's default), unlike an import's copy:
+    // this file is the person's own work, rewritten in place, and the
+    // backup is the one way back from a write that went wrong.
+    bytes: encodeRmdaBytes(merged),
+  );
+  return switch (result) {
+    Ok() => '${family.displayName} is in this project and in $kMyLibraryName.',
+    Err() => _notShelved(family, '$kMyLibraryName could not be written.'),
+  };
 }

@@ -1342,7 +1342,11 @@ $SuiteFloors = @{
     # arrival_test.dart. A family added from a library follows the three
     # cases and is then held; a clash arrives under a fresh id and counts
     # as held; libraryFamiliesOf names each with its library, stably.
-    'rackpal_core'   = 5708
+    # 5711 at `#832` (SFE-C4, DR-245 §11.244.2): +3 in library/library_
+    # families_test.dart, shelveFamily. A shelf with no My library starts
+    # one; a family already there, by id or under another, writes nothing;
+    # a different one under the same id goes beside it, never over it.
+    'rackpal_core'   = 5711
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -2374,7 +2378,10 @@ $SuiteFloors = @{
     # bringing T5.01 into the export.
     # 1202 at `#1033` (SFE-C5, DR-245): +1 in session/library_io_test.dart,
     # a library exported from a device on a clone carries the clone, at v4.
-    'rackpal_app'    = 1202
+    # 1205 at `#832` (SFE-C4): +3 in session/library_io_test.dart. A clone
+    # lands in My library and a second time says so; an unreadable My
+    # library is left byte-identical; no library folder writes nothing.
+    'rackpal_app'    = 1205
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

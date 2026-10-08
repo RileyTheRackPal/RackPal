@@ -136,4 +136,46 @@ void main() {
       expect(tree.containsKey('signalFamilies'), isFalse);
     });
   });
+
+  group('shelveFamily, My library (SFE-C4, DR-245 §11.244.2)', () {
+    test('a shelf with no personal library starts one holding the family', () {
+      final lib = shelveFamily(null, vantage)!;
+      expect(lib.name, kMyLibraryName);
+      expect(lib.templates, isEmpty);
+      expect([for (final f in lib.signalFamilies) f.id], [vantage.id]);
+    });
+
+    test('a family already there, or already there under another id, '
+        'writes nothing', () {
+      final lib = shelveFamily(null, vantage)!;
+      expect(shelveFamily(lib, vantage), isNull);
+      final moved = SignalFamilyDef(
+        id: const SignalFamilyId('ctl.vantage_9'),
+        displayName: 'Vantage 9',
+        domain: vantage.domain,
+        defaultConnector: vantage.defaultConnector,
+        defaultDirection: vantage.defaultDirection,
+        defaultTopology: vantage.defaultTopology,
+        shortTag: vantage.shortTag,
+        dashOverride: vantage.dashOverride,
+        lineWeightPermilleOverride: vantage.lineWeightPermilleOverride,
+        glyphOverride: vantage.glyphOverride,
+        clonedFrom: vantage.clonedFrom,
+      );
+      expect(shelveFamily(lib, moved), isNull);
+    });
+
+    test('a DIFFERENT family under the same id is added beside it under a '
+        'fresh id and name, never over it', () {
+      final lib = shelveFamily(null, vantage)!;
+      final other = _clone('Vantage', parent: 'ctl.lutron_qs');
+      expect(other.id, vantage.id);
+      final next = shelveFamily(lib, other)!;
+      expect(next.signalFamilies.first, same(vantage));
+      final added = next.signalFamilies.last;
+      expect(added.id, isNot(vantage.id));
+      expect(added.displayName, 'Vantage 2');
+      expect(added.dashOverride, other.dashOverride);
+    });
+  });
 }

@@ -113,6 +113,10 @@ void main() {
         'clone_signal_family.dart':
             'the clone, which takes domain, direction and topology from '
             'a parent (DR-122 §11.121.2, DR-244 §11.243.3)',
+        'library_families.dart':
+            'the personal library on the shelf taking a family under a '
+            'fresh id when a DIFFERENT one already holds its id (DR-245 '
+            '§11.244.2); every field but the id and name is the clone',
         'family_arrival.dart':
             'a family a library CARRIED, copied under a fresh id when its '
             'own is taken by a different family (DR-245 §11.244.3); every '
