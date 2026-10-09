@@ -24563,6 +24563,69 @@ are seeded and how each is named.
 
 ---
 
+### 11.246 DR-247 · Wireless distance is checked as advisory with its source shown, and lighting delivers a load schedule and an engraving schedule
+
+**Settled by the user on 2026-10-09**, answering the five questions of LIGHT-0's census
+(`docs/research/research-domain-lighting.md` §9, `#1041`). One answer amends DR-246; one adds scope to
+roadmap §2.5's lighting stub; three are trade facts recorded in the user's words.
+
+**11.246.1 RULED BY THE USER: DR-246 §11.245.7 IS AMENDED, AND WIRELESS DISTANCE IS CHECKED AS ADVISORY.**
+§11.245.7 refused a range check because plan positions know no walls, so a distance verdict *"would be an
+estimate printed as a fact"*. **The census refuted the premise**: Lutron's own design rules are
+straight-line distances (*"within 30 ft (9.1m) of the RadioRA 3 processor or Repeater"*, *"within 75ft
+(22.9m) of the processor"*), so checking them checks Lutron's rule rather than estimating propagation.
+**The user then gave Control4's**, in their words: *"ZigBee does have a rule of thumb that Control4
+operates on (the bulk of ZigBee installations currently, AFAIK) of 15-20 feet max between devices, and
+no more than 300 feet from the ZAP (ZigBee Access Point)."* Offered with G4's own text (roadmap §1.1
+filter 4: a heuristic that has not earned authority *"is cut or demoted"*) and CR-061, the user chose
+the recommendation:
+
+- a distance check is **advisory**, and every finding says **straight line** and names its threshold's
+  **source and grade**: a manufacturer's published rule is not a firm's rule of thumb, and the finding
+  says which it is;
+- each threshold is **editable per protocol**, because a rule of thumb is a firm's to set;
+- **a device on a different plan sheet from what it is measured against is counted as unchecked, never
+  passed.** A plan is two-dimensional per sheet and the model carries no floor heights, so a keypad
+  upstairs and a ZAP downstairs have no computable distance (G4: report the unknown count).
+
+Not taken: Lutron's published rules only, which is stricter under G4 and skips the protocol most of
+the user's installs use; and §11.245.7 kept as ruled. **Not ruled here**: the rule's ID (assigned at
+decomposition, with its fixture pair under AC-051), and the default for a range the user gave as
+*"15-20 feet"*. The option offered showed 20 ft.
+
+**11.246.2 LEFT UNRULED BY THE USER: LUTRON'S 6 FT SEPARATION.** Lutron 3691055f says *"Mount the panel
+so that line-voltage wiring will be at least 6 ft (1.8 m) from audio or electronic equipment and
+wiring."* The user: *"Let's leave that one unruled for now; make a note of it for the start of the
+epic."* Noted on Epic `#1040`'s description, where the epic's decomposition will read it.
+
+**11.246.3 TRADE FACT: WHERE A LIGHTING PROCESSOR LIVES DEPENDS ON THE JOB.** In the user's words: *"It
+depends entirely on the job, but Lutron/Control4/Vantage panels are designed to hold their respective
+lighting controllers. Most of the time, we aim to have them in an enclosure if we are using centralized
+lighting, but for setups that are based around the wireless systems (RadioRA3 & some HomeWorks products
+like Sunnata) the processor will live on a rack/in a low voltage enclosure. Caseta devices do not have a
+dedicated panel, so those exclusively live on racks or in enclosures, or oftentimes mounted to the
+outside of one."* **What it means for a model**, stated as a constraint and not as a design: a panel's
+control compartment is one place a processor can be, never the place it is; the same processor model
+sits in a panel on one job and on a rack on the next, and a Caséta bridge is sometimes mounted on the
+outside of an enclosure, which no host in RackPal describes today.
+
+**11.246.4 RULED BY THE USER: v1.4's LIGHTING DELIVERS A LOAD SCHEDULE AND A KEYPAD ENGRAVING SCHEDULE.**
+Asked what the firm hands over: *"Both ideally, neither typically (partially a documentation issue,
+partially a culture issue. I'd want to have both be deliverables though)."* Both join roadmap §2.5's
+lighting row. **What each prints is not ruled**; the census lists what Lutron's own load-schedule tool
+records (circuit, feed and zone name per load), at summary grade.
+
+**11.246.5 TRADE FACT, RESOLVING A CONFLICT IN VANTAGE'S OWN SHEET: SEVEN ENCLOSURES PER CONTROLLER.**
+The IMPE/ISPE sheet says both *"Up to six Secondary Enclosures"* and *"up to 5 additional enclosures per
+controller"*. The user: *"It's actually 7 panels (One main + six secondary) for a total of 28 modules for
+one controller."* Six secondaries, four modules in each of seven enclosures.
+
+**Scope.** **A scope change**, per §8.3, carried in its own commit. Roadmap §2.5: the lighting row gains
+the two schedules; the wireless row's *"No range check"* becomes the advisory check of §11.246.1.
+§12.56. No v1 change.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -25348,6 +25411,12 @@ close and a reopen.
 |---|---|---|
 | **DR-227 §11.226.3** | `TemplateBody` gains `wifi`, a `bool?` (unset, yes, no) | **Replaced in v1, before release**, by a per-radio capability in which each radio is yes, no or unknown and Wi-Fi is one radio (§11.245.6). The Device Builder's *Wi-Fi* toggle and the Devices view's listing rule read the Wi-Fi radio exactly as they read `wifi`. No migration: no file holds a `wifi` value, which `template_wifi_wire_test.dart` already pins for the starters (the access point is *tagged* `"wifi"`, which is a different key). |
 | **DR-048 §11.47.10**, as DR-227 left it | Network **values** are instance data and no template carries one | **Unchanged.** Which wireless networks a device is on is instance data too (§11.245.5); only the capability is on the template. |
+
+### 12.56 Amended by DR-247 (wireless distance is checked as advisory)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-246 §11.245.7** | *"NO RANGE CHECK"*: a distance verdict would be an estimate printed as a fact | **An advisory straight-line check**, each threshold editable per protocol and naming its source and grade, with a device on another plan sheet counted as unchecked (§11.246.1). Its reasoning stands where a protocol publishes no distance rule and nobody has given one. |
 
 ## 13. Resolved §10 questions
 
