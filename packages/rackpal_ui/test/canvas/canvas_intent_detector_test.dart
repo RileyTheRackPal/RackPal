@@ -541,6 +541,96 @@ void main() {
     await tester.sendEventToBinding(p.panZoomEnd());
   });
 
+  // ── a Windows pinch (`#1037`) ──────────────────────────────────────────
+  //
+  // The Windows embedder drives `onPointerPanZoom*` from DirectManipulation,
+  // and hands over DM's CONTENT TRANSFORM as-is: `pan` is that transform's
+  // translation column. DM scales its content about a centre of its own
+  // choosing, so a pure pinch arrives with `pan = (1 - scale) * centre`:
+  // translation that only exists to hold DM's centre still. Applied as a
+  // real pan and then zoomed about the cursor on top, the pinch had two
+  // pivots and drifted off toward the canvas origin.
+  //
+  // The streams below are built the way the embedder builds them: position
+  // fixed at the gesture's start, `pan` cumulative from that start.
+
+  Offset dmPan(Offset centre, double scale) => centre * (1 - scale);
+
+  for (final (name, centre) in <(String, Offset)>[
+    ('DM centred on the cursor', const Offset(400, 300)),
+    ('DM centred somewhere else', const Offset(520, 260)),
+  ]) {
+    testWidgets('a Windows pinch zooms about the cursor ($name)', (
+      tester,
+    ) async {
+      final vp = ViewportController();
+      addTearDown(vp.dispose);
+      await tester.pumpWidget(_host(vp, null));
+
+      final p = TestPointer(1, PointerDeviceKind.trackpad);
+      const cursor = Offset(400, 300);
+      final sceneUnderCursor = vp.screenToScene(const DPt(400, 300));
+      await tester.sendEventToBinding(p.panZoomStart(cursor));
+      for (final s in <double>[1.25, 1.5, 2]) {
+        await tester.sendEventToBinding(
+          p.panZoomUpdate(cursor, pan: dmPan(centre, s), scale: s),
+        );
+      }
+      await tester.sendEventToBinding(p.panZoomEnd());
+
+      expect(vp.scale, closeTo(2, 1e-6));
+      final after = vp.sceneToScreen(sceneUnderCursor);
+      expect(
+        Offset(after.x, after.y),
+        offsetMoreOrLessEquals(cursor, epsilon: 1e-4),
+        reason:
+            'what was under the cursor when the pinch began is still '
+            'under it when the pinch ends',
+      );
+    });
+  }
+
+  testWidgets('a pinch latches its gesture, and the next gesture pans again', (
+    tester,
+  ) async {
+    final vp = ViewportController();
+    addTearDown(vp.dispose);
+    await tester.pumpWidget(_host(vp, null));
+
+    final p = TestPointer(1, PointerDeviceKind.trackpad);
+    const cursor = Offset(400, 300);
+    await tester.sendEventToBinding(p.panZoomStart(cursor));
+    // Pans first, which DM can report before it has recognised the pinch.
+    await tester.sendEventToBinding(
+      p.panZoomUpdate(cursor, pan: const Offset(10, 0)),
+    );
+    expect(vp.transform.storage[12], closeTo(10, 1e-6));
+    await tester.sendEventToBinding(
+      p.panZoomUpdate(cursor, pan: const Offset(30, 20), scale: 2),
+    );
+    // Back at scale 1 inside the same gesture: still a pinch, so its
+    // translation is still DM's and still not a pan.
+    await tester.sendEventToBinding(
+      p.panZoomUpdate(cursor, pan: const Offset(60, 40)),
+    );
+    await tester.sendEventToBinding(p.panZoomEnd());
+    expect(vp.scale, closeTo(1, 1e-6));
+    expect(
+      vp.transform.storage[12],
+      closeTo(10, 1e-6),
+      reason: 'only the pan from before the pinch was recognised moved it',
+    );
+    expect(vp.transform.storage[13], closeTo(0, 1e-6));
+
+    // A fresh gesture is a two-finger pan again.
+    await tester.sendEventToBinding(p.panZoomStart(cursor));
+    await tester.sendEventToBinding(
+      p.panZoomUpdate(cursor, pan: const Offset(0, 25)),
+    );
+    await tester.sendEventToBinding(p.panZoomEnd());
+    expect(vp.transform.storage[13], closeTo(25, 1e-6));
+  });
+
   // ── the secondary button (CR-102, `#231`/`#232`) ──────────────────────
   //
   // Right-drag is reserved for the context menu, "a platform expectation on

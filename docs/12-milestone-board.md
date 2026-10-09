@@ -2388,6 +2388,35 @@ written through the codec, where the census could not have seen it.
 
 No version move: the DR-122 epic is not the current one.
 
+### 4.57 A Windows pinch zoomed about two pivots, and its test was shaped like a Mac · 2026-10-09 · `#1037` · AC-016 (#23), docs/04 keymap, docs/05 "Pan and zoom" · no version move
+
+`#1037`, from a person on a Microsoft Precision Touchpad: pinch zoom on the schematic drifted toward the
+canvas origin rather than zooming where they were looking. The defect was in `CanvasIntentDetector`, which
+all three canvases share, so the rack and the Plan view had it too.
+
+**The mechanism, read from the embedder rather than guessed.** At the pinned engine (`a10d8ac3`) the Windows
+embedder drives `onPointerPanZoom*` from DirectManipulation and passes DM's content transform through
+unedited: `scale` is its scale and `pan` its translation column. DM scales about a centre of its own, so a
+pinch with no finger travel arrives with `pan = (1 - scale) * centre`. The detector panned by that and then
+zoomed about the cursor as well: two pivots. Chromium's handler for the same API calls the translation
+"noise" during a pinch and latches the gesture; `b2b1d897` takes that rule. Once a gesture's scale leaves 1
+by more than 0.1% it is a pinch until it ends, its `pan` is discarded, and the cursor is the only pivot.
+
+**The user's choice.** Pinch zooms about the cursor, not the viewport centre: the same rule as Ctrl+wheel,
+so the two zoom inputs agree. The ticket said "centre of the screen", which with the pointer mid-canvas is
+the same place.
+
+**Why the existing test passed.** It held `pan` constant through its pinch, which is the macOS stream, and on
+that stream the old code is correct. New OKF practice:
+`.okf/practices/a-synthetic-event-is-one-platforms-shape.md`.
+
+**Evidence.** `canvas_intent_detector_test` (+3: a DM-shaped pinch keeps the scene point under the cursor,
+for a DM centre on the cursor and one elsewhere; a pinch latches its gesture against later translation and
+the next gesture pans again). All three fail on the old code. Floor: ui 2149 to 2152. **Not yet
+demonstrated on the hardware**; the board item waits in Needs You until a person pinches.
+
+No version move: Epic 786 is not a milestone.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
