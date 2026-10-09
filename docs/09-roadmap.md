@@ -84,6 +84,8 @@ Grouped by subsystem; the **Why** column names the governing ruling. See [Data m
 
 **One cable, several sets, several devices** (DR-236, amendment of 2026-10-04): a 16/4 tapped at one speaker and continued to the next, or a dual-head IR emitter, is one cable. CR-014 always let a `Link` reach N devices; what v1 gains is the authoring, **Add a set to this cable** on the selected cable's bar, and the readers that print such a cable right: one Pull Sheet row naming every far end, a Termination Schedule line per end. Hand-mapping individual conductors stays v1.1. Canon §11.235, §12.51.
 
+**Wireless networks, the data shapes only** (DR-246, amendment of 2026-10-09, on G5): the project's list of wireless networks and each device's membership in them load and save, with **no surface**, so a v1 build edits a v1.4 file without dropping them; the protocol is a registry row carried in the document, not an enum, so a protocol added later does not lock v1 out. `TemplateBody.wifi` is replaced **before release** by a per-radio capability (yes, no or unknown per radio, Wi-Fi one of them), read by the *Wi-Fi* toggle and the Devices view exactly as `wifi` was, so no migration is ever owed. The surfaces are §2.5. Canon §11.245, §12.55.
+
 **Platform and quality**: mobile/tablet **read-only** on exactly three surfaces, with the app saying so rather than shipping a squeezed editor (AC-056); the outline tree; a fully specified keyboard path to create a connection, WCAG AA, NVDA/VoiceOver matrix (AC-058 D11); ~40 keybindings from one `Intent` registry with the 16 collisions fixed (CR-101, AC-046); the in-app glossary and one error-message catalogue (AC-058 D1); eight empty states and the full file-layer error surface (D3, D4); progress and cancel on every operation over ~500 ms (D14); four starter projects doing triple duty as goldens, perf fixtures and screenshot source (AC-052); Windows code signing started **two milestones early** (AC-058 D10).
 
 ### 2.2 v1.1: the fast follow
@@ -137,7 +139,18 @@ interchange export is neither a fast follow nor a new product.
   envelope and **five of those six fields have no writer** (DR-188 §11.187.5). Somewhere to type the
   numbers comes first.
 
-### 2.5 v2: the next product decision, not the next release
+### 2.5 v1.4: centralized lighting
+
+**Created by DR-246 §11.245.4**, by the user and over a recommendation of v2, on DR-188's precedent
+for v1.3. It holds the point where, in the user's words, the product has *"gone from a simple
+diagramming tool to a light CAD package"*.
+
+| Item | State |
+|---|---|
+| **Centralized lighting** for Lutron, Vantage and Control4: keypads (wired and wireless), processors, and the panels they live in | **A stub. Scope to be ruled.** Loads, zones, circuits, engraving and link limits are unruled. The panels are known to need a host `Rack` cannot be: Lutron on DIN rail, Vantage in a 1x4 module panel with the controller in a bottom slot, Control4 in its own panel with a network switch enclosure and a module count set by panel size (§11.245.4). A census of real panels comes before a model |
+| **Wireless network membership, its surfaces**: naming a project's Wi-Fi, ZigBee, Z-Wave, ClearConnect and Vantage networks, putting devices on them, showing it in the Devices view and `T6.50`, and a count per network against a cited limit | DR-246. The data shapes are v1 (§2.1). Membership, never links: nothing is drawn on the schematic. **No range check**, since plan positions know no walls (§11.245.7) |
+
+### 2.6 v2: the next product decision, not the next release
 
 Each changes what the product *is* and should be decided with evidence from v1 users.
 
@@ -145,13 +158,13 @@ Each changes what the product *is* and should be decided with evidence from v1 u
 |---|---|
 | `SignalRoute`: Dante flows, AVoIP streams, matrix crosspoints, eARC, VLAN/multicast/latency | CR-008, AC-036. Returns **with** a Dante view or not at all; a third entity layer with no editor is dead weight |
 | **Layers**: Existing / Phase 1 / Phase 2 / Future / Demo | CR-064, AC-038. Real for commercial retrofit, absent from the residential first job; `DeviceStatus` covers 80% for one field |
-| ~~Cloud sync and multi-user~~ | **SPLIT BY DR-052 (§12.22) and this row is gone.** It was two features wearing one name. **Sync** moved *forward*: git sync is §2.3, gated on evidence, and divergence detection is §2.1. **Simultaneous multi-user editing** moved to §2.6, never. The row's reasoning survives and is why the split was possible: a cloud-ready model is what makes sync cheap and is irrelevant to concurrent editing, which fails on determinism, CR-117 and undo rather than on identity |
+| ~~Cloud sync and multi-user~~ | **SPLIT BY DR-052 (§12.22) and this row is gone.** It was two features wearing one name. **Sync** moved *forward*: git sync is §2.3, gated on evidence, and divergence detection is §2.1. **Simultaneous multi-user editing** moved to §2.7, never. The row's reasoning survives and is why the split was possible: a cloud-ready model is what makes sync cheap and is irrelevant to concurrent editing, which fails on determinism, CR-117 and undo rather than on identity |
 | Mobile **editing** | v1 is read-only by confirmed decision; the intent layer keeps the door open |
 | A read-only **web** viewer | AC-016 (#22). Distribution story, not a feature, one `kIsWeb` guard already exists |
 | A priced BOM with suppliers and purchase orders | AC-055. An adjacent product, not a missing feature |
 | Real-SKU catalog | A legal and maintenance question before it is a product one |
 
-### 2.6 Not doing: rulings, not omissions
+### 2.7 Not doing: rulings, not omissions
 
 | Item | Ruling |
 |---|---|
@@ -173,7 +186,7 @@ Each changes what the product *is* and should be decided with evidence from v1 u
 | **Label-printer drivers: Brother, Dymo, Epson dialects** | **DR-049 §11.48.7.** An export nobody has run on the hardware is `VACUOUS` under docs/12 §0, and this project already carries two unexecuted print matrices (`D11`, `D13`). **The label sheet and the CSV both ship** (§2.1); every label program on the market imports a CSV, and the mapping is the user's to make once |
 | **A D-Tools or XTEN-AV exporter** | **DR-049 §11.48.8.** It cannot be demonstrated without a licensed seat, neither vendor publishes a stable import schema, and docs/00 §4.2 positions this product against AVSnap and Stardraw and **explicitly not against D-Tools**, so shipping one is a positioning amendment wearing a feature's clothes. The generic CSV serves the same user through an import wizard those products already ship |
 
-### 2.7 The ten cuts that account for most of the saving
+### 2.8 The ten cuts that account for most of the saving
 
 Ranked by engineering weeks removed, using `critique-feasibility.md`'s own sizing.
 
@@ -541,7 +554,7 @@ The two structural facts in that graph: **M4 is not on the critical path**: it h
 
 **How to read a size.** `S` < `M` < `L`, relative to each other and to the closed milestones below, which is what makes them checkable: M1 and M4 are what an `L` looks like in this repository, M0 is what an `S` looks like. **The letters are not a function of any count**, and the counts are printed beside them so the next person can see that for themselves: M1 is `L` with 9 stories and M5 is `M` with 20.
 
-### 6.1 The v1 saga: 20 epics, every one sized
+### 6.1 The v1 saga, every epic sized as of 2026-09-16
 
 Counts are Stories under the epic, Done of that, read off the board on 2026-09-16. A milestone's letter is the one canon §12.7 set and is **not re-estimated here**; the nine epics that had no size anywhere get one, argued from their stories.
 
@@ -567,6 +580,8 @@ Counts are Stories under the epic, Done of that, read off the board on 2026-09-1
 | Authored devices reach the shelf (DR-123) | `S` | 1 / 0 | — | one story, four chapters, over machinery M4-N already built |
 | EXP-A (DR-049) | `S` | 0 | — | **NOT DECOMPOSED**, so this is sized from the ruling and not from stories, which is weaker evidence and says so. A CSV writer against a reader stack that already ships, a round-trip property, and a label sheet as its own export action |
 | DOC-A (DR-051) | `S` | 0 | — | **NOT DECOMPOSED**, same caveat. A reference block on `TemplateBody` printing on two sheets that already exist, reusing CR-061's provenance machinery |
+
+**Created since that reading, and not yet sized here:** BRK-A (`#1003`, DR-236) and WNET-A (`#1043`, DR-246). The heading said *"20 epics"* until 2026-10-09, when the board held 21 and WNET-A made 22: a count in a heading has no date to say when it was true, so it now carries the table's.
 
 ### 6.2 What the closed milestones actually took
 
