@@ -1,5 +1,14 @@
 # Update Log
 
+## 2026-10-09 (hundred-and-thirty-first entry)
+
+* **Progress**: `#1037` fixed at `b2b1d897`: a Windows touchpad pinch zoomed about two pivots, because the
+  embedder hands DirectManipulation's own zoom translation over as `pan`. A pinch now latches its gesture and
+  zooms about the cursor only, on all three canvases. docs/12 §4.57. Waits on a person with the touchpad.
+* **Note**: **A SYNTHETIC EVENT IS ONE PLATFORM'S SHAPE.** The pinch test held `pan` constant, which is macOS,
+  and passed over the Windows bug for its whole life. New practice:
+  [a synthetic event is one platform's shape](/practices/a-synthetic-event-is-one-platforms-shape.md).
+
 ## 2026-10-08 (hundred-and-thirtieth entry)
 
 * **Progress**: SFE-C (`#820`) built in seven chapters on DR-245 (`0458abe0`): the clone dialog and grid
