@@ -1,5 +1,18 @@
 # Update Log
 
+## 2026-10-09 (hundred-and-thirty-third entry)
+
+* **Progress**: LIGHT-0 (`#1041`, DR-246): the lighting census is
+  `docs/research/research-domain-lighting.md`. Lutron, Vantage and Control4 share one shape: a processor,
+  main and secondary power panels, modules fed by line feeds and split into zones, a wired keypad bus,
+  and wireless links with counted limits. All three of the user's panel descriptions held.
+* **Note**: **MARK HOW A FACT WAS OBTAINED, NOT ONLY WHERE.** Each figure is tagged *read* (from the
+  manufacturer's own document) or *summary* (from a search summary of a page not opened). A summary-grade
+  number is a `VERIFY:` before it reaches a catalog row or a rule.
+* **Note**: **A RULING'S REASON CAN BE REFUTED BY THE DOMAIN IT RULED ON.** DR-246 §11.245.7 refused a range
+  check because distance ignores walls; Lutron's own design rule is a straight-line distance. Put to the
+  user as a question, not reopened.
+
 ## 2026-10-09 (hundred-and-thirty-second entry)
 
 * **Progress**: `#1038` answered by

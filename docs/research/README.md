@@ -48,6 +48,7 @@ from multiple message blocks and may read choppily at block boundaries.
 | [research-domain-racks.md](research-domain-racks.md) | EIA-310 rack standards, RU geometry, occupancy, weight/power/heat |
 | [research-domain-signals.md](research-domain-signals.md) | A/V signal, cable and connector taxonomy across all families |
 | [research-domain-docs.md](research-domain-docs.md) | Wiring schedules, TIA-606 labelling, structured wiring, CI deliverables |
+| [research-domain-lighting.md](research-domain-lighting.md) | Centralized lighting: Lutron, Vantage and Control4 panels, modules, processors, wireless link limits. **Written 2026-10-09 for LIGHT-0 (`#1041`, DR-246), after the original pass**, and marks each fact as read from the manufacturer's document or taken from a search summary |
 
 ### Research: technical
 
