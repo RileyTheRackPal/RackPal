@@ -12,6 +12,12 @@ import 'package:rackpal_ui/src/canvas/viewport_controller.dart';
 /// land exactly where you started.
 const double kZoomPerScrollUnit = 0.002;
 
+/// How far a trackpad gesture's cumulative scale must move from 1 before the
+/// gesture counts as a pinch. DM rounds its scale to damp jitter, but a
+/// steady two-finger pan is not promised an exact 1.0, and a pan misread as
+/// a pinch would stop panning. A real pinch clears 0.1% in its first event.
+const double _kPinchScaleSlop = 0.001;
+
 /// The identity of ONE `beginDrag → update* → (commitDrag|cancel)` sequence.
 ///
 /// ═══════════════════════════════════════════════════════════════════════
@@ -107,7 +113,8 @@ abstract interface class CanvasIntentHandler {
 /// * **`onPointerSignal` scroll** — plain scroll pans; Ctrl/Cmd+scroll zooms
 ///   about the cursor.
 /// * **`onPointerPanZoom*` (native trackpad)** — a SEPARATE channel from
-///   `onPointerSignal`: `panDelta` pans, pinch `scale` zooms about the focus.
+///   `onPointerSignal`: `panDelta` pans, pinch `scale` zooms about the cursor,
+///   and a gesture that has pinched stops panning (`_onPanZoomUpdate`).
 ///
 /// Distinguishing signal-vs-gesture *channels* is allowed (it is about which
 /// physical channel carries pan/zoom, not about editing semantics); branching
@@ -228,6 +235,11 @@ class _CanvasIntentDetectorState extends State<CanvasIntentDetector> {
   // Trackpad pinch accumulator: PointerPanZoomUpdateEvent.scale is cumulative
   // from gesture start, so we track the last value to derive per-event factors.
   double _panZoomLastScale = 1;
+
+  /// Whether the current trackpad gesture has become a pinch. Once it has,
+  /// its `pan` is no longer a pan: see [_onPanZoomUpdate]. Cleared at the
+  /// gesture's start and end, so the next gesture can pan again.
+  bool _panZoomIsPinch = false;
 
   ViewportController get _vp => widget.viewport;
 
@@ -373,13 +385,43 @@ class _CanvasIntentDetectorState extends State<CanvasIntentDetector> {
 
   void _onPanZoomStart(PointerPanZoomStartEvent event) {
     _panZoomLastScale = 1;
+    _panZoomIsPinch = false;
   }
 
+  /// A gesture is a pan until its scale moves, and a pinch from then until
+  /// it ends. A pinch zooms about the cursor and pans NOT AT ALL (`#1037`).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// ON WINDOWS, A PINCH'S `pan` IS NOT A PAN
+  /// ═══════════════════════════════════════════════════════════════════
+  /// The Windows embedder drives this channel from DirectManipulation and
+  /// passes DM's content transform through unedited: `scale` is its scale
+  /// and `pan` is its translation column. DM scales its content about a
+  /// centre of its own, so a pinch with no finger travel at all arrives
+  /// with `pan = (1 - scale) * centre`, which is translation whose only job
+  /// is to hold DM's centre still. Applied here as a pan AND followed by a
+  /// zoom about the cursor, the pinch had two pivots, and the canvas slid
+  /// away toward its origin as you zoomed.
+  ///
+  /// So once the scale moves, `pan` is discarded for the rest of the
+  /// gesture, scale-1 events included, and the cursor is the only pivot.
+  /// This is Chromium's rule for the same API: its DM handler calls that
+  /// translation "noise when pinch zoom", latches the sequence into a pinch,
+  /// and allows pan-then-pinch because DM can report a slow pinch as a
+  /// scroll before it recognises it. What a latch costs is panning inside
+  /// the same gesture after it has pinched: lift, and the next one pans.
+  ///
+  /// macOS sends a pinch with no translation, so the latch changes nothing
+  /// there. The cursor is the pivot on every platform, as it is for
+  /// Ctrl+wheel (docs/04 keymap, docs/05 "Pan and zoom").
   void _onPanZoomUpdate(PointerPanZoomUpdateEvent event) {
-    if (event.panDelta != Offset.zero) {
-      _vp.panBy(event.panDelta);
+    if (event.scale <= 0) return; // Chromium has seen DM report 0.
+    if ((event.scale - 1).abs() > _kPinchScaleSlop) _panZoomIsPinch = true;
+    if (!_panZoomIsPinch) {
+      if (event.panDelta != Offset.zero) _vp.panBy(event.panDelta);
+      return;
     }
-    if (event.scale > 0 && event.scale != _panZoomLastScale) {
+    if (event.scale != _panZoomLastScale) {
       final factor = event.scale / _panZoomLastScale;
       _panZoomLastScale = event.scale;
       _vp.zoomBy(factor, screenPivot: event.localPosition);
@@ -388,6 +430,7 @@ class _CanvasIntentDetectorState extends State<CanvasIntentDetector> {
 
   void _onPanZoomEnd(PointerPanZoomEndEvent event) {
     _panZoomLastScale = 1;
+    _panZoomIsPinch = false;
   }
 
   /// THE TERMINAL A DISPOSED DETECTOR OWES — AND THE ONE IT MUST STOP THE

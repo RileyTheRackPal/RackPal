@@ -2118,7 +2118,11 @@ $SuiteFloors = @{
     # test.dart, Change line fixing a clash end to end, the mark gone.
     # 2149 at `#1036` (SFE-C8): +1 in settings/project_settings_dialog_
     # test.dart, a library family offered, added, then no longer offered.
-    'rackpal_ui'     = 2149
+    # 2152 at `#1037`: +3 in canvas/canvas_intent_detector_test.dart, a
+    # DirectManipulation-shaped pinch holding the point under the cursor
+    # (DM centred on the cursor, and elsewhere), and a pinch latching its
+    # gesture against later translation while the next gesture pans.
+    'rackpal_ui'     = 2152
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
