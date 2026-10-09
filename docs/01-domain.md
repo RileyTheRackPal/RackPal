@@ -541,7 +541,7 @@ The canonical residential outlet is Grade 2: **2 × Cat6/6A + 2 × RG6**.
 
 ### 8.2 The distribution device and the rack
 
-Residential home runs terminate either in a **structured media enclosure** (14/21/28/42-in recessed cans, module bays rather than RUs) or, in higher-end CI work, directly on **rack-mounted patch panels**. The latter is RackPal's primary case. In commercial work the analogue is the MDF/IDF and the building's horizontal cabling.
+Residential home runs terminate either in a **structured media enclosure** (14/21/28/42-in recessed cans with a perforated back plate, devices fixed wherever its holes allow and sometimes on the door as well, rather than in RUs or bays; DR-246 §11.245.8) or, in higher-end CI work, directly on **rack-mounted patch panels**. The latter is RackPal's primary case. In commercial work the analogue is the MDF/IDF and the building's horizontal cabling.
 
 Low-voltage rough-in is deliberately routed in separate stud bays from AC, and the pull happens at framing while termination and test happen after drywall. **That is why `roughInStatus` is meaningful rather than decorative**: `planned → pulled → dressed → terminated → tested` (CR-065). `Link.designatorLocked` auto-sets at `roughInStatus >= pulled`, once sixty cables are physically labelled, an accidental renumber is a day of relabelling (CR-034, AC-034/m22).
 

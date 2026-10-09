@@ -24459,6 +24459,110 @@ locks. RJ-012's two remaining limbs. The `.rppj` document format, beyond SFE-C3'
 
 ---
 
+### 11.245 DR-246 · A device can say which wireless networks it is on, and it ships with centralized lighting in a band of its own
+
+**Settled by the user on 2026-10-09, from `#1038`** (*"Feasibility of adding wireless network support"*).
+The need, in the user's words: *"some houses my firm has done may have two, three, or maybe even six
+ZigBee networks depending on size/number of devices/design constraints."* And the trade facts the
+protocols rest on, also theirs: *"Lutron's ClearConnectA and ClearConnectX protocols have similar
+constraints to Z-Wave and ZigBee, respectively; Vantage I believe also uses the 900MhZ frequency band,
+but in yet another proprietary standard with similar constraints to Z-Wave."* The Vantage band is the
+user's belief and is recorded as one; CR-061 wants a source before any catalog or rule states it.
+
+**11.245.1 TWO CORRECTIONS FIRST, BOTH TO THE QUESTION AS ASKED.** The ticket said Wi-Fi *"was rejected
+at some point"*. **It was not.** DR-048 §11.47.10 kept network *values* off the template, and DR-227
+§11.226.3 gave the template `wifi` on 2026-10-03, on the user's own ruling. What no ruling has ever
+covered is **which** wireless network a device joins, and that gap is the same for Wi-Fi, ZigBee,
+Z-Wave, ClearConnect and Vantage. Second, the ticket files this *"alongside the Lutron support that's
+planned after v1"*. **Centralized lighting appeared in no band of roadmap §2**, which §8.3 makes the one
+scope list. It is created below rather than assumed.
+
+**11.245.2 PROPOSED, NOT OBJECTED TO: MEMBERSHIP, NOT LINKS.** A project-level list of wireless networks,
+each with a name, a protocol, an optional coordinator or bridge device, and for Wi-Fi an SSID; a device
+lists the networks it is on, **several where it has several radios** (a Control4 controller on ZigBee and
+Wi-Fi, an RA3 processor on ClearConnect A and X). **Nothing is drawn on the schematic**: a mesh routes
+itself, so a ZigBee link drawn between two dimmers would record a path no installer designed. This shape
+was the feasibility's recommendation and the user answered every later question on top of it, but it
+was not put as a question of its own, so field names and the protocol list are **re-opened at
+decomposition**, not settled here.
+
+**11.245.3 RULED BY THE USER, OVER THE RECOMMENDATION: IT SHIPS WITH CENTRALIZED LIGHTING.** Recommended
+was v1.2 on its own, since membership is useful on any AV or security job without a lighting feature and
+§2.3's own criterion (a format addition) places it there. The user bundled it with lighting, whose
+keypads are where the six-network houses come from.
+
+**11.245.4 RULED BY THE USER, OVER THE RECOMMENDATION: CENTRALIZED LIGHTING IS A BAND OF ITS OWN, v1.4.**
+Recommended was v2, on roadmap §2.6's test that v2 *"changes what the product is"*; the user's own description
+was that the product has *"gone from a simple diagramming tool to a light CAD package"*. Also offered:
+v1.2, which would have promised a model that does not exist (there is no load, zone or circuit-to-load
+model today). **The user created v1.4**, on DR-188 §11.187.3's precedent for v1.3. Its lighting row is a
+**stub**: a title and the facts the user has given, with scope to be ruled.
+
+**The panel facts given so far, in the user's words.** *"Lutron has a DIN-rail based system; Vantage uses
+a 1x4 module panel, with a slot in the bottom for the controller; Control4 has its own panel with a
+network switch enclosure & space for various amounts of modules depending on the panel size."* **None
+of these fits `Rack`**, which counts RU and nothing else.
+
+**11.245.5 RULED BY THE USER, ON G5: THE DATA SHAPE SHIPS IN v1 WITH NO UI.** A v1 build drops a
+device-level key it does not model when it saves. The project's list of wireless networks and each
+device's membership therefore load and save in v1, on `TemplateBody.submittedBy`'s precedent, so a v1
+machine edits a v1.4 file and loses nothing. **The user first chose the other option**, stamping such a
+file with a reader version a v1 build will not overwrite (`documentMinReaderVersion`'s precedent), and
+**reversed it on being shown roadmap §1.1's filter 2**: *"Does omitting it cost a format migration, a
+command-stack rewrite, or a reconstruct-and-confirm pass over user data? If yes the **model** ships in v1
+even when the **UI** does not."* The feasibility should have cited G5 the first time and did not;
+recorded because an answer given without the governing rule in view is not the same answer.
+
+**THE PROTOCOL IS A REGISTRY ROW, NOT AN ENUM, AND THAT IS WHAT MAKES THE RESERVATION WORK.**
+`json_codec.dart` decodes every enum strictly, and *"a newer build that adds a value is expected to raise
+`minReaderVersion`"*. A protocol enum frozen in v1 would therefore bring back the read-only lockout this
+clause declines the first time v1.4 adds a protocol. A registry carried in the document, as signal
+families are, lets a newer file bring its own rows. Which rows are seeded is not ruled here.
+
+**11.245.6 RULED BY THE USER, ON G5: A TEMPLATE SAYS WHICH RADIOS IT HAS, AND THE CHANGE IS MADE IN v1.**
+DR-227's `wifi` is replaced **before release**, while no user file holds a value and no seeded template
+sets one, so it is a rename with no migration ever; a check can then flag a device put on a network its
+model cannot join. **Reversed on the same filter**: the user first chose to wait for v1.4, which would have
+cost a migration of every saved `wifi: true` and, because a template body keeps no unknown keys (roadmap
+§2.2, the `submittedBy` row), a v1 build saving a template from a newer file would have dropped its radios.
+
+**THE SHAPE KEEPS UNKNOWN PER RADIO, AND A SET WOULD NOT.** A plain set of radios turns every radio not
+ticked into a stated *no*: a template marked Wi-Fi would claim to have no ZigBee, a fabricated fact under
+G4. Each radio is therefore yes, no or unknown, and an absent radio is unknown (CR-114: an absent key).
+The Device Builder's *Wi-Fi* toggle keeps working as the Wi-Fi member, DR-227 §11.226.2's Devices view
+keeps listing a device whose Wi-Fi is yes, and no other radio has a surface until v1.4.
+
+**11.245.7 RULED: NO RANGE CHECK.** Plan positions know nothing of walls, floors or materials, so a
+distance verdict would be an estimate printed as a fact, which G4 forbids. **A count per network
+against a cited limit is checkable** and is the candidate rule; it ships, if at all, with its source
+(CR-061) and its fixture pair (AC-051).
+
+**11.245.8 A STRUCTURED MEDIA ENCLOSURE IS NOT A LIGHTING PANEL, AND THE USER'S EVIDENCE SAYS SO.** The
+feasibility proposed that one non-RU host might serve lighting panels and structured media enclosures,
+since docs/01 describes the latter as *"module bays rather than RUs"*. **The user refuted it with two
+photographs of installed cans**: *"Structured media enclosures are a bit trickier, as those are usually
+a lot more free-form in nature."* What they show: a perforated back plate with a splitter and a
+switch enclosure fixed wherever its holes allowed, cable dressed freely around them; and a hinged
+door that itself carries a device, an access point. That is free placement on a hole grid, on more
+than one surface, not a row of bays. **docs/01's "module bays" is the derived sentence that misled the
+proposal.** The photographs are not committed: they are of an installed home.
+
+**Scope.** **A scope change**, per §8.3, carried in its own commit. Creates roadmap §2.5 for v1.4 with
+two rows (centralized lighting, a stub; wireless network membership, its surfaces) and renumbers the old
+§2.5 to §2.7 as §2.6 to §2.8. **v1 grows by two data shapes and no surface**: the wireless network
+registry and membership (§11.245.5), and the per-radio capability replacing `TemplateBody.wifi`
+(§11.245.6, §12.55). `#1038`.
+
+**What this does not rule.** The lighting band's contents: loads, zones, circuits, keypad engraving,
+processor link limits. **How a lighting panel is modelled**: three vendors' panels described in a
+sentence each is not a model, and it wants a census of real panels (slot counts, rail lengths, module
+widths, where the controller and the switch sit) before anybody designs one. **How a structured media
+enclosure is modelled**, if ever, after §11.245.8. Whether a Wi-Fi network records its passphrase (the
+recommendation will be never, since a project file is emailed to clients and trades). Which protocols
+are seeded and how each is named.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -25237,6 +25341,13 @@ close and a reopen.
 |---|---|---|
 | **DR-122 §11.121.6**, the shelf half | A cloned family is written *"onto the user's shelf"* | **Into `My library.rpda`**, the personal device library on the shelf, which carries families since DR-245 (§11.244.1, §11.244.2). The project copy stays authoritative for the drawing. |
 | **DR-123 §11.122.6** | *"does not touch `.rmdx` or `.rmda`"* | **Read as DR-123's own scope**, not a bar on later rulings. `.rmda` and `.rmdx` gain an optional `signalFamilies` list, written at schema v4 only when present (§11.244.1). |
+
+### 12.55 Amended by DR-246 (a template says which radios it has)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-227 §11.226.3** | `TemplateBody` gains `wifi`, a `bool?` (unset, yes, no) | **Replaced in v1, before release**, by a per-radio capability in which each radio is yes, no or unknown and Wi-Fi is one radio (§11.245.6). The Device Builder's *Wi-Fi* toggle and the Devices view's listing rule read the Wi-Fi radio exactly as they read `wifi`. No migration: no file holds a `wifi` value, which `template_wifi_wire_test.dart` already pins for the starters (the access point is *tagged* `"wifi"`, which is a different key). |
+| **DR-048 §11.47.10**, as DR-227 left it | Network **values** are instance data and no template carries one | **Unchanged.** Which wireless networks a device is on is instance data too (§11.245.5); only the capability is on the template. |
 
 ## 13. Resolved §10 questions
 

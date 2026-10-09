@@ -1,5 +1,17 @@
 # Update Log
 
+## 2026-10-09 (hundred-and-thirty-second entry)
+
+* **Progress**: `#1038` answered by
+  [DR-246](/decisions/dr-246-wireless-networks-and-centralized-lighting.md): a device can say which wireless
+  networks it is on, never drawn. Roadmap §2.5 is new, **v1.4: centralized lighting**, and v2 onward
+  renumbers. v1 grows by two data shapes with no surface.
+* **Note**: **CITE THE FILTER WHEN YOU ASK, NOT AFTER THE ANSWER.** The user chose against G5 twice
+  before being shown it, then reversed both. An answer given without the governing rule in view is not
+  the same answer.
+* **Note**: **A CLAIM ABOUT "NO FILE" IS A GREP.** Nine tracked files matched `"wifi"`; all nine were the
+  access point's tag, and a test already pinned the field's absence. Checked before it went into canon.
+
 ## 2026-10-09 (hundred-and-thirty-first entry)
 
 * **Progress**: `#1037` fixed at `b2b1d897`: a Windows touchpad pinch zoomed about two pivots, because the
