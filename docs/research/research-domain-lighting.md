@@ -228,6 +228,8 @@ grade]. Not a number a rule can cite.
 **What this means for DR-246's "count per network against a cited limit":** Lutron and Z-Wave have
 citable numbers. Vantage has numbers from secondary sources only. ZigBee has none a rule could cite,
 so a ZigBee count would have to be shown and never judged, which is G4 working as intended.
+**Distance is different** (§10): the user gave Control4's ZigBee rule of thumb, and DR-247 made
+distance an advisory check that names its source.
 
 ---
 
@@ -236,7 +238,7 @@ so a ZigBee count would have to be shown and never judged, which is G4 working a
 | Claim | Disagreement | Read it as |
 |---|---|---|
 | IMPE-4-IC24 capacity | Legrand's product page: *"houses the 24V InFusion Controller and two separate control modules"* under a title saying 4 Module. The family sheet: up to four | **Four.** The product page is a copy error |
-| Secondaries per IMPE | The same Vantage sheet says *"Up to six Secondary Enclosures"* and, a column over, *"up to 5 additional enclosures per controller"* | Unresolved. 288 loads (6 x 4 x 12) agrees with six |
+| Secondaries per IMPE | The same Vantage sheet says *"Up to six Secondary Enclosures"* and, a column over, *"up to 5 additional enclosures per controller"* | **Six, per the user** (DR-247 §11.246.5): one main and six secondary, 28 modules per controller. 288 loads (6 x 4 x 12) agrees |
 | CCX devices per gateway | 100 (newer Lutron spec) vs 50 (older sheet) [summary] | Probably 100; check the revision |
 | CCA devices per RA3 processor | 95 (support article, read) vs *"100 ... including repeaters"* (one-line diagram) [summary] | The same budget counted two ways: 95 plus 1 processor plus 4 repeaters |
 | Control4 panel weight | 49.4 lb / 27.35 lb (Control4, 2013) vs 53 / 29 lb (SnapAV) | Likely a revision; neither is a design input |
@@ -303,7 +305,28 @@ so a ZigBee count would have to be shown and never judged, which is G4 working a
 
 ---
 
-## 10. Sources
+## 10. The user's answers, 2026-10-09
+
+Recorded as DR-247 (canon §11.246). In order of §9's questions:
+
+1. **Distance.** *"ZigBee does have a rule of thumb that Control4 operates on (the bulk of ZigBee
+   installations currently, AFAIK) of 15-20 feet max between devices, and no more than 300 feet from
+   the ZAP (ZigBee Access Point)."* Offered the options, the user ruled distance an **advisory** check,
+   sources and grades shown, editable per protocol, other-sheet devices counted as unchecked.
+2. **The 6 ft separation.** *"Let's leave that one unruled for now; make a note of it for the start of
+   the epic."*
+3. **Where the processor lives.** It depends on the job: panels are built to hold their own brand's
+   controller and centralized jobs aim for that; RadioRA 3 and Sunnata-based HomeWorks jobs put it on a
+   rack or in a low-voltage enclosure; Caseta has no panel and lives on a rack, in an enclosure, or
+   mounted to the outside of one.
+4. **Deliverables.** *"Both ideally, neither typically (partially a documentation issue, partially a
+   culture issue. I'd want to have both be deliverables though)."*
+5. **Vantage.** *"It's actually 7 panels (One main + six secondary) for a total of 28 modules for one
+   controller."*
+
+---
+
+## 11. Sources
 
 Retrieved 2026-10-09.
 

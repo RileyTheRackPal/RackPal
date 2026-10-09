@@ -1,5 +1,16 @@
 # Update Log
 
+## 2026-10-09 (hundred-and-thirty-fourth entry)
+
+* **Progress**: the user answered LIGHT-0's five questions;
+  [DR-247](/decisions/dr-247-wireless-distance-advisory-and-lighting-schedules.md) records them. DR-246's
+  "no range check" becomes an advisory distance check, and v1.4 lighting gains a load schedule and a keypad
+  engraving schedule.
+* **Note**: **A RULING'S REASON IS A CLAIM ABOUT THE DOMAIN, AND A CENSUS TESTS IT.** "Distance ignores walls"
+  was true and beside the point: Lutron's rule is a distance, and Control4's rule of thumb is too.
+* **Note**: **A SHEET CAN CONTRADICT ITSELF.** Vantage's enclosure sheet gave five and six secondaries on one
+  page. The census tabled it rather than picked; the user knew it was six.
+
 ## 2026-10-09 (hundred-and-thirty-third entry)
 
 * **Progress**: LIGHT-0 (`#1041`, DR-246): the lighting census is
