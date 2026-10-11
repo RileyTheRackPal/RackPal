@@ -1,5 +1,19 @@
 # Update Log
 
+## 2026-10-11 (hundred-and-thirty-sixth entry)
+
+* **Progress**: `#1046` under [DR-248](/decisions/dr-248-fourteen-day-cooldown-and-flutter-3-47-5.md): a standing
+  fourteen-day cooldown on every release; `pubspec.lock` committed and enforced in CI; Flutter 3.44.4 to 3.47.5;
+  nineteen packages to their newest qualifying versions; very_good_analysis 9.0.0 to 11.0.0. Info pin 21 to 138,
+  every one accounted for in `tools/ci/analyze_info_baseline.txt`.
+* **Note**: **"UPDATE EVERYTHING" WAS AN SDK UPGRADE.** Most of `pub outdated` was held by the Flutter pin. Measure
+  what holds a package back before promising to move it.
+* **Note**: **AN IDE ON THE TREE IS A SECOND WRITER.** Android Studio and VS Code re-ran `pub get` on the global SDK
+  two seconds after any pubspec edit, reverted an upgrade, and caused a false finding that shipped in three places
+  before a clean re-test refuted it. Dependency work moved to a worktree no IDE watched.
+* **Note**: **A TOOL'S FIX IS A HYPOTHESIS.** `dart fix` broke three files; a lint package's include is versioned,
+  so bumping the package alone changes nothing; and its rule file flipped the formatter's trailing commas.
+
 ## 2026-10-11 (hundred-and-thirty-fifth entry)
 
 * **Progress**: `#1037` `CONFIRMED` on the hardware by the user (*"Pinch to zoom works!"*), closing the item that
