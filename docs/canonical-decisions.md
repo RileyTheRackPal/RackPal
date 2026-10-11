@@ -24626,6 +24626,53 @@ the two schedules; the wireless row's *"No range check"* becomes the advisory ch
 
 ---
 
+### 11.247 DR-248 · Nothing is adopted until it is fourteen days old, Flutter moves to 3.47.5, and the lint set moves to 11
+
+**Settled by the user on 2026-10-11, for `#1046`**, on the request *"Let's go ahead and update all of
+our dependencies, if possible; many of them show entire version releases available."*
+
+**11.247.1 WHAT "ALL OF THEM" MEANT, MEASURED BEFORE IT WAS OFFERED.** `flutter pub outdated` on
+`b2482999` split the list three ways: fourteen packages that move inside their existing constraints
+(`archive`, `image`, `pdf`, `vm_service` and ten transitive ones), one that needs a constraint edit
+(`very_good_analysis`), and the rest held where they are **by the Flutter SDK itself** (`meta`,
+`vector_math`, `test`, `analyzer`, `xml` and others are pinned by Flutter 3.44.4). Updating everything
+therefore means moving the Flutter pin, which docs/11 §7 calls *"load-bearing"* and `ensure_flutter.ps1`
+says must move as *"a deliberate, reviewed step"*. Both texts were quoted in the question.
+
+**11.247.2 RULED BY THE USER, A STANDING RULE: NO RELEASE IS ADOPTED UNTIL IT IS FOURTEEN DAYS OLD.** It
+applies to every pub package, direct or transitive, and to the Flutter SDK, measured from the
+publication date on pub.dev or the release date in Flutter's release feed, against the day the
+upgrade is made. **An exception needs a named reason in the commit that takes it**, and a security
+fix is the reason anticipated. The evidence the question carried: `archive` published 4.4.0 and 4.5.0
+on 2026-10-10 and 2026-10-11, and `image` four releases across the same two days. That is most likely
+a maintainer at work and is also the shape a hijacked publish takes, and waiting costs nothing.
+
+**11.247.3 RULED BY THE USER: FLUTTER MOVES FROM 3.44.4 TO 3.47.5.** The newest stable at least
+fourteen days old on 2026-10-11 (released 2026-09-18, Dart 3.13.4). Not taken: 3.47.7, three days old;
+and 3.44.9, the same minor line, which would leave most of the outdated list where it is.
+`screen_retriever` 0.3.0 (2026-10-08, needing Flutter 3.47 or later) waits for the rule, not for the
+SDK.
+
+**A REJECTION'S PREMISE CHANGES, AND THE REJECTION DOES NOT.** DR-138 declined `pdfrx` partly because
+2.x *"needs Flutter 3.47 / Dart 3.13"* against the 3.44.4 pin. That limb no longer holds. DR-153 built
+the vendored pdfium binding since, so nothing is reopened; recorded so nobody reads DR-138's version
+argument as current.
+
+**11.247.4 RULED BY THE USER: `very_good_analysis` MOVES FROM 9.0.0 TO 11.0.0, AND THE INFO PIN RISES ONLY
+BY WHAT CANNOT BE FIXED CHEAPLY.** docs/11 §8 pins the lint set *"exactly"* and says the info ratchet
+*"only moves down"*. A stricter lint set raises the count on code nobody touched, so the new infos that
+are mechanical are fixed in the same work and the pin rises only by the remainder, with the reason
+written in `analyze_info_baseline.txt` as earlier moves were. The pin rises because the rules got
+stricter, not because the code got worse. Not taken: raising the pin by everything, and staying on 9.0.0.
+
+**Scope.** No product scope moves. A process rule (§11.247.2) and two pins. `#1046`.
+
+**What this does not rule.** A gate that enforces the cooldown; today it is a rule the person
+upgrading follows, and a gate needs the network in CI. The global Flutter SDK on any developer's
+machine, which is theirs to switch.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

@@ -372,6 +372,11 @@ A three-item manual checklist catches what nothing automated will: `debugRepaint
 
 The Flutter version pin is load-bearing and lives in exactly one place.
 
+**Nothing is adopted until it is fourteen days old** (DR-248, a standing rule): a pub package, direct or
+transitive, or a Flutter release, measured from its pub.dev publication date or its release-feed date
+on the day of the upgrade. An exception names its reason in the commit that takes it; a security fix is
+the one anticipated. Followed by the person upgrading, not yet enforced by a gate.
+
 ---
 
 ## 8. Linting and `analysis_options.yaml`
