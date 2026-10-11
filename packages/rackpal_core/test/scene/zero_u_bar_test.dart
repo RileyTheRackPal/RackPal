@@ -79,7 +79,7 @@ DeviceInstance _amp() => DeviceInstance(
   meta: testMeta(),
 );
 
-DeviceInstance _pdu({Len? span, Len offset = const Len(0)}) => DeviceInstance(
+DeviceInstance _pdu({Len? span, Len offset = Len.zero}) => DeviceInstance(
   id: _pduId,
   kind: DeviceKind.rackDevice,
   templateRef: const TemplateRef(

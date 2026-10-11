@@ -281,8 +281,7 @@ Set<String> usedPathwayDesignators(
   Set<String> alsoUsed = const {},
 }) => {
   for (final p in doc.pathways.values)
-    if (p.id != exceptPathwayId)
-      if (p.designator case final d?) d,
+    if (p.id != exceptPathwayId) ?p.designator,
   ...alsoUsed,
 };
 

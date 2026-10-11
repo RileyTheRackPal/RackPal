@@ -112,8 +112,7 @@ Future<List<ShelfLibrary>> loadLibraryShelf(
 /// palette's chip order and its row order come from one sort rather than
 /// two that can disagree.
 List<LoadedLibrary> loadedLibrariesOf(List<ShelfLibrary> shelf) => [
-  for (final entry in shelf)
-    if (entry.library case final library?) library,
+  for (final entry in shelf) ?entry.library,
 ];
 
 Future<ShelfLibrary> _load(

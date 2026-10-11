@@ -139,8 +139,7 @@ PlanEstimateGap? planEstimateGapOf(RackDocument doc, Location location) {
   final racks = _datumRacksFor(doc, location.id);
   if (racks.isEmpty) return PlanEstimateGap.noLandedRun;
   final pins = [
-    for (final rackId in racks)
-      if (doc.racks[rackId]?.planPin case final pin?) pin,
+    for (final rackId in racks) ?doc.racks[rackId]?.planPin,
   ];
   if (pins.isEmpty) return PlanEstimateGap.rackNotPinned;
   if (pins.every((p) => p.underlayId != outline.underlayId)) {

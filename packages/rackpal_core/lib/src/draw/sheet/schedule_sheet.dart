@@ -293,7 +293,7 @@ List<String> scheduleSheetNotes(ScheduleView view) {
       ? null
       : 'Not listed: ${parts.join(', ')}. ${why.join(' ')}'.trim();
   return <String>[
-    if (view.lifecycleKey case final key?) key,
+    ?view.lifecycleKey,
     ?notListed,
   ];
 }

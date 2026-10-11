@@ -42,8 +42,7 @@ List<SignalFamilyDef> familiesToCarry(
   final ids = named.where((id) => !shipped.containsKey(id)).toList()
     ..sort((a, b) => a.v.compareTo(b.v));
   return [
-    for (final id in ids)
-      if (registries.signalFamilies[id] case final family?) family,
+    for (final id in ids) ?registries.signalFamilies[id],
   ];
 }
 

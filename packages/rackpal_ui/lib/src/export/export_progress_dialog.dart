@@ -16,6 +16,8 @@
 // reports nothing, and that is most of the time. A bar parked at full
 // while four fifths of the work is still to come would be a lie, so the
 // second phase is an indeterminate bar that says what is happening.
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 
@@ -47,9 +49,14 @@ Future<void> showExportProgressDialog(
 }) {
   var open = true;
   final navigator = Navigator.of(context);
-  finished.whenComplete(() {
-    if (open) navigator.pop();
-  });
+  // Not awaited: the dialog returns its own future below. The caller's
+  // [finished] never errors (export_controller maps an error to a normal
+  // completion), so the future `whenComplete` returns has no error to drop.
+  unawaited(
+    finished.whenComplete(() {
+      if (open) navigator.pop();
+    }),
+  );
   return showDialog<void>(
     context: context,
     barrierDismissible: false,

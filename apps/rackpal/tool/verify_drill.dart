@@ -72,12 +72,10 @@ void main(List<String> args) {
   // CR-113 at the artifact, and as a SET rather than a count: a duplicate
   // hides perfectly inside a matching total.
   final fieldLabels = [
-    for (final l in drops)
-      if (l.structureOrigin?.fieldLabel case final f?) f,
+    for (final l in drops) ?l.structureOrigin?.fieldLabel,
   ];
   final rackLabels = [
-    for (final l in drops)
-      if (l.structureOrigin?.rackLabel case final r?) r,
+    for (final l in drops) ?l.structureOrigin?.rackLabel,
   ];
 
   final schedule = buildSchedule(doc);

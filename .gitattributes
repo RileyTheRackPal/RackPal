@@ -79,3 +79,8 @@
 # guess about content rather than a rule about this path, and CR-100 put
 # the binary in the tree deliberately enough to say so.
 third_party/pdfium/** binary
+
+# The committed lockfile (DR-248 section 11.247.5). pub writes it with LF; a
+# CRLF checkout invites a rewrite on the first `pub get`, so check it out
+# the way pub writes it.
+pubspec.lock text eol=lf

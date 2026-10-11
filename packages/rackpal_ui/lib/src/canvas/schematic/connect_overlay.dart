@@ -414,8 +414,7 @@ ConnectOverlay buildConnectOverlay({
   final caretPin = caret == null ? null : locatePin(scene, caret);
   final sourcePin = source == null ? null : locatePin(scene, source);
   final selectedPins = <LocatedPin>[
-    for (final ref in selected)
-      if (locatePin(scene, ref) case final pin?) pin,
+    for (final ref in selected) ?locatePin(scene, ref),
   ];
   // EMPTY IS REACHABLE WITH A LINK STILL SELECTED, and it is not a fault:
   // the domain filter can hide the cable's whole family, and both its

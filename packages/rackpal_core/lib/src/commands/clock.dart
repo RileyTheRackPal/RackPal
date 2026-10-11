@@ -10,7 +10,6 @@
 // Deliberate injection seam, not an unnecessary abstraction: SystemClock
 // and FixedClock below are two real, swappable implementations, not a
 // single call site a top-level function would serve just as well.
-// ignore: one_member_abstracts
 abstract class Clock {
   const Clock();
 

@@ -99,7 +99,7 @@ void main() {
         pageFormat: const PdfPageFormat(_boxW, _boxH, marginAll: 0),
         build: (context) => pw.CustomPaint(
           size: const PdfPoint(_boxW, _boxH),
-          painter: (PdfGraphics graphics, PdfPoint size) {
+          painter: (graphics, size) {
             PdfDiagramCanvas(
                 graphics: graphics,
                 boxHeight: size.y,

@@ -485,7 +485,7 @@ class _SpanController extends TextEditingController {
         style: style,
         children: [
           TextSpan(text: text),
-          if (ghostSpan != null) ghostSpan,
+          ?ghostSpan,
         ],
       );
     }
@@ -503,7 +503,7 @@ class _SpanController extends TextEditingController {
           ),
         ),
         TextSpan(text: text.substring(span.$2)),
-        if (ghostSpan != null) ghostSpan,
+        ?ghostSpan,
       ],
     );
   }

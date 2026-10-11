@@ -154,9 +154,9 @@ class EditingOverlayPainter extends CustomPainter {
            viewport,
            caret,
            ...dragPreviews,
-           if (compaction != null) compaction,
-           if (resize != null) resize,
-           if (shake != null) shake,
+           ?compaction,
+           ?resize,
+           ?shake,
          ]),
        );
 

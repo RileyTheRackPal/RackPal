@@ -465,7 +465,7 @@ List<ResolvedCsvItem> _wideItems(
   List<CsvCellIssue> issues,
 ) {
   final out = <ResolvedCsvItem>[];
-  for (final (column: column, media: media) in mapping.mediaCountColumns) {
+  for (final (:column, :media) in mapping.mediaCountColumns) {
     final raw = row.cells[column].trim();
     if (raw.isEmpty) continue;
     final n = int.tryParse(raw);

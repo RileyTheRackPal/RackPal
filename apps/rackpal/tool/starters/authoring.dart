@@ -339,7 +339,7 @@ final class StarterAuthor {
     required String name,
     required Uuid rackId,
     required String channelId,
-    Len offsetFromChannelStart = const Len(0),
+    Len offsetFromChannelStart = Len.zero,
     Len? spanAlongChannel,
     Uuid? locationId,
     String? notes,

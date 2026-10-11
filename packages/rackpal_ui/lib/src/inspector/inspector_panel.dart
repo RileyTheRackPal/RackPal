@@ -347,8 +347,7 @@ class _SelectionSummary extends StatelessWidget {
   /// selection is not exactly one device that still exists.
   DeviceInstance? get _soleDevice {
     final live = [
-      for (final id in selectedIds)
-        if (doc.devices[id] case final d?) d,
+      for (final id in selectedIds) ?doc.devices[id],
     ];
     return live.length == 1 ? live.single : null;
   }

@@ -28,7 +28,7 @@ import 'package:test/test.dart';
 Map<String, Object?> _fieldValues({
   String room = 'LR',
   String? service = 'TV',
-}) => {'ROOM_ABBR': room, if (service != null) 'SERVICE': service};
+}) => {'ROOM_ABBR': room, 'SERVICE': ?service};
 
 String _label(LabelAllocation a) => (a as LabelAllocated).label;
 

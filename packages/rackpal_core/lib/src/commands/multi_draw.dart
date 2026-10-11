@@ -134,9 +134,7 @@ List<ConnectTarget> portsInBank(
 
   return <ConnectTarget>[
     for (final def in defs)
-      if (resolveConnectTarget(doc, deviceId: deviceId, portKey: def.key.v)
-          case final t?)
-        t,
+      ?resolveConnectTarget(doc, deviceId: deviceId, portKey: def.key.v),
   ];
 }
 

@@ -2567,8 +2567,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     final pool = _wireFrom == null
         ? locatePins(scene)
         : <LocatedPin>[
-            for (final ref in _candidates)
-              if (locatePin(scene, ref) case final pin?) pin,
+            for (final ref in _candidates) ?locatePin(scene, ref),
           ];
     final from = locatePin(scene, seeded);
     if (from == null || pool.isEmpty) return;
@@ -5448,9 +5447,11 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
         // the deeper explanation this chip's own header promises was
         // reachable from nowhere.
         onWhy: () {
-          // NOT AWAITED, and not wrapped: the viewer is read-only, so
-          // nothing here depends on it closing.
-          showWhyRuleDialog(context: context, ruleId: chip.ruleId);
+          // NOT AWAITED: the viewer is read-only, so nothing here depends
+          // on it closing. Wrapped in `unawaited` since very_good_analysis
+          // 11 (`discarded_futures`, DR-248), which is that same statement
+          // made in code rather than only in this comment.
+          unawaited(showWhyRuleDialog(context: context, ruleId: chip.ruleId));
         },
       ),
     );

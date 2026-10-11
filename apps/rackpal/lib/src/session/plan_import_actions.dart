@@ -163,7 +163,6 @@ Future<Outcome<Uint8List>> readImportedBytes({
   int maxBytes = kMaxImageBytes,
 }) async {
   // ---- 1. STAT, BEFORE READING (AC-058/D8). -------------------------
-  // ignore: avoid_redundant_argument_values
   final sized = await checkImportedFileSize(fs, path, maxBytes: maxBytes);
   if (sized case Err(:final error)) return Err(error);
   try {

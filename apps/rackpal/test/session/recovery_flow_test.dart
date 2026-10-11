@@ -71,11 +71,11 @@ Uint8List _sidecarBytes({
       'displayName': 'Smith Residence',
       'docId': docId ?? _survivorSlot,
       'owner': _crashedSessionId,
-      if (realPath != null) 'realPath': realPath,
+      'realPath': ?realPath,
       'savedAt': '2026-07-26T14:32:11.004112Z',
       'schemaVersion': kSchemaVersion,
       'sequence': 412,
-      if (unsavedEditCount != null) 'unsavedEditCount': unsavedEditCount,
+      'unsavedEditCount': ?unsavedEditCount,
     }),
   ),
 );

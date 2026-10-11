@@ -478,17 +478,17 @@ ElevationSheet buildElevationSheet({
   final notes = <String>[
     if (face == Face.rear) kRearDetailNote,
     if (face == Face.rear)
-      rack.mirrorRearElevation ? kMirroredChip : kNotMirroredChip,
+      if (rack.mirrorRearElevation) kMirroredChip else kNotMirroredChip,
     kScaleAppliesNote,
     // DR-239 §11.238.4. Only when something is known.
-    if (envelopeNote(rack, face, settings.displayUnits) case final note?) note,
+    ?envelopeNote(rack, face, settings.displayUnits),
     // DR-240 §11.239.1: both faces, beside the envelope, so the two rack
     // facts read together and the sheet's notice about itself stays last.
     if (rack.groundBarPresent) kGroundBarNote,
     // SIXTH AT MOST since DR-240, and the band holds six: rear note, chip,
     // scale, envelope, ground bar, this. Only ever present when it has
     // something to say.
-    if (labels.sheetNote case final note?) note,
+    ?labels.sheetNote,
   ];
   final summary = rackLoadSummaryLines(profile, settings.displayUnits, face);
   // The summary is held to its own five LINES by `rackLoadSummaryLines`;

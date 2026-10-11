@@ -966,7 +966,7 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
                     // decides which stack they land on.
                     onEdit: (commands) => _transact(
                       LabelKey.setPortProperty,
-                      (TxnScope<TemplateBody> tx) {
+                      (tx) {
                         for (final command in commands) {
                           tx.add(command);
                         }
@@ -1064,17 +1064,16 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
     // `buildBatchWrite` builds the commands in core; this closure only
     // decides which stack they land on, which is the same division the
     // grid's own edits use.
-    onWrite: (column, value) =>
-        _transact(LabelKey.setPortProperty, (TxnScope<TemplateBody> tx) {
-          for (final command in buildBatchWrite(
-            body: _session.body,
-            column: column,
-            portKeys: batch.portKeys,
-            value: value,
-          )) {
-            tx.add(command);
-          }
-        }),
+    onWrite: (column, value) => _transact(LabelKey.setPortProperty, (tx) {
+      for (final command in buildBatchWrite(
+        body: _session.body,
+        column: column,
+        portKeys: batch.portKeys,
+        value: value,
+      )) {
+        tx.add(command);
+      }
+    }),
   );
 }
 

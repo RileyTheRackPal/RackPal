@@ -709,7 +709,7 @@ QuickAddCompletion? quickAddCompletion(
             ..._kFaces.keys,
             for (final f in registries.signalFamilies.values) ...[
               ...f.aliases,
-              if (f.shortTag case final t?) t,
+              ?f.shortTag,
               _tail(f.id.v),
             ],
             for (final c in registries.connectorTypes.values) ...[

@@ -8,7 +8,11 @@ build/
 *.snapshot
 .flutter-plugins
 .flutter-plugins-dependencies
-pubspec.lock
+# The ROOT pubspec.lock is committed (DR-248 §11.247.5): the workspace resolves
+# once, there, and a cooldown the lockfile does not record holds nowhere else.
+# A member's own lockfile would be a stray from resolving outside the workspace.
+/apps/**/pubspec.lock
+/packages/**/pubspec.lock
 
 # Generated code (build_runner)
 *.g.dart

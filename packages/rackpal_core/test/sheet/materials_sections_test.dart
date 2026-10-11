@@ -177,13 +177,13 @@ void main() {
     test('an unknown footage prints the dash, never 0 (G4)', () {
       expect(footageText(null, UnitSystem.imperial), '— ft');
       expect(footageText(null, UnitSystem.metric), '— m');
-      expect(footageText(const Len(0), UnitSystem.imperial), '0 ft');
+      expect(footageText(Len.zero, UnitSystem.imperial), '0 ft');
     });
 
     test('a waste factor prints as a person writes it', () {
       expect(percentOf(const Permille(100)), '10%');
       expect(percentOf(const Permille(125)), '12.5%');
-      expect(percentOf(const Permille(0)), '0%');
+      expect(percentOf(Permille.zero), '0%');
     });
 
     test('no field cable says so', () {

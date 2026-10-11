@@ -53,7 +53,7 @@ void main() {
     });
 
     test('is linear and signed', () {
-      expect(pointsForLen(const Len(0)), 0.0);
+      expect(pointsForLen(Len.zero), 0.0);
       expect(pointsForLen(const Len(-25400000)), -72.0);
     });
   });

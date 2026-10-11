@@ -897,8 +897,10 @@ final class KeyBinding {
   /// The chord as a person reads it: `Cmd+Shift+S`, `Ctrl+Alt+U`, `Esc`.
   String renderChord(TargetPlatform platform) {
     final parts = <String>[
-      if (primary) _primaryIsMeta(platform) ? 'Cmd' : 'Ctrl',
-      if (alt) _primaryIsMeta(platform) ? 'Option' : 'Alt',
+      if (primary)
+        if (_primaryIsMeta(platform)) 'Cmd' else 'Ctrl',
+      if (alt)
+        if (_primaryIsMeta(platform)) 'Option' else 'Alt',
       if (shift) 'Shift',
       _renderTrigger(trigger),
     ];

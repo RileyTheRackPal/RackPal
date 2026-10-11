@@ -903,7 +903,7 @@ Recent files are a JSON list in application support (`{path, displayName, lastOp
 | `test` | `in use` | `^1.26.0` | dev | Pure-Dart tests in core/text/export. | — | — |
 | `flutter_test` | `in use` | sdk | dev | Widget and golden tests. | — | — |
 | `integration_test` | `planned (unscheduled)` | sdk | dev | Desktop end-to-end tests: the file lifecycle, crash recovery, and the two error-surface cases nothing else catches (docs/11 §5). **Planned and not installed**: no `integration_test/` directory exists in `apps/rackpal`, and no milestone in docs/09 names this work. | the plan it belongs to is unscheduled, which is the risk | — |
-| `very_good_analysis` | `in use` | `9.0.0` **exact** | dev | Strictest widely-used lint set: catches the `prefer_final` / `avoid_dynamic_calls` / unawaited-future classes that matter in a document editor. | third-party; a major bump can fail CI on unchanged code | pinned exactly, bumped deliberately. Fallback `flutter_lints ^6.0.0` |
+| `very_good_analysis` | `in use` | `11.0.0` **exact** (9.0.0 until DR-248) | dev | Strictest widely-used lint set: catches the `prefer_final` / `avoid_dynamic_calls` / unawaited-future classes that matter in a document editor. | third-party; a major bump can fail CI on unchanged code | pinned exactly, bumped deliberately. Fallback `flutter_lints ^6.0.0` |
 | `leak_tracker_flutter_testing` | `in use` | `^3.0.0` | dev | Catches undisposed `TextPainter` / `ui.Picture` / `ChangeNotifier`. Given §7.3's native-resource caching, **not optional**. | — | — |
 | `fake_async` | `in use` | `^1.3.3` | dev | Deterministic `Timer` control in `status_message_controller_test.dart`, so the auto-clear is tested without a real sleep. Already resolved transitively through `flutter_test`; declared directly per pub's "declare what you import". | none | `Future.delayed` and a slower suite |
 | `benchmark_harness` | `planned (unscheduled)` | `^2.3.0` | dev | The perf-budget harness (docs/11 §6's commit-time budget). **Planned and not installed**: the shipped perf tests are op-count baselines in `schematic_perf_test.dart`, which need no harness, and no milestone in docs/09 names this work. | the plan it belongs to is unscheduled | the op-count baselines, which is what is actually in use |
@@ -914,7 +914,7 @@ The node-editor rejection deserves its reason, because the best of them is genui
 
 ### 10.2 Two version facts: the Flutter pin (resolved), Impeller (open)
 
-**RESOLVED: the Flutter pin is `3.44.4`, and it lives in `azure-pipelines.yml`.**
+**RESOLVED: the Flutter pin is `3.47.5`, and it lives in `azure-pipelines.yml`.** It was `3.44.4` until DR-248 moved it on 2026-10-11, to the newest stable at least fourteen days old (Dart 3.13.4, framework revision `6a19cca56475dbfba1478ee68d7bd0c2ef891da1`, engine `af7e796e161ae0bb1ff0758c71a7105418bd9ded`).
 
 The original item read: *the corpus contains two different Flutter stable versions, `design-architecture.md` targets 3.44.4, while the canvas research reports 3.41 as current. The CI Flutter version is pinned and load-bearing, because a minor bump routinely shifts antialiasing by a pixel and golden regeneration must be a deliberate, reviewed step of every upgrade. Resolve to one number and pin it.*
 
@@ -924,15 +924,15 @@ It is resolved to **3.44.4 stable**: that is what `design-architecture.md` targe
 
 | | |
 |---|---|
-| The number | `flutterVersion: '3.44.4'` in `azure-pipelines.yml`, referenced by every step that needs it. One place. |
+| The number | `flutterVersion: '3.47.5'` in `azure-pipelines.yml`, referenced by every step that needs it. One place: `tools/ci/run_local.ps1` **reads** it rather than restating it, which it did until DR-248 found the second copy while moving the pin. |
 | The install | `tools/ci/ensure_flutter.ps1` fetches that exact stable archive, no channel, no version range, no marketplace task resolving on its own. |
 | **The enforcement** | The same script then reads `flutter --version --machine` and **fails the build** if `frameworkVersion` is not exactly the pinned number, or the channel is not `stable`. A pipeline that *requests* a version and never checks what it got looks identical to one that works, right up until goldens flap. |
 | The revision | `frameworkRevision` is recorded in `azure-pipelines.yml` and **warned about, not enforced**: there are no goldens for it to protect yet (docs/12 §4.3). **Promote it to a hard failure on the day the first golden lands**; the script says so at its call site. |
 
-Two things this pin does **not** yet cover, stated so neither is mistaken for done:
+Two things this pin did **not** cover, stated so neither is mistaken for done (the second is closed):
 
 - **There are no goldens.** The whole antialiasing argument above is an argument about a corpus that does not exist. The pin is standing guard over the right door in advance; it is not evidence that pixel regressions are caught.
-- **`pubspec.lock` is gitignored**, so CI resolves the dependency graph fresh on every run. The Flutter SDK is pinned exactly and the package graph is not. Committing the lockfile is the fix and it is a project decision, not a CI one.
+- ~~**`pubspec.lock` is gitignored**, so CI resolves the dependency graph fresh on every run.~~ **CLOSED 2026-10-11 by DR-248 §11.247.5: the root `pubspec.lock` is committed**, CI keys its pub cache on it and runs `flutter pub get --enforce-lockfile`, which builds exactly the committed graph and checks every archive against the lock's sha256. The package graph is now pinned as exactly as the SDK.
 
 `VERIFY:` Impeller is not the default on Windows as of the research date; desktop still renders through Skia. Budget frame costs against Skia and re-benchmark when Impeller lands, the `saveLayer` and path-stroking numbers will shift meaningfully.
 

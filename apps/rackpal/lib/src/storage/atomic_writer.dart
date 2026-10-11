@@ -613,7 +613,6 @@ int? errnoOf(Object error) {
     // cannot name `FileSystemException` to type the access. The shape
     // `.osError.errorCode` IS the contract, and both `dart:io` and the
     // fake honour it.
-    // ignore: avoid_dynamic_calls
     final osError = (error as dynamic).osError;
     if (osError == null) return null;
     // Same reason as above.

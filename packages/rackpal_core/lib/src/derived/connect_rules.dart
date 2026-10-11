@@ -437,8 +437,8 @@ List<SetSplit> planSplitsFor(
   );
   final toSplit = planSetSplit(doc, target: to, towardsDeviceId: from.deviceId);
   return <SetSplit>[
-    if (fromSplit != null) fromSplit,
-    if (toSplit != null) toSplit,
+    ?fromSplit,
+    ?toSplit,
   ];
 }
 

@@ -251,12 +251,18 @@ variables:
   # CHANGING THIS NUMBER IS A REVIEWED ACT. When goldens exist, the same
   # commit regenerates them and the diff gets read (docs/11 section 9,
   # item 9).
-  flutterVersion: '3.44.4'
-  # The framework revision 3.44.4 resolved to on the machine this pipeline
-  # was written on. WARNED ABOUT, NOT ENFORCED, because there are no
-  # goldens for it to protect yet — see tools/ci/ensure_flutter.ps1, which
+  #
+  # MOVED 3.44.4 -> 3.47.5 on 2026-10-11 by DR-248 (#1046): the newest
+  # stable at least fourteen days old, under that ruling's standing
+  # cooldown (3.47.7 was three days old). tools/ci/run_local.ps1 READS both
+  # values below rather than restating them, so this stays the one place.
+  flutterVersion: '3.47.5'
+  # The framework revision 3.47.5 resolved to, read from
+  # `flutter --version --machine` on the side-by-side install DR-248's
+  # upgrade ran on. WARNED ABOUT, NOT ENFORCED, because there are no
+  # goldens for it to protect yet; see tools/ci/ensure_flutter.ps1, which
   # says where to promote it to a hard failure.
-  flutterFrameworkRevision: 'ad70ec4617166f1c38e5d2bfd388af71fda14f06'
+  flutterFrameworkRevision: '6a19cca56475dbfba1478ee68d7bd0c2ef891da1'
 
   # Test streams and JUnit reports. Under build/ because that directory is
   # gitignored AND is skipped by the repo sweep in
@@ -431,7 +437,11 @@ jobs:
       # exists is not a pin; `flutter.version.json` carries the version
       # AND the framework revision, which are the two things
       # `ensure_flutter.ps1` gates on, so a stale or half-written SDK
-      # falls through to the cache exactly as before. A file read rather
+      # falls through to the cache exactly as before. AND A CACHE MISS DOES
+      # NOT CLEAR IT: the restore writes nothing, the stale SDK stays, and
+      # until DR-248 `ensure_flutter.ps1` accepted any SDK it found (build
+      # 463 ran on 3.44.4 against a 3.47.5 pin). It now reads the same
+      # marker and replaces an SDK that is not the pin. A file read rather
       # than `flutter --version`, because spawning the tool to ask whether
       # the tool is there costs more than the check saves.
       #
@@ -514,14 +524,13 @@ jobs:
       - task: Cache@2
         displayName: 'Restore pub cache'
         inputs:
-          # pubspec.lock is gitignored in this repository, so it cannot be
-          # part of the key and CI resolves dependencies fresh on every run.
-          # That is a real reproducibility gap — a transitive dependency can
-          # move under a build nobody changed — but committing the lockfile
-          # is a project decision, not a CI one, so it is flagged here and
-          # not quietly changed. Keying on the pubspecs is the best available
-          # approximation.
-          key: 'pub | "$(Agent.OS)" | "$(flutterVersion)" | **/pubspec.yaml'
+          # Keyed on the COMMITTED pubspec.lock (DR-248 section 11.247.5).
+          # Until 2026-10-11 the lockfile was gitignored, so CI resolved the
+          # graph fresh on every run and this key could only approximate it
+          # with the pubspecs; a transitive dependency could move under a
+          # build nobody changed. The lockfile is now the graph the local
+          # gates ran, so it is the key.
+          key: 'pub | "$(Agent.OS)" | "$(flutterVersion)" | pubspec.lock'
           path: '$(PUB_CACHE)'
         continueOnError: true
 
@@ -529,7 +538,19 @@ jobs:
           # The workspace root resolves every member (pubspec.yaml
           # `workspace:`). `flutter pub get`, not `dart pub get`: two members
           # depend on the Flutter SDK.
-          flutter pub get
+          #
+          # --enforce-lockfile: build EXACTLY the committed graph, and verify
+          # every package archive against the lock's sha256 (DR-248 section
+          # 11.247.5). A pubspec changed without its lock, or a re-published
+          # archive under an old version number, fails here instead of
+          # building something nobody gated. It is CI-only because a person
+          # upgrading WANTS pub get to move the lock; run_local.ps1 does not
+          # enforce. (This comment said a failed enforce run rewrites the lock.
+          # It does not: measured on a worktree no IDE watches, the lock is
+          # byte-identical after an exit-65 refusal. The rewrite first seen was
+          # an IDE re-running `pub get` on a pubspec edit; see DR-248's OKF
+          # concept.)
+          flutter pub get --enforce-lockfile
           exit $LASTEXITCODE
         displayName: 'flutter pub get (workspace root)'
 

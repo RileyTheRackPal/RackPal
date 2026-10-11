@@ -92,7 +92,6 @@ bool _trySet(RackDocument doc, _Table table, Object field, Object? value) {
   try {
     // The tables erase each field's type in `all`, so the set is dynamic
     // and the field's own parameter type is what accepts or refuses.
-    // ignore: avoid_dynamic_calls
     (field as dynamic).set(table.first(doc), value);
     return true;
     // Caught ON PURPOSE: a TypeError here IS the answer "this field does
@@ -105,7 +104,6 @@ bool _trySet(RackDocument doc, _Table table, Object field, Object? value) {
 
 Object? _get(RackDocument doc, _Table table, Object field) =>
     // Dynamic for `_trySet`'s reason: `all` erases the field's type.
-    // ignore: avoid_dynamic_calls
     (field as dynamic).get(table.first(doc));
 
 /// The two zeros a measured field can take: a count, or a length.
