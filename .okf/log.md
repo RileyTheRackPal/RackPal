@@ -1,5 +1,12 @@
 # Update Log
 
+## 2026-10-11 (hundred-and-thirty-fifth entry)
+
+* **Progress**: `#1037` `CONFIRMED` on the hardware by the user (*"Pinch to zoom works!"*), closing the item that
+  waited in Needs You since `b2b1d897`. docs/12 §4.57 says so.
+* **Note**: **A GREEN SUITE OVER A SYNTHETIC STREAM IS NOT THE HARDWARE.** The item stayed open after merge on
+  purpose: the tests proved the arithmetic, and only the touchpad could prove the embedder sends what they model.
+
 ## 2026-10-09 (hundred-and-thirty-fourth entry)
 
 * **Progress**: the user answered LIGHT-0's five questions;
