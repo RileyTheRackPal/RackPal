@@ -929,10 +929,10 @@ It is resolved to **3.44.4 stable**: that is what `design-architecture.md` targe
 | **The enforcement** | The same script then reads `flutter --version --machine` and **fails the build** if `frameworkVersion` is not exactly the pinned number, or the channel is not `stable`. A pipeline that *requests* a version and never checks what it got looks identical to one that works, right up until goldens flap. |
 | The revision | `frameworkRevision` is recorded in `azure-pipelines.yml` and **warned about, not enforced**: there are no goldens for it to protect yet (docs/12 §4.3). **Promote it to a hard failure on the day the first golden lands**; the script says so at its call site. |
 
-Two things this pin does **not** yet cover, stated so neither is mistaken for done:
+Two things this pin did **not** cover, stated so neither is mistaken for done (the second is closed):
 
 - **There are no goldens.** The whole antialiasing argument above is an argument about a corpus that does not exist. The pin is standing guard over the right door in advance; it is not evidence that pixel regressions are caught.
-- **`pubspec.lock` is gitignored**, so CI resolves the dependency graph fresh on every run. The Flutter SDK is pinned exactly and the package graph is not. Committing the lockfile is the fix and it is a project decision, not a CI one.
+- ~~**`pubspec.lock` is gitignored**, so CI resolves the dependency graph fresh on every run.~~ **CLOSED 2026-10-11 by DR-248 §11.247.5: the root `pubspec.lock` is committed**, CI keys its pub cache on it and runs `flutter pub get --enforce-lockfile`, which builds exactly the committed graph and checks every archive against the lock's sha256. The package graph is now pinned as exactly as the SDK.
 
 `VERIFY:` Impeller is not the default on Windows as of the research date; desktop still renders through Skia. Budget frame costs against Skia and re-benchmark when Impeller lands, the `saveLayer` and path-stroking numbers will shift meaningfully.
 

@@ -514,14 +514,13 @@ jobs:
       - task: Cache@2
         displayName: 'Restore pub cache'
         inputs:
-          # pubspec.lock is gitignored in this repository, so it cannot be
-          # part of the key and CI resolves dependencies fresh on every run.
-          # That is a real reproducibility gap — a transitive dependency can
-          # move under a build nobody changed — but committing the lockfile
-          # is a project decision, not a CI one, so it is flagged here and
-          # not quietly changed. Keying on the pubspecs is the best available
-          # approximation.
-          key: 'pub | "$(Agent.OS)" | "$(flutterVersion)" | **/pubspec.yaml'
+          # Keyed on the COMMITTED pubspec.lock (DR-248 section 11.247.5).
+          # Until 2026-10-11 the lockfile was gitignored, so CI resolved the
+          # graph fresh on every run and this key could only approximate it
+          # with the pubspecs; a transitive dependency could move under a
+          # build nobody changed. The lockfile is now the graph the local
+          # gates ran, so it is the key.
+          key: 'pub | "$(Agent.OS)" | "$(flutterVersion)" | pubspec.lock'
           path: '$(PUB_CACHE)'
         continueOnError: true
 
@@ -529,7 +528,15 @@ jobs:
           # The workspace root resolves every member (pubspec.yaml
           # `workspace:`). `flutter pub get`, not `dart pub get`: two members
           # depend on the Flutter SDK.
-          flutter pub get
+          #
+          # --enforce-lockfile: build EXACTLY the committed graph, and verify
+          # every package archive against the lock's sha256 (DR-248 section
+          # 11.247.5). A pubspec changed without its lock, or a re-published
+          # archive under an old version number, fails here instead of
+          # building something nobody gated. It is CI-only on purpose: under
+          # Flutter a FAILED enforce run still rewrites pubspec.lock in place,
+          # harmless on a throwaway checkout and a trap in a working tree.
+          flutter pub get --enforce-lockfile
           exit $LASTEXITCODE
         displayName: 'flutter pub get (workspace root)'
 

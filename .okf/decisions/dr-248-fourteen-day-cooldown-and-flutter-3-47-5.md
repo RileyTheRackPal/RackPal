@@ -22,12 +22,21 @@ Settled by the user on 2026-10-11 for `#1046`.
 | Cooldown | User, on the recommendation, standing | No release adopted before 14 days old; an exception names its reason |
 | Flutter | User, on the recommendation | 3.47.5, the newest stable at least 14 days old (not 3.47.7, not 3.44.9) |
 | Lint set | User, on the recommendation | very_good_analysis 11.0.0; cheap new infos fixed, pin raised only by the remainder |
+| Lockfile | User, on the recommendation | `pubspec.lock` committed; CI enforces it, sha256 included. Without it the cooldown held on one machine only |
 
 # The trap this ruling records
 
 **"Update everything" was mostly an SDK upgrade in disguise.** `pub outdated` showed whole major
 versions available, and most of them could not move without the Flutter pin moving, which the corpus
 calls load-bearing. Measure what holds a package back before promising to move it.
+
+# A trap found while proving the lockfile gate
+
+**Under Flutter, a FAILED `pub get --enforce-lockfile` still rewrites `pubspec.lock`.** Its output says
+"Would change 2 dependencies" and "Unable to satisfy", and the file on disk had changed anyway, with the
+run's own timestamp. The lock was then untracked, so git could not restore it; it was rebuilt from the
+versions an earlier `pub outdated` had recorded. CI uses the flag, where the checkout is thrown away;
+nobody should run it in a working tree they care about.
 
 # Why a cooldown
 

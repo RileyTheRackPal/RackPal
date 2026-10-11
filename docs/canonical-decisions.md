@@ -24665,7 +24665,17 @@ are mechanical are fixed in the same work and the pin rises only by the remainde
 written in `analyze_info_baseline.txt` as earlier moves were. The pin rises because the rules got
 stricter, not because the code got worse. Not taken: raising the pin by everything, and staying on 9.0.0.
 
-**Scope.** No product scope moves. A process rule (§11.247.2) and two pins. `#1046`.
+**11.247.5 RULED BY THE USER: `pubspec.lock` IS COMMITTED.** docs/03 §10.2 had flagged it as *"a project
+decision, not a CI one"*: the lockfile was gitignored, so CI resolved the newest allowed version of every
+package on each run, and *"the Flutter SDK is pinned exactly and the package graph is not."* §11.247.2
+makes that gap decisive rather than tolerable. **A cooldown that the lockfile does not record holds on
+the machine that ran the upgrade and nowhere else**: a clean clone would have resolved `archive` 4.5.0,
+published the morning of the ruling. So the lockfile is committed, CI builds the graph the local gates
+ran, the pub cache is keyed on it, and every dependency change is a visible diff. Dart's own guidance
+is to commit the lockfile of an application, which RackPal is. Not taken: keeping it ignored, which
+leaves the cooldown as advice for local upgrades only.
+
+**Scope.** No product scope moves. A process rule (§11.247.2), two pins, and a committed lockfile (§11.247.5). `#1046`.
 
 **What this does not rule.** A gate that enforces the cooldown; today it is a rule the person
 upgrading follows, and a gate needs the network in CI. The global Flutter SDK on any developer's
