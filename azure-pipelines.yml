@@ -539,9 +539,13 @@ jobs:
           # every package archive against the lock's sha256 (DR-248 section
           # 11.247.5). A pubspec changed without its lock, or a re-published
           # archive under an old version number, fails here instead of
-          # building something nobody gated. It is CI-only on purpose: under
-          # Flutter a FAILED enforce run still rewrites pubspec.lock in place,
-          # harmless on a throwaway checkout and a trap in a working tree.
+          # building something nobody gated. It is CI-only because a person
+          # upgrading WANTS pub get to move the lock; run_local.ps1 does not
+          # enforce. (This comment said a failed enforce run rewrites the lock.
+          # It does not: measured on a worktree no IDE watches, the lock is
+          # byte-identical after an exit-65 refusal. The rewrite first seen was
+          # an IDE re-running `pub get` on a pubspec edit; see DR-248's OKF
+          # concept.)
           flutter pub get --enforce-lockfile
           exit $LASTEXITCODE
         displayName: 'flutter pub get (workspace root)'

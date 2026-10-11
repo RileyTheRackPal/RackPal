@@ -30,13 +30,19 @@ Settled by the user on 2026-10-11 for `#1046`.
 versions available, and most of them could not move without the Flutter pin moving, which the corpus
 calls load-bearing. Measure what holds a package back before promising to move it.
 
-# A trap found while proving the lockfile gate
+# A finding that was wrong, and what actually happened
 
-**Under Flutter, a FAILED `pub get --enforce-lockfile` still rewrites `pubspec.lock`.** Its output says
-"Would change 2 dependencies" and "Unable to satisfy", and the file on disk had changed anyway, with the
-run's own timestamp. The lock was then untracked, so git could not restore it; it was rebuilt from the
-versions an earlier `pub outdated` had recorded. CI uses the flag, where the checkout is thrown away;
-nobody should run it in a working tree they care about.
+**This section first said a failed `pub get --enforce-lockfile` rewrites `pubspec.lock`. IT DOES NOT.**
+Measured again in a worktree no IDE had open: a mutant pubspec, exit 65, *"Would change 1 dependency"*,
+and the lock byte-identical afterwards. **What rewrote the lock was an IDE.** Android Studio and VS Code
+were both open on the repository, each with a Dart language server on the global Flutter SDK (3.44.4),
+and the Dart tooling re-runs `pub get` whenever a `pubspec.yaml` changes. Proven directly: a comment
+appended to one pubspec, and the lock was rewritten two seconds later with no command run. The
+"failed enforce run" had simply been the pubspec edit that preceded it.
+
+It cost more than one false sentence. The same race reverted a cooldown upgrade (`meta` 1.19.0 back to
+1.18.0, `xml` 7.1.0 back to 7.0.1: the 3.44.4 resolution) between two commands. **Dependency work on a
+tree an IDE has open is a race.** It was finished in a sibling worktree (`../w1046`) that no IDE watched.
 
 # Why a cooldown
 
