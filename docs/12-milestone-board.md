@@ -2412,8 +2412,10 @@ that stream the old code is correct. New OKF practice:
 
 **Evidence.** `canvas_intent_detector_test` (+3: a DM-shaped pinch keeps the scene point under the cursor,
 for a DM centre on the cursor and one elsewhere; a pinch latches its gesture against later translation and
-the next gesture pans again). All three fail on the old code. Floor: ui 2149 to 2152. **Not yet
-demonstrated on the hardware**; the board item waits in Needs You until a person pinches.
+the next gesture pans again). All three fail on the old code. Floor: ui 2149 to 2152. **`CONFIRMED` on
+the hardware by the user on 2026-10-11**, on the Precision Touchpad that reported it: *"Pinch to zoom
+works!"* The widget tests prove the event arithmetic; only the touchpad could prove the embedder sends
+what they model, which is why the item waited in Needs You rather than closing on a green suite.
 
 No version move: Epic 786 is not a milestone.
 
