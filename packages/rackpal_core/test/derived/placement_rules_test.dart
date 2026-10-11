@@ -215,7 +215,7 @@ void main() {
 
     ZeroUPlacement zeroU({
       String channelId = 'ch-left',
-      Len offset = const Len(0),
+      Len offset = Len.zero,
     }) => ZeroUPlacement(
       rackId: const Uuid('rk-1'),
       channelId: channelId,

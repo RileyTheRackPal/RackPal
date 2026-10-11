@@ -149,7 +149,7 @@ void main() {
 
     test('a measured zero prints 0', () {
       final doc = _doc();
-      _pathway(doc, 'pth-a', 'stub', order: 'a', nominalLength: const Len(0));
+      _pathway(doc, 'pth-a', 'stub', order: 'a', nominalLength: Len.zero);
       final row = buildPathwayTable(doc).rows.single;
       expect(_cell(row, PathwayColumnId.nominalLength), '0');
     });

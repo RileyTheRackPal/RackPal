@@ -459,7 +459,7 @@ void main() {
           placement: const ZeroUPlacement(
             rackId: Uuid('rk-1'),
             channelId: 'ch-a',
-            offsetFromChannelStart: Len(0),
+            offsetFromChannelStart: Len.zero,
             orientation: ZeroUOrientation.vertical,
           ),
         ),

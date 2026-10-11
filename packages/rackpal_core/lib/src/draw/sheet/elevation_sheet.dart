@@ -478,7 +478,7 @@ ElevationSheet buildElevationSheet({
   final notes = <String>[
     if (face == Face.rear) kRearDetailNote,
     if (face == Face.rear)
-      rack.mirrorRearElevation ? kMirroredChip : kNotMirroredChip,
+      if (rack.mirrorRearElevation) kMirroredChip else kNotMirroredChip,
     kScaleAppliesNote,
     // DR-239 §11.238.4. Only when something is known.
     if (envelopeNote(rack, face, settings.displayUnits) case final note?) note,

@@ -914,7 +914,7 @@ The node-editor rejection deserves its reason, because the best of them is genui
 
 ### 10.2 Two version facts: the Flutter pin (resolved), Impeller (open)
 
-**RESOLVED: the Flutter pin is `3.44.4`, and it lives in `azure-pipelines.yml`.**
+**RESOLVED: the Flutter pin is `3.47.5`, and it lives in `azure-pipelines.yml`.** It was `3.44.4` until DR-248 moved it on 2026-10-11, to the newest stable at least fourteen days old (Dart 3.13.4, framework revision `6a19cca56475dbfba1478ee68d7bd0c2ef891da1`, engine `af7e796e161ae0bb1ff0758c71a7105418bd9ded`).
 
 The original item read: *the corpus contains two different Flutter stable versions, `design-architecture.md` targets 3.44.4, while the canvas research reports 3.41 as current. The CI Flutter version is pinned and load-bearing, because a minor bump routinely shifts antialiasing by a pixel and golden regeneration must be a deliberate, reviewed step of every upgrade. Resolve to one number and pin it.*
 
@@ -924,7 +924,7 @@ It is resolved to **3.44.4 stable**: that is what `design-architecture.md` targe
 
 | | |
 |---|---|
-| The number | `flutterVersion: '3.44.4'` in `azure-pipelines.yml`, referenced by every step that needs it. One place. |
+| The number | `flutterVersion: '3.47.5'` in `azure-pipelines.yml`, referenced by every step that needs it. One place: `tools/ci/run_local.ps1` **reads** it rather than restating it, which it did until DR-248 found the second copy while moving the pin. |
 | The install | `tools/ci/ensure_flutter.ps1` fetches that exact stable archive, no channel, no version range, no marketplace task resolving on its own. |
 | **The enforcement** | The same script then reads `flutter --version --machine` and **fails the build** if `frameworkVersion` is not exactly the pinned number, or the channel is not `stable`. A pipeline that *requests* a version and never checks what it got looks identical to one that works, right up until goldens flap. |
 | The revision | `frameworkRevision` is recorded in `azure-pipelines.yml` and **warned about, not enforced**: there are no goldens for it to protect yet (docs/12 §4.3). **Promote it to a hard failure on the day the first golden lands**; the script says so at its call site. |

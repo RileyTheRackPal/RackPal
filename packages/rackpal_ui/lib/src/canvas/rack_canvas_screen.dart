@@ -1942,7 +1942,7 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
       // than a guess made here.
       zeroU: (
         channelId: channelId,
-        offsetFromChannelStart: const Len(0),
+        offsetFromChannelStart: Len.zero,
         orientation: ZeroUOrientation.vertical,
       ),
     );

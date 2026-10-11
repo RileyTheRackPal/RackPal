@@ -25,8 +25,8 @@ import 'package:test/test.dart';
 const _panelPosition = PanelPosition(
   ruOffset: 0,
   xTwelfth: 0,
-  xFineNm: Len(0),
-  yFineNm: Len(0),
+  xFineNm: Len.zero,
+  yFineNm: Len.zero,
 );
 
 TemplateBody _body() => TemplateBody(

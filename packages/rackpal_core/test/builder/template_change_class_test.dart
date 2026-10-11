@@ -17,8 +17,8 @@ import 'package:test/test.dart';
 const _origin = PanelPosition(
   ruOffset: 0,
   xTwelfth: 0,
-  xFineNm: Len(0),
-  yFineNm: Len(0),
+  xFineNm: Len.zero,
+  yFineNm: Len.zero,
 );
 
 PortDef _port(

@@ -203,7 +203,7 @@ void main() {
             placement: const ZeroUPlacement(
               rackId: _rackA,
               channelId: 'c',
-              offsetFromChannelStart: Len(0),
+              offsetFromChannelStart: Len.zero,
               orientation: ZeroUOrientation.vertical,
             ),
           ),
@@ -418,7 +418,7 @@ void main() {
             placement: const ZeroUPlacement(
               rackId: _rackA,
               channelId: 'c',
-              offsetFromChannelStart: Len(0),
+              offsetFromChannelStart: Len.zero,
               orientation: ZeroUOrientation.vertical,
             ),
           ),

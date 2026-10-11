@@ -373,7 +373,7 @@ final class FlutterDiagramCanvas implements DiagramCanvas {
     if (close) path.close();
     final nums = <double>[
       for (final p in pts) ...[p.x, p.y],
-      close ? 1.0 : 0.0,
+      if (close) 1.0 else 0.0,
     ];
     final key = _PathKey.geometry('polyline', nums);
     _strokeShape(path, key, s);

@@ -115,13 +115,13 @@ List<DrcFixture> placementFixtures() => [
     ruleId: 'PLC-003',
     kind: FixtureKind.knownBad,
     what: 'a channel id the rack does not have',
-    run: () => _zeroU('right', const Len(0)),
+    run: () => _zeroU('right', Len.zero),
   ),
   DrcFixture(
     ruleId: 'PLC-003',
     kind: FixtureKind.nearMiss,
     what: 'the id the rack does have, at the near end',
-    run: () => _zeroU('left', const Len(0)),
+    run: () => _zeroU('left', Len.zero),
   ),
   // THE TAIL, which this rule could not see until `#883` gave a 0U
   // occupant an extent (DR-166 §11.165.3). The channel is 12 U long, so
@@ -130,12 +130,12 @@ List<DrcFixture> placementFixtures() => [
     ruleId: 'PLC-003',
     kind: FixtureKind.knownBad,
     what: 'a span that runs off the end of the channel',
-    run: () => _zeroU('left', const Len(0), span: kRackUnit * 13),
+    run: () => _zeroU('left', Len.zero, span: kRackUnit * 13),
   ),
   DrcFixture(
     ruleId: 'PLC-003',
     kind: FixtureKind.nearMiss,
     what: 'a span that fills the channel exactly',
-    run: () => _zeroU('left', const Len(0), span: kRackUnit * 12),
+    run: () => _zeroU('left', Len.zero, span: kRackUnit * 12),
   ),
 ];

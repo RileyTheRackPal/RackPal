@@ -482,9 +482,10 @@ String _omissionLine(RackLoadProfile profile, Face face) {
   final where = <String>[
     if (elsewhere > 0) '$elsewhere ON ${_otherFaceWord(face)}',
     if (nowhere > 0)
-      elsewhere > 0
-          ? '$nowhere ONLY ON $kUndrawnListedOnSheet'
-          : 'SEE $kUndrawnListedOnSheet',
+      if (elsewhere > 0)
+        '$nowhere ONLY ON $kUndrawnListedOnSheet'
+      else
+        'SEE $kUndrawnListedOnSheet',
   ].join(', ');
   // "NOT DRAWN", never "WITH NO RU". A rail device whose template does not
   // resolve is off-axis and HAS an ruIndex — T6.30 prints it — so the old

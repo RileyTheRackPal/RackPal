@@ -406,8 +406,8 @@ RenderedSymbol _headerRuleSymbol() => buildSymbolGeometry(
       position: const PanelPosition(
         ruOffset: 0,
         xTwelfth: 0,
-        xFineNm: Len(0),
-        yFineNm: Len(0),
+        xFineNm: Len.zero,
+        yFineNm: Len.zero,
       ),
       order: const FracIndex('a0'),
       direction: PortDirection.sink,

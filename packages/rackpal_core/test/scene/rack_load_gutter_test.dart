@@ -151,7 +151,7 @@ void main() {
         placement: const ZeroUPlacement(
           rackId: _rackId,
           channelId: 'c',
-          offsetFromChannelStart: Len(0),
+          offsetFromChannelStart: Len.zero,
           orientation: ZeroUOrientation.vertical,
         ),
         meta: testMeta(),
@@ -240,7 +240,7 @@ void main() {
       placement: const ZeroUPlacement(
         rackId: _rackId,
         channelId: 'c',
-        offsetFromChannelStart: Len(0),
+        offsetFromChannelStart: Len.zero,
         orientation: ZeroUOrientation.vertical,
       ),
       meta: testMeta(),

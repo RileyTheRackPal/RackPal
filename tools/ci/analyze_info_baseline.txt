@@ -99,5 +99,24 @@
 # implicit view and Flutter deprecated it after 3.35. The controller now
 # takes the view from its owner and calls `sendAnnouncement`, which is the
 # fix, not an ignore. The channel is what M7's NVDA matrix will listen to.
+#
+# 21 -> 38 on 2026-10-11 at `#1046` (DR-248), moving Flutter 3.44.4 -> 3.47.5.
+# Dart 3.13's analyzer raised the count to 69 on code nobody touched. Fixed
+# in the same change, all of them mechanical: 25 `use_named_constants` that
+# ARE right (`Len(0)` -> `Len.zero`, `Permille(0)` -> `Permille.zero`) and
+# all six `prefer_if_elements_to_conditional_expressions`, including the one
+# already counted here.
+#
+# THE 18 THAT REMAIN ARE FALSE POSITIVES, AND FOLLOWING THEM DOES NOT
+# COMPILE. `Len`, `Mass` and `Permille` are extension types over `int`, so
+# `Len(25_400_000)` and the plain `int` constant `Len.nmPerInch` are the same
+# object at runtime, and the lint says to use the constant. It is an `int`:
+# measured, `pointsForLen(Len.nmPerInch)` fails with "The argument type 'int'
+# can't be assigned to the parameter type 'Len'". The suggestions name
+# `Len.nmPerInch` (4), `Len.nmPerMillimetre` (2), `Mass.ugPerKilogram` (7)
+# and `Mass.ugPerPound` (5). DO NOT "FIX" THESE BY FOLLOWING THE LINT; that
+# hands a bare int to a unit type, which CR-001 exists to stop. What would
+# retire them is a typed constant (`static const Len inch`) or an analyzer
+# that knows an extension type from its representation.
 
-21
+38

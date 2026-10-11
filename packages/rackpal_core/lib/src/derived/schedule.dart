@@ -278,7 +278,8 @@ final class ScheduleEnd {
     final parts = <String>[
       if (rackDesignator != null) rackDesignator!,
       if (ruIndex != null) 'U$ruIndex',
-      if (face != null) face == Face.front ? 'front' : 'rear',
+      if (face != null)
+        if (face == Face.front) 'front' else 'rear',
     ];
     if (parts.isNotEmpty) return parts.join(' / ');
     return switch (kind) {

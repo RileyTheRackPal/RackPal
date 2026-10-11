@@ -69,8 +69,19 @@ function Invoke-Gate {
 Push-Location $RepoRoot
 try {
     # The pin first: every number below is only meaningful on the pinned SDK.
-    $pinVersion = '3.44.4'
-    $pinRevision = 'ad70ec4617166f1c38e5d2bfd388af71fda14f06'
+    #
+    # READ FROM azure-pipelines.yml, NEVER RESTATED HERE. docs/11 section 7
+    # says the pin "lives in exactly one place", and until DR-248 moved it
+    # this file kept a second copy of both numbers, which the move would
+    # have left behind: CI on the new SDK, this gate demanding the old one.
+    # A parse that finds nothing fails the gate by name rather than
+    # verifying against an empty string.
+    $pipeline = Get-Content -Raw (Join-Path $RepoRoot 'azure-pipelines.yml')
+    $pinVersion = [regex]::Match($pipeline, "(?m)^\s*flutterVersion:\s*'([^']+)'").Groups[1].Value
+    $pinRevision = [regex]::Match($pipeline, "(?m)^\s*flutterFrameworkRevision:\s*'([0-9a-f]{40})'").Groups[1].Value
+    if (-not $pinVersion -or -not $pinRevision) {
+        throw "could not read flutterVersion / flutterFrameworkRevision from azure-pipelines.yml (got '$pinVersion' / '$pinRevision')"
+    }
     Invoke-Gate 'flutter pin' {
         pwsh -NoProfile -File (Join-Path $ci 'ensure_flutter.ps1') `
             -Version $pinVersion -ExpectedFrameworkRevision $pinRevision -VerifyOnly
