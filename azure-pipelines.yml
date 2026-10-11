@@ -437,7 +437,11 @@ jobs:
       # exists is not a pin; `flutter.version.json` carries the version
       # AND the framework revision, which are the two things
       # `ensure_flutter.ps1` gates on, so a stale or half-written SDK
-      # falls through to the cache exactly as before. A file read rather
+      # falls through to the cache exactly as before. AND A CACHE MISS DOES
+      # NOT CLEAR IT: the restore writes nothing, the stale SDK stays, and
+      # until DR-248 `ensure_flutter.ps1` accepted any SDK it found (build
+      # 463 ran on 3.44.4 against a 3.47.5 pin). It now reads the same
+      # marker and replaces an SDK that is not the pin. A file read rather
       # than `flutter --version`, because spawning the tool to ask whether
       # the tool is there costs more than the check saves.
       #

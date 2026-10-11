@@ -75,9 +75,34 @@ if (-not $VerifyOnly) {
     $flutterHome = Join-Path $InstallRoot 'flutter'
     $flutterBin  = Join-Path $flutterHome 'bin'
 
-    if (Test-Path (Join-Path $flutterBin 'flutter.bat')) {
-        Write-Host "  found an existing SDK at $flutterHome (cache hit, probably)"
-    } else {
+    # AN EXISTING SDK IS TRUSTED ONLY AT THE PINNED VERSION. This branch
+    # used to accept any `flutter.bat` it found, on the assumption that a
+    # wrong one could only arrive through the cache, keyed on the version.
+    # A SELF-HOSTED AGENT KEEPS ITS TOOL DIRECTORY BETWEEN BUILDS: when
+    # DR-248 moved the pin, the cache missed, restored nothing, and left
+    # 3.44.4 in place, which this branch then accepted and the measurement
+    # below rejected (build 463). So read the version the SDK records about
+    # itself, the marker the pipeline's probe step reads, and REPLACE the
+    # SDK when it is not the pin or cannot say what it is.
+    $existing = Join-Path $flutterBin 'flutter.bat'
+    if (Test-Path $existing) {
+        $marker = Join-Path $flutterHome 'bin/cache/flutter.version.json'
+        $onDisk = $null
+        try { $onDisk = (Get-Content $marker -Raw | ConvertFrom-Json).flutterVersion } catch { $onDisk = $null }
+        if ($onDisk -eq $Version) {
+            Write-Host "  found the pinned SDK at $flutterHome ($onDisk)"
+        } else {
+            Write-Host "  found an SDK at $flutterHome reporting '$onDisk', not ${Version}: replacing it"
+            Remove-Item -LiteralPath $flutterHome -Recurse -Force -ErrorAction SilentlyContinue
+            if (Test-Path $flutterHome) { & cmd.exe /c "rmdir /s /q `"$flutterHome`"" }
+            if (Test-Path $flutterHome) {
+                Write-Host "##vso[task.logissue type=error]could not remove the stale SDK at $flutterHome; delete it by hand and re-run."
+                exit 1
+            }
+        }
+    }
+
+    if (-not (Test-Path $existing)) {
         # The official stable archive, addressed by EXACT version. This URL
         # shape has been stable for years, but it is an external dependency
         # and this script has never been run against it from a developer
@@ -102,7 +127,9 @@ if (-not $VerifyOnly) {
 
         Write-Host "  extracting to $InstallRoot"
         # bsdtar (Windows 10+) unpacks a zip far faster than Expand-Archive.
-        & tar.exe -xf $zip -C $InstallRoot
+        # BY PATH: the bsdtar Windows ships. Run from Git Bash, a bare `tar.exe`
+        # resolved to GNU tar, which read `C:` as a remote host and failed.
+        & (Join-Path $env:SystemRoot 'System32\tar.exe') -xf $zip -C $InstallRoot
         if ($LASTEXITCODE -ne 0) {
             Write-Host "  tar failed; falling back to Expand-Archive"
             Expand-Archive -Path $zip -DestinationPath $InstallRoot -Force
