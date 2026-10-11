@@ -1,4 +1,12 @@
-include: package:very_good_analysis/analysis_options.9.0.0.yaml
+include: package:very_good_analysis/analysis_options.11.0.0.yaml
+
+# KEPT AT `preserve`, overriding the include (DR-248). very_good_analysis
+# 11.0.0 changed `trailing_commas` from `preserve` to `automate`, which would
+# reformat most of the tree inside a dependency bump, under the formatter
+# gate DR-017 adopted on this style. Moving to `automate` is a choice of its
+# own: one line here plus one mechanical commit, on a day no branch is open.
+formatter:
+  trailing_commas: preserve
 
 analyzer:
   language:

@@ -1423,8 +1423,7 @@ class _LocationPane extends StatelessWidget {
     final theme = Theme.of(context);
     final tree = LocationTree.of(doc);
     final counts = <Uuid, int>{
-      for (final group in table.groups)
-        if (group.locationId case final id?) id: group.dropCount,
+      for (final group in table.groups) ?group.locationId: group.dropCount,
     };
     final rows = <Widget>[];
     void walk(Uuid id, int depth) {

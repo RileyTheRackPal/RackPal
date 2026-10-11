@@ -602,8 +602,7 @@ SchematicSymbolTier buildSchematicSymbolTier({
     symbols: symbols,
     layers: layers,
     positions: <Uuid, Pt>{
-      for (final c in drawn)
-        if (layout.positions[c.device.id.v] case final p?) c.device.id: p,
+      for (final c in drawn) c.device.id: ?layout.positions[c.device.id.v],
     },
     unsymbolisedDeviceIds: unsymbolised,
     minTextPt: minText,

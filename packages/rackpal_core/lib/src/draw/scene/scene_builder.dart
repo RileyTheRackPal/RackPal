@@ -581,7 +581,7 @@ RackScene buildRackScene({
     unlabelledDeviceIds: List.unmodifiable(unlabelled),
     shelfOverflow: Map.unmodifiable({
       for (final MapEntry(key: id, value: layout) in shelves.entries)
-        if (layout.overflow case final over?) id: over,
+        id: ?layout.overflow,
     }),
   );
 }

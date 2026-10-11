@@ -1738,16 +1738,14 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     final commands = [
       for (final id in _selection.ids)
         if (_doc.devices.containsKey(id))
-          if (buildSetEntityProperty(
-                doc: _doc,
-                id: id,
-                field: DeviceField.lifecycleStatus,
-                to: status,
-                now: _controller.clock.nowUtc(),
-                actor: _controller.actor,
-              )
-              case final command?)
-            command,
+          ?buildSetEntityProperty(
+            doc: _doc,
+            id: id,
+            field: DeviceField.lifecycleStatus,
+            to: status,
+            now: _controller.clock.nowUtc(),
+            actor: _controller.actor,
+          ),
     ];
     if (commands.isEmpty) return;
     _controller.selection = _selection.snapshot();
@@ -5807,12 +5805,11 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
                 includeAcknowledged: _drcIncludeAcknowledged,
               ),
               grouping: _drcGrouping,
-              onGroupingChanged: (FindingGrouping g) =>
-                  setState(() => _drcGrouping = g),
+              onGroupingChanged: (g) => setState(() => _drcGrouping = g),
               expanded: _drcExpanded,
-              onExpandedChanged: (bool v) => setState(() => _drcExpanded = v),
+              onExpandedChanged: (v) => setState(() => _drcExpanded = v),
               height: _drcHeight,
-              onHeightChanged: (double h) => setState(() => _drcHeight = h),
+              onHeightChanged: (h) => setState(() => _drcHeight = h),
               onReveal: _revealFinding,
               // ═══════════════════════════════════════════════════════
               // SUPPLIED SINCE `#875`, AND THE THIRD TIME ROUND FOR THIS

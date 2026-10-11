@@ -141,7 +141,6 @@ abstract interface class FileSink {
 /// make it useful: the type names what is being held, and the two
 /// implementations (a `RandomAccessFile` lock and the fake's registry
 /// entry) each carry their own state behind it.
-// ignore: one_member_abstracts
 abstract interface class FileLease {
   /// Gives the claim up. Idempotent.
   Future<void> release();

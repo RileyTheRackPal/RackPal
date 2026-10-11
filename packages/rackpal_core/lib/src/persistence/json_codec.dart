@@ -1642,7 +1642,7 @@ JsonMap _encodePlacement(Placement placement) => switch (placement) {
   OffRackPlacement(:final locationId, :final mountNote, :final planPin) => {
     'type': 'offRack',
     if (locationId != null) 'locationId': locationId.v,
-    if (mountNote != null) 'mountNote': mountNote,
+    'mountNote': ?mountNote,
     if (planPin != null) 'planPin': _encodePlanPin(planPin),
     ...?_placementUnknown(placement),
   },
@@ -1656,7 +1656,7 @@ JsonMap _encodePlacement(Placement placement) => switch (placement) {
     {
       'type': 'staged',
       if (lastRackId != null) 'lastRackId': lastRackId.v,
-      if (lastRuIndex != null) 'lastRuIndex': lastRuIndex,
+      'lastRuIndex': ?lastRuIndex,
       if (lastFace != null) 'lastFace': encodeEnumName(lastFace),
       if (lastHostDeviceId != null) 'lastHostDeviceId': lastHostDeviceId.v,
       if (schematicHint != null) 'schematicHint': _encodePt(schematicHint),

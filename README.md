@@ -79,7 +79,7 @@ Mobile is read-only by confirmed product decision. The architecture must not pre
 | File dialogs | first-party `IFileDialog`, no package | `file_selector` was removed: it cannot set `FOS_DONTADDTORECENT`, without which every open and save writes the project file name into `HKCU\…\ComDlg32\OpenSavePidlMRU`. ~150 lines of COM in the Windows runner. Half a fix, and the other half is bounded rather than listed: RackPal's own code writes no registry key, but **the shell writes values under ComDlg32 that RackPal does not control**: at minimum `LastVisitedPidlMRU` (this executable plus the last folder browsed) and `CIDSizeMRU` (this executable, written even on a cancelled dialog), measured examples and not an inventory. So a portable build leaves shell-owned HKCU entries naming this executable and folders browsed, and no project file names (docs/03 §10.1) |
 | Window | `window_manager` ^0.5.2 | `setPreventClose` for the save prompt is the load-bearing API |
 | Persistence | Hand-written JSON codecs | Plain, pretty-printed, key-sorted UTF-8 JSON. No `freezed`, no `json_serializable`, the migration chain and byte-round-trip contract need explicit control (CR-091, CR-092) |
-| Lints | `very_good_analysis` ^9.0.0 | Strictest widely-used set; `flutter_lints` ^6.0.0 is the fallback if it proves noisy |
+| Lints | `very_good_analysis` 11.0.0, exact (DR-248) | Strictest widely-used set; `flutter_lints` ^6.0.0 is the fallback if it proves noisy |
 
 VERIFY: every version above is taken from the design corpus and has not been re-checked against pub.dev at the time of writing.
 

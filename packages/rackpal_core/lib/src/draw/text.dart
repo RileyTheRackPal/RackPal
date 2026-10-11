@@ -151,7 +151,6 @@ final class TextMetrics {
 // implementation swapped in per context (`PdfFontMeasurer` in
 // `rackpal_text`), matching docs/08-pdf-export.md §7.5's verbatim
 // `abstract interface class TextMeasurer` declaration.
-// ignore: one_member_abstracts
 abstract interface class TextMeasurer {
   TextMetrics measureText(String text, TextStyleSpec style);
 }

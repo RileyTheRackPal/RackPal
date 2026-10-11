@@ -113,8 +113,7 @@ Set<String> usedRackLabels(
   Set<String> alsoUsed = const {},
 }) => {
   for (final l in doc.links.values)
-    if (l.id != exceptLinkId)
-      if (l.structureOrigin?.rackLabel case final r?) r,
+    if (l.id != exceptLinkId) ?l.structureOrigin?.rackLabel,
   ...alsoUsed,
 };
 
@@ -188,11 +187,11 @@ RackLabelResolution resolveRackLabel({
     values: {
       'PANEL': panel.designator,
       'PORT': portDesignator,
-      if (location?.floorNumber case final f?) 'FLOOR': f,
+      'FLOOR': ?location?.floorNumber,
       if (location?.spaceCode?.trim() case final s? when s.isNotEmpty)
         'SPACE': s,
       if (location?.code.trim() case final c? when c.isNotEmpty) 'ROOM_ABBR': c,
-      if (doc.racks[rackId]?.designator case final r?) 'RACK': r,
+      'RACK': ?doc.racks[rackId]?.designator,
     },
     usedLabels: usedRackLabels,
   );
@@ -212,8 +211,7 @@ RackLabelResolution resolveRackLabel({
         'ROOM_ABBR': 'a short code',
       };
       final named = [
-        for (final t in tokens)
-          if (fields[t] case final f?) f,
+        for (final t in tokens) ?fields[t],
       ];
       final what = named.isEmpty ? tokens.join(', ') : named.join(' and ');
       return RackLabelResolution(
@@ -344,7 +342,7 @@ final class AddHomeRunCommand extends Command<RackDocument> {
   EpochMask get touches => EpochMask.wires | EpochMask.meta;
 
   @override
-  Iterable<Uuid> get affects => [id, netId, if (outletId case final o?) o];
+  Iterable<Uuid> get affects => [id, netId, ?outletId];
 
   /// ONE PLACE THE DEFAULT LIVES, so the Net and the Service cannot
   /// drift apart. See [signalFamily].

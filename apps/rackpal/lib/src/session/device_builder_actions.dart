@@ -109,7 +109,7 @@ DeviceBuilderActions buildDeviceBuilderActions({
     // remembers nothing, which is the honest degradation.
     rememberedPacks: (category) => {
       for (final name in prefs?.current.packsFor(category) ?? const <String>{})
-        if (portColumnPackNamed(name) case final pack?) pack,
+        ?portColumnPackNamed(name),
     },
     onPacksRemembered: (category, packs) {
       final store = prefs;

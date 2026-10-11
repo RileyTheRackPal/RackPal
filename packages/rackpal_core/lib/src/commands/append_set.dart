@@ -173,8 +173,7 @@ AppendSetResult planAppendSetToLink(
   final reaches = <Uuid>{
     for (final c in link.conductors)
       for (final e in [c.from, c.to])
-        if (e is PortEndpoint)
-          if (doc.ports[e.portId]?.deviceId case final d?) d,
+        if (e is PortEndpoint) ?doc.ports[e.portId]?.deviceId,
   };
   if (!reaches.contains(fromDeviceId)) {
     return AppendSetRefused(

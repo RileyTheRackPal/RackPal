@@ -17,14 +17,15 @@ import 'dart:async';
 
 /// A scheduled callback that can be cancelled.
 ///
-/// ONE METHOD, AND `one_member_abstracts` IS SUPPRESSED RATHER THAN
-/// OBEYED. The lint's advice — make it a top-level function — is right
+/// ONE METHOD, AND `one_member_abstracts` WAS SUPPRESSED RATHER THAN
+/// OBEYED, until very_good_analysis 11 dropped the lint (DR-248) and the
+/// ignore went with it. The argument stands for anyone tempted to
+/// "simplify" this: the lint's advice (make it a top-level function) is right
 /// for a callback and wrong for a HANDLE: the thing being modelled is an
 /// object with identity and a lifetime, which a `void Function()` cannot
 /// express without every holder inventing its own convention for "was
 /// this already cancelled". Two implementations exist (`dart:async`'s
 /// timer and the tests' manual one) and both are objects.
-// ignore: one_member_abstracts
 abstract interface class CancellableTimer {
   void cancel();
 }

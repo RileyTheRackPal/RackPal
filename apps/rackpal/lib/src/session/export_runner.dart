@@ -67,20 +67,24 @@ ExportJob runExport(ExportRequest request) =>
 ExportJob runExportInline(ExportRequest request) {
   final progress = ValueNotifier<ExportProgress?>(null);
   final done = Completer<Outcome<ExportedDocument>?>();
-  buildExportDocument(
-    request,
-    onProgress: (sheetsDone, sheets) {
-      if (!done.isCompleted) {
-        progress.value = (sheetsDone: sheetsDone, sheets: sheets);
-      }
-    },
-  ).then(
-    (outcome) {
-      if (!done.isCompleted) done.complete(outcome);
-    },
-    onError: (Object error, StackTrace stack) {
-      if (!done.isCompleted) done.completeError(error, stack);
-    },
+  // Not awaited: [done] carries the result, and `onError` routes a failure
+  // into it, so the future `then` returns never errors.
+  unawaited(
+    buildExportDocument(
+      request,
+      onProgress: (sheetsDone, sheets) {
+        if (!done.isCompleted) {
+          progress.value = (sheetsDone: sheetsDone, sheets: sheets);
+        }
+      },
+    ).then(
+      (outcome) {
+        if (!done.isCompleted) done.complete(outcome);
+      },
+      onError: (Object error, StackTrace stack) {
+        if (!done.isCompleted) done.completeError(error, stack);
+      },
+    ),
   );
   return ExportJob(
     result: done.future,
@@ -131,19 +135,23 @@ ExportJob runExportInIsolate(ExportRequest request) {
     }
   });
 
-  Isolate.spawn<(SendPort, ExportRequest)>(
-    _exportEntry,
-    (port.sendPort, request),
-    onExit: port.sendPort,
-    debugName: 'rackpal-export',
-  ).then(
-    (spawned) {
-      isolate = spawned;
-      // A CANCEL THAT ARRIVED WHILE THE ISOLATE WAS STILL STARTING.
-      if (cancelled) spawned.kill(priority: Isolate.immediate);
-    },
-    onError: (Object error, StackTrace stack) =>
-        finish(() => done.completeError(error, stack)),
+  // Not awaited, for the inline runner's reason: `onError` routes a failed
+  // spawn into [done], so the future `then` returns never errors.
+  unawaited(
+    Isolate.spawn<(SendPort, ExportRequest)>(
+      _exportEntry,
+      (port.sendPort, request),
+      onExit: port.sendPort,
+      debugName: 'rackpal-export',
+    ).then(
+      (spawned) {
+        isolate = spawned;
+        // A CANCEL THAT ARRIVED WHILE THE ISOLATE WAS STILL STARTING.
+        if (cancelled) spawned.kill(priority: Isolate.immediate);
+      },
+      onError: (Object error, StackTrace stack) =>
+          finish(() => done.completeError(error, stack)),
+    ),
   );
 
   return ExportJob(

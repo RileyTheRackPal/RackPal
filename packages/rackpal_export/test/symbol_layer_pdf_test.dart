@@ -110,7 +110,7 @@ Future<Uint8List> _render(List<DiagramOp> ops) async {
     pw.Page(
       build: (context) => pw.CustomPaint(
         size: const PdfPoint(400, 400),
-        painter: (PdfGraphics graphics, PdfPoint size) {
+        painter: (graphics, size) {
           final canvas = PdfDiagramCanvas(
             graphics: graphics,
             boxHeight: size.y,

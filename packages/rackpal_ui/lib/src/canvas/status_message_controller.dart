@@ -60,7 +60,11 @@ class StatusMessageController extends ChangeNotifier {
     notifyListeners();
     final target = view();
     if (target != null) {
-      SemanticsService.sendAnnouncement(target, message, TextDirection.ltr);
+      // Fire and forget: the visible text above is the message, and an
+      // announcement that lands late is still the right announcement.
+      unawaited(
+        SemanticsService.sendAnnouncement(target, message, TextDirection.ltr),
+      );
     }
 
     _timer?.cancel();

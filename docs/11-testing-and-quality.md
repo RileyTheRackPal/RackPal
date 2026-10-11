@@ -381,7 +381,7 @@ the one anticipated. Followed by the person upgrading, not yet enforced by a gat
 
 ## 8. Linting and `analysis_options.yaml`
 
-`very_good_analysis`, **pinned exactly** (`9.0.0`, not `^9.0.0`) and bumped deliberately, because a minor bump of a third-party lint set can fail CI on code nobody touched. Fallback if the strictness proves noisy in practice: `flutter_lints`. It is stricter than `flutter_lints` where it matters for a document editor, `prefer_final`, `avoid_dynamic_calls`, and the unawaited-future family.
+`very_good_analysis`, **pinned exactly** (`11.0.0`, not `^11.0.0`; 9.0.0 until DR-248) and bumped deliberately, because a minor bump of a third-party lint set can fail CI on code nobody touched. Fallback if the strictness proves noisy in practice: `flutter_lints`. It is stricter than `flutter_lints` where it matters for a document editor, `prefer_final`, `avoid_dynamic_calls`, and the unawaited-future family.
 
 Project additions on top of the base set:
 
@@ -390,7 +390,7 @@ Project additions on top of the base set:
 - Generated code (`*.g.dart`, `l10n/`) excluded; nothing else is.
 - Custom naming is enforced by test rather than by lint, because no analyzer rule expresses it: N3 (types `UpperCamelCase`, JSON keys `lowerCamelCase`, registry IDs `lower.dotted.snake`, tokens `UPPER_SNAKE`, rule IDs `AAA-000`) and N4 (a serialized `weight` or `length` without a unit suffix or a unit type is a defect) are asserted over the codec layer in `naming_conventions_test.dart`.
 
-VERIFY: `very_good_analysis` 9.x rule set against Dart 3.12 before pinning.
+~~VERIFY: `very_good_analysis` 9.x rule set against Dart 3.12 before pinning.~~ Superseded by DR-248's move to 11.0.0 on Dart 3.13.4, measured rather than verified in advance: the infos it added, and what was fixed, are recorded in `tools/ci/analyze_info_baseline.txt`. **A bump moves two things**: the pubspec pins and the versioned include in `analysis_options.yaml`, since every release ships the older rule files and a package-only bump changes nothing.
 
 ---
 

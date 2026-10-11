@@ -2855,7 +2855,7 @@ void main() {
         find.byType(DropdownButton<String>),
       ))
         for (final item in menu.items ?? const <DropdownMenuItem<String>>[])
-          if (item.value case final v?) v,
+          ?item.value,
     };
 
     testWidgets('a LANDED row offers NOT LANDED, where it showed text', (

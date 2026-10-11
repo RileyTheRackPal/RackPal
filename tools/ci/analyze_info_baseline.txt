@@ -118,5 +118,43 @@
 # hands a bare int to a unit type, which CR-001 exists to stop. What would
 # retire them is a typed constant (`static const Len inch`) or an analyzer
 # that knows an extension type from its representation.
+#
+# 38 -> 138 on 2026-10-11 at `#1046` (DR-248 section 11.247.4), moving
+# very_good_analysis 9.0.0 -> 11.0.0. BOTH halves had to move: the package
+# AND the include in analysis_options.yaml, which names a versioned file
+# (`analysis_options.9.0.0.yaml`). 11.0.0 still ships that file, so a
+# package-only bump measured 38 and changed nothing. With the include moved
+# the count was 220, +182, on code nobody touched.
+#
+# Fixed in the same change, 82 of the 182:
+#   * 68 by `dart fix`, restricted to four NEW lint codes
+#     (use_null_aware_elements, avoid_types_on_closure_parameters,
+#     simplify_variable_pattern, unnecessary_unawaited) so it could not
+#     touch older, sometimes deliberate infos;
+#   * all 5 discarded_futures, by hand. Each was READ first, because a
+#     dropped Future can be a bug: all five were deliberate fire-and-forget
+#     (two route errors through onError, one awaits a future that cannot
+#     error, two are read-only UI), and each is now `unawaited(...)` with
+#     its reason beside it;
+#   * all 9 unnecessary_ignore, by deleting exactly the lines named. 11.0.0
+#     dropped one_member_abstracts, and an explicit `as dynamic` is no
+#     longer reported. The comments that argued for those ignores were
+#     reread; one claimed the lint "IS SUPPRESSED" and now says it was.
+#
+# `dart fix` WAS NOT SAFE, AND THE ANALYZER IS WHAT SAID SO. Its fixes in
+# three files produced 8 errors and 3 warnings: types stripped where
+# inference could not recover them (panel_arrange.dart, with 5 new
+# avoid_dynamic_calls), a null-aware element over an unchecked nullable
+# (drop_build.dart), and a syntax error (port_cells.dart). Those three
+# files were reverted whole; their 6 infos are in the remainder.
+#
+# THE REMAINDER IS 138, every one accounted for:
+#   63 prefer_foreach               no automated fix, and a style call
+#   31 async_return_with_no_await   removing `async` moves when an error
+#                                   surfaces; not mechanical
+#   18 use_named_constants          the extension-type false positives,
+#                                   see the 21 -> 38 entry above
+#   20 the infos this pin already held
+#    6 the sites where `dart fix` broke the code
 
-38
+138

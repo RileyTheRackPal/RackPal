@@ -33,7 +33,7 @@ pw.Page buildDiagramScenePage({
     pageTheme: pageTheme,
     build: (context) => pw.CustomPaint(
       size: PdfPoint(usableWidth, usableHeight),
-      painter: (PdfGraphics graphics, PdfPoint size) {
+      painter: (graphics, size) {
         final canvas = PdfDiagramCanvas(
           graphics: graphics,
           boxHeight: size.y, // size.y, NOT page height -- see file header

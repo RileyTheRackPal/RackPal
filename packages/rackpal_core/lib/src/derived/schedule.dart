@@ -276,7 +276,7 @@ final class ScheduleEnd {
   /// cannot say where that end is.
   String get locationCell {
     final parts = <String>[
-      if (rackDesignator != null) rackDesignator!,
+      ?rackDesignator,
       if (ruIndex != null) 'U$ruIndex',
       if (face != null)
         if (face == Face.front) 'front' else 'rear',
@@ -1005,7 +1005,7 @@ final class ScheduleEntry {
   String _termCell(TerminationType? type, {required String? port}) {
     final parts = <String>[
       if (type != null) terminationLabel(type),
-      if (port != null) port,
+      ?port,
       if (wiringStandard != null &&
           type != null &&
           kPairOrderTerminations.contains(type))

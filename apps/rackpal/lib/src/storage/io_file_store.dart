@@ -162,9 +162,8 @@ final class DartIoFileStore implements FileStore {
   // whole design is `existsSync` on a dead UNC path taking 1261 ms — on
   // the UI isolate that is a frozen window. Async is the deliberate
   // choice here and everywhere else in this class.
-  // ignore: avoid_slow_async_io
   Future<bool> exists(String path) async =>
-      // Same reason as the annotation above: blocking here would freeze
+      // Same reason as the comment above: blocking here would freeze
       // the window on an unreachable network path.
       // ignore: avoid_slow_async_io
       await File(path).exists() || await Directory(path).exists();

@@ -320,8 +320,7 @@ class RenderRackCanvas extends RenderBox
       final isHit = result.addWithPaintTransform(
         transform: childTransform,
         position: position,
-        hitTest: (BoxHitTestResult r, Offset transformed) =>
-            child!.hitTest(r, position: transformed),
+        hitTest: (r, transformed) => child!.hitTest(r, position: transformed),
       );
       if (isHit) return true;
       child = pd.previousSibling;

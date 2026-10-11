@@ -62,8 +62,7 @@ void main() {
 
   /// Every string the chip actually put on screen.
   List<String> rendered(WidgetTester tester) => <String>[
-    for (final text in tester.widgetList<Text>(find.byType(Text)))
-      if (text.data case final data?) data,
+    for (final text in tester.widgetList<Text>(find.byType(Text))) ?text.data,
   ];
 
   group('what it says', () {

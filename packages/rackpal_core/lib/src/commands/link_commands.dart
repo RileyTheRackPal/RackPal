@@ -171,7 +171,7 @@ final class RemoveLinkCommand extends Command<RackDocument> {
   EpochMask get touches => EpochMask.wires;
 
   @override
-  Iterable<Uuid> get affects => [id, if (netId case final n?) n];
+  Iterable<Uuid> get affects => [id, ?netId];
 
   @override
   bool apply(RackDocument doc) {

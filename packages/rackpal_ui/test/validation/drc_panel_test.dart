@@ -19,7 +19,7 @@ void main() {
     ruleId: ruleId,
     severity: severity,
     message: 'A sentence about $ruleId.',
-    targets: [if (primary != null) primary],
+    targets: [?primary],
     primaryEntityId: primary,
   );
 

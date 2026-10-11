@@ -261,8 +261,7 @@ StructureTable buildStructureTable(
     // because every one of them contributed the same null. The count is
     // "how many boxes are there", and the answer for a speaker is none.
     outletCount: {
-      for (final row in rows)
-        if (doc.links[row.linkId]?.structureOrigin?.outletId case final id?) id,
+      for (final row in rows) ?doc.links[row.linkId]?.structureOrigin?.outletId,
     }.length,
     // See [StructureTable.pathwayCount]: the document's, not this body's
     // drops', because DR-032 makes a pathway with nothing running through

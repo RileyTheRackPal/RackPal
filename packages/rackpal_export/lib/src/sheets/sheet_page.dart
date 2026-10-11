@@ -47,7 +47,7 @@ pw.Page buildSheetPage({
       ignoreMargins: true,
       child: pw.CustomPaint(
         size: PdfPoint(format.width, format.height),
-        painter: (PdfGraphics graphics, PdfPoint boxSize) {
+        painter: (graphics, boxSize) {
           final canvas = PdfDiagramCanvas(
             graphics: graphics,
             boxHeight: boxSize.y, // size.y, NOT page height -- §7.4

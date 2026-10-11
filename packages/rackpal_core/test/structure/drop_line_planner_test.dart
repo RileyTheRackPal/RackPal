@@ -942,8 +942,7 @@ void main() {
       );
       expect(
         {
-          for (final l in drops)
-            if (l.structureOrigin!.rackLabel case final r?) r,
+          for (final l in drops) ?l.structureOrigin!.rackLabel,
         },
         hasLength(46),
       );
