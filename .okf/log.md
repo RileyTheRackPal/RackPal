@@ -1,5 +1,19 @@
 # Update Log
 
+## 2026-10-12 (hundred-and-thirty-eighth entry)
+
+* **Correction**: entry 137 says the `VERIFY:` pass *"found a ruled refusal that was never built (`#1058`)"*. **It was
+  built**: `kMaxExportSheets` and `ExportTooManySheets` refuse past 2000 sheets before a page is emitted, from
+  `efbba7ad` (`#352`), held by `export_sheet_cap_test.dart`. `#1058` closes as not a defect, and docs/08's two lines
+  are corrected.
+* **Note**: **A TRUNCATED GREP IS A SILENT CENSUS.** The census grep matched the right file and was piped through
+  `head -10`; ten hits in `seed_registries.dart` filled the window and the real one was cut. The follow-up searched
+  for a guessed name (`kMaxSheets`) where the code says `kMaxExportSheets`. Neither showed the truth, and both read
+  as "nothing". Before calling something unbuilt, search for its error type or its test, not for a guessed constant.
+* **Note**: **AND THE RE-CHECK FOUND ONE MORE.** Every other absence the pass asserted was re-run in full. One more was
+  wrong in its reason: the SWM tuner budget has no field but IS seeded, as description text, uncited; docs/01 says
+  so now. The `MultiPage` claim survived: its three hits are comments, one explaining why the export avoids it.
+
 ## 2026-10-12 (hundred-and-thirty-seventh entry)
 
 * **Progress**: `#1046` (DR-248) **`CONFIRMED`** by the user on 2026-10-12: a smoke test on the global Flutter 3.47.5
