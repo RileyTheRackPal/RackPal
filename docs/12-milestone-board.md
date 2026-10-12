@@ -2419,6 +2419,53 @@ what they model, which is why the item waited in Needs You rather than closing o
 
 No version move: Epic 786 is not a milestone.
 
+### 4.58 Flutter 3.47.5 and every dependency, under a fourteen-day cooldown · 2026-10-11 · `#1046` · `DR-248` · no version move
+
+The user asked to update every dependency. **Measured first**: `pub outdated` showed most of the list held by
+the Flutter SDK, so "everything" meant moving the pin docs/11 §7 calls load-bearing. DR-248 ruled a standing
+fourteen-day cooldown on every release, Flutter 3.47.5 (not 3.47.7, three days old), very_good_analysis 11,
+and a committed `pubspec.lock`.
+
+| Commit | What |
+|---|---|
+| `bf5a3ef2` | DR-248 |
+| `5a372da1` | `pubspec.lock` committed; CI keys its pub cache on it and runs `pub get --enforce-lockfile` |
+| `c345a794` | The pin, and only what the SDK forced; `run_local.ps1` reads the pin instead of keeping a second copy |
+| `c933e83b` | **A correction**: a failed enforce run does not rewrite the lock; an IDE did |
+| `268e4114` | Nineteen packages to their newest qualifying versions; `archive` 4.5.0 and `image` 4.12.0 held |
+| `7b4be1a7` | very_good_analysis 11: package and versioned include; 82 new infos fixed |
+| `e492c0d3` | `ensure_flutter.ps1` replaces an SDK that is not the pin |
+
+**What went wrong, each found by a measurement.** Android Studio and VS Code, open on the tree, re-ran `pub get`
+on the global 3.44.4 SDK two seconds after any pubspec edit: it reverted an upgrade and produced a false finding
+that shipped in three places before a worktree no IDE watched refuted it. `dart fix --apply` broke three files.
+Dart 3.13's `use_named_constants` reports 18 false positives on `Len`/`Mass`/`Permille`, which are extension
+types, and following them does not compile. very_good_analysis 11 flipped `trailing_commas` to `automate`, kept
+at `preserve`. The info pin moved 21 to 38 to 138, every one accounted for in its baseline file. **CI build 463
+failed on the first run of the new pin**: the self-hosted agent keeps its tool directory, the SDK cache missed,
+and the stale 3.44.4 was accepted; `e492c0d3` replaces it, proven against a planted stale SDK before push.
+
+**Evidence.** All 20 local gates green on each commit, every suite exactly at its floor. CI: build 464 (PR 223)
+and build 465 (`main`, `33483474`) green on 3.47.5, the second taking the warm path (install verified in 6 s).
+**`CONFIRMED` by the user on 2026-10-12**: a smoke test on the global SDK (the Whole House starter, schematic pan,
+Ctrl+wheel and pinch, a rack elevation, PDF export, close and reopen). No golden protects rendering across Flutter
+versions, so that test is the upgrade's only rendering evidence.
+
+No version move: Epic 786 is not a milestone.
+
+### 4.59 Four items closed with evidence and without a line here · 2026-10-12 · `#1052` · no version move
+
+The 2026-10-12 census found four Done items that no section of this file, the OKF log or canon mentions by
+number or range. **None was closed without evidence**: each names its commit on the board, as §8.8 asks. Listed
+so a later census reads them as recorded.
+
+| Item | Closed by | What |
+|---|---|---|
+| `#77` | `f6928e94` | The OKF knowledge bundle, built 2026-07-28 |
+| `#114` (96-G) | `c4079d7c` (`#801`) | N03's 24 duplicate port labels: a symptom of the bank-collapse deferral, fixed when the canvas honoured collapse (DR-109; this file's `#801` entry, *"one argument that removes 47 of 48 ports"*) |
+| `#122` (96-H) | `4392846d` | The net-label comb bounded to a computed number of lanes |
+| `#1032` | `68b644d7`, `096a94f4` | docs/00 R7 and docs/21 describe the sheet set M6 ships |
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
