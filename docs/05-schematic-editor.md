@@ -628,7 +628,7 @@ Full recompute on every edit. No route cache, no invalidation logic, no incremen
 | 4 | Hyperedge geometry improvement: the shift-segments heuristic, horizontal pass then vertical, topology preserved unless the user asks | better splitter and 70 V tap trees | moderate |
 | 5 | Free-placement escape hatch: if pinning breaks the layered structure, fall back to a **1-bend visibility graph** router for the affected edges only: `O(n)` nodes rather than `O(n²)`, empirically 3–4 A\* steps versus 28–34 | correctness under adversarial pinning | ~700 lines |
 
-If a general router is ever needed, reimplement against MSAGL's rectilinear package rather than libavoid's C++, or bind libavoid through an ELK-style subprocess. **VERIFY:** libavoid is LGPL 2.1+ with a commercial licence available; confirm the licence and the linking model before depending on it.
+If a general router is ever needed, reimplement against MSAGL's rectilinear package rather than libavoid's C++, or bind libavoid through an ELK-style subprocess. ~~**VERIFY:**~~ **Confirmed (2026-10-12, `#1056`)** from adaptagrams.org and libavoid's own header: libavoid is LGPL 2.1+ with a commercial licence available from Monash University; the linking model is still to be settled before depending on it, and ELK's answer was a separate process over standard I/O.
 
 ---
 
@@ -667,7 +667,7 @@ A persistent strip below the toolbar: eight chips, each a `SignalDomainDef` swat
 
 - **Click** solos a domain; `Ctrl+click` toggles; `1`–`8` solo by index; `` ` `` shows all.
 - Filtered-out wires **ghost**, and the ghost alpha is **baked into `Paint.color`, never an opacity layer**: the `saveLayer` ban applies here more than anywhere, because this is a per-frame path.
-- **VERIFY:** the design document's 8% ghost alpha is below a legible floor. AC-058/D11 requires the filtered-wire alpha to be raised to a *tested* value against both themes; the number is set once in §6.6, not here. DR-001 raises its importance, under net labels the ghost is what a non-matching domain looks like on every filtered sheet, so it is seen constantly.
+- **VERIFY:** the design document's 8% ghost alpha is below a legible floor. **Re-checked (2026-10-12, `#1056`), still open:** the code still marks the value VERIFY (`net_label_layer.dart`), and the tested value AC-058/D11 asks for belongs to M7's accessibility matrix. AC-058/D11 requires the filtered-wire alpha to be raised to a *tested* value against both themes; the number is set once in §6.6, not here. DR-001 raises its importance, under net labels the ghost is what a non-matching domain looks like on every filtered sheet, so it is seen constantly.
 - Preference **Ghost** (default) versus **Hide**. Ghost preserves spatial context so the reader still sees that *something* runs there; Hide is for reading a single domain cleanly.
 - Devices with zero visible links dim to 25% and their pins drop to ticks.
 

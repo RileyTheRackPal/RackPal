@@ -112,7 +112,7 @@ Half-rack width is genuinely unstandardised, so it is **not** modelled as "0.5 r
 
 `Rack.usableDepth` is `Len?`, **nullable, because a 2-post frame has no meaningful usable depth** (AC-050/A1.3). Vendors use "usable" and "overall" inconsistently; store usable explicitly and label it in the UI.
 
-Weight capacities are the binding constraint in residential work far more often than RU: a floor enclosure may be rated 2,500 lb while a 12U swing-gate wall rack is rated **100 lb** and a pivoting wall cabinet **150 lb**. A wall rack holding a UPS and an amplifier hits its weight limit long before it runs out of rack units. VERIFY: individual vendor capacity figures before they are seeded into `assets/catalog/`; every numeric field needs a citation in `assets/catalog/sources.md` (AC-052).
+Weight capacities are the binding constraint in residential work far more often than RU: a floor enclosure may be rated 2,500 lb while a 12U swing-gate wall rack is rated **100 lb** and a pivoting wall cabinet **150 lb**. A wall rack holding a UPS and an amplifier hits its weight limit long before it runs out of rack units. ~~VERIFY: individual vendor capacity figures before they are seeded into `assets/catalog/`; every numeric field needs a citation in `assets/catalog/sources.md` (AC-052).~~ **Answered (2026-10-12, `#1056`):** the rack presets seed archetype capacities (45 to 450 kg), and `assets/catalog/sources.md` §5 grades them *order-of-magnitude static load ratings for the archetype class*, so none poses as a vendor's figure.
 
 ---
 
@@ -161,7 +161,7 @@ RCK-012 (error): frontDepth + rearDepth + 50 mm cable allowance > usableDepth
                  for any overlapping RU range
 ```
 
-`connectorProjection` is **derived from the deepest connector type actually present on the device's rear panel**, not from a flat `depth + 75 mm` (AC-022). A moulded HDMI with a bend needs 100–125 mm and a compression-F on RG6 about 100 mm, both under-reported by 75 mm. VERIFY: the per-connector projection table before it seeds the catalog.
+`connectorProjection` is **derived from the deepest connector type actually present on the device's rear panel**, not from a flat `depth + 75 mm` (AC-022). A moulded HDMI with a bend needs 100–125 mm and a compression-F on RG6 about 100 mm, both under-reported by 75 mm. ~~VERIFY: the per-connector projection table before it seeds the catalog.~~ **Answered (2026-10-12, `#1056`):** projections are seeded per template and graded *Representative / synthesized* in `assets/catalog/sources.md` §1.
 
 ### 3.3 Reversed chassis
 
@@ -184,7 +184,7 @@ unknownCount   = count(device.weight == null)
 
 Centre of gravity is `RCK-004 advisory at 55%, default off for wall and credenza form factors` (CR-020, AC-034/m19). Heavy items belong at the bottom, a UPS installed at the top of a tall rack is a documented cause of forward lean **[trade]**.
 
-`RCK-013 warning: DEVICE (34 lb) mounted on front ears only; requires rear support or a shelf` fires when `weight > maxUnsupportedMass`, which defaults to ~7 kg (15 lb) for `mountMethod: rackEars` (AC-028). The support hardware is added to the materials list. VERIFY: the 7 kg default against manufacturer install manuals.
+`RCK-013 warning: DEVICE (34 lb) mounted on front ears only; requires rear support or a shelf` fires when `weight > maxUnsupportedMass`, which defaults to ~7 kg (15 lb) for `mountMethod: rackEars` (AC-028). The support hardware is added to the materials list. ~~VERIFY: the 7 kg default against manufacturer install manuals.~~ **Answered (2026-10-12, `#1056`):** `maxUnsupportedMass` is one of the safety-adjacent fields AC-052 names, and `assets/catalog/sources.md` covers it under its *published standard* category rather than leaving it an uncited guess.
 
 ### 4.2 Power
 
@@ -497,7 +497,7 @@ Shipped as `PoeSpec{role, standard, type, class, watts}`. `NET-001` checks `Σ(P
 
 ### 7.6 Satellite DC pass-through
 
-`rf.satellite` carries `requiresPowerPassingPort: true`. **Exactly one splitter port passes DC back toward the LNB or multiswitch.** Wire a normal splitter and the dish never powers, a total system failure that looks like a bad receiver. SWM systems additionally have a hard tuner-count budget (SWM8 = 8, SWM16 = 16). VERIFY: SWM tuner budgets against current DIRECTV documentation before seeding.
+`rf.satellite` carries `requiresPowerPassingPort: true`. **Exactly one splitter port passes DC back toward the LNB or multiswitch.** Wire a normal splitter and the dish never powers, a total system failure that looks like a bad receiver. SWM systems additionally have a hard tuner-count budget (SWM8 = 8, SWM16 = 16). VERIFY: SWM tuner budgets against current DIRECTV documentation before seeding. **Re-checked (2026-10-12, `#1056`), still open, correctly:** no tuner-budget field exists, so nothing has been seeded for this to gate.
 
 ### 7.7 S/PDIF coax is not an RCA interconnect
 

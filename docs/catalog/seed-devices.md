@@ -2469,7 +2469,7 @@ one shown. The generator expands the §2 notation into exactly this.
 | `unknown: {}` on every object | Forward compatibility. A v1 reader preserves and re-emits v2 keys it does not understand |
 | No `frontImage`, no `cost`, no `signature` | Cut from v1, and cut means absent from the schema, not null (AC-057, AC-055, AC-042) |
 
-> **VERIFY:** the concrete `FracIndex` string encoding (`"a0"`, `"a1"`, `"b0"` above) is
+> ~~**VERIFY:**~~ **Confirmed (2026-10-12, `#1056`):** the code uses this form, `FracIndex('a0')` in `rack_commands.dart`. The concrete `FracIndex` string encoding (`"a0"`, `"a1"`, `"b0"` above) is
 > illustrative of the base-62 midpoint scheme these libraries conventionally use. The exact
 > alphabet and midpoint algorithm are fixed once in `rackmate_core/units/frac_index.dart` and this
 > document follows whatever ships there. Nothing else in the format depends on the encoding.

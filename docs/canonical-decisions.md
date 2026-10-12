@@ -6169,6 +6169,12 @@ distribution side **repeats the bound and does not enumerate keys**.
   legal-existence requirement. The fallback is named so that adopting it is a config change; it is
   not asserted to be instantly available.
 
+> **Re-checked 2026-10-12 (`#1056`), both still open.** MSIX: the Store alpha (`#100`) packages as
+> MSIX and MSIX-7 (`#171`) registers the association, so the question remains only for copies
+> outside the Store. Trusted Signing (now Artifact Signing): Microsoft's quickstart admits
+> individual developers in the United States and Canada only, with a wider list for
+> organisations; eligibility is the user's to confirm against their own identity.
+
 ### 11.7 DR-007 · Keystone strap geometry ships in M3, not v1.X
 
 > **RULING — THE LOW-VOLTAGE BOX'S INTERNAL GEOMETRY IS v1, BUILT IN M3.** An `Outlet` gains an
