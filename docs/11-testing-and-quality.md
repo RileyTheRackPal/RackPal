@@ -226,7 +226,7 @@ This is reviewable in a pull request (a reviewer reads *"the wire moved 2 mm and
 
 Pixel goldens then serve one narrow purpose: proving the two backends are faithful interpreters of that list. Keep them small and few.
 
-- `matchesGoldenFile` via plain `flutter_test`. No `golden_toolkit`, no `alchemist`, the value over a good `flutter_test_config.dart` is small and the maintenance risk is not. VERIFY: `golden_toolkit` maintenance status at the time of scaffolding.
+- `matchesGoldenFile` via plain `flutter_test`. No `golden_toolkit`, no `alchemist`, the value over a good `flutter_test_config.dart` is small and the maintenance risk is not. ~~VERIFY: `golden_toolkit` maintenance status at the time of scaffolding.~~ **Moot (2026-10-12, `#1056`):** the choice above was plain `flutter_test`, and no golden library is a dependency.
 - Golden the device faceplate renderer and the wire layer **separately**. Never golden the whole canvas: one pixel of change anywhere fails everything and reviewers begin rubber-stamping.
 - `debugDisableShadows = true`, fixed `Random` seeds, no animations, fixed `Size`. A separate invariant test asserts the scene contains no gradient, shadow, blur, blend mode or shader op (CR-088 deleted `RendererCaps` and promoted that rule from prose to a test) and that `saveLayer` count is zero.
 - Tagged `@Tags(['golden'])` in `dart_test.yaml` so non-Linux jobs skip them.
@@ -275,8 +275,9 @@ for (final s in kFixtures) {
 
     // 2. What the PDF backend actually emits: the Tm/Td translation in the
     //    content stream for this op, un-flipped by the single global flip (CR-085).
-    final pdfBaselineY = PdfProbe.baselineOf(renderToStream(op));   // VERIFY: content-stream
-                                                                    // introspection API in package:pdf
+    final pdfBaselineY = PdfProbe.baselineOf(renderToStream(op));   // SUPERSEDED 2026-10-12: the
+                                                                    // gate was built differently, as
+                                                                    // apps/rackpal/test/baseline_parity_test.dart
 
     // 3. What Flutter actually paints, with kern AND liga disabled (CR-081).
     final painter = TextPainter(text: op.toTextSpan(), textDirection: TextDirection.ltr)
@@ -295,7 +296,7 @@ for (final s in kFixtures) {
 
 ### 4.4 Pixel diff, nightly only
 
-Render pages with poppler's `pdftoppm` in the Linux job and image-diff against references. Nightly, not per-PR: it is slow and mildly flaky, and it is the third line of defence behind structural assertions and display-list goldens. VERIFY: `pdftoppm` availability and version pinning on the GitHub-hosted Ubuntu image.
+Render pages with poppler's `pdftoppm` in the Linux job and image-diff against references. Nightly, not per-PR: it is slow and mildly flaky, and it is the third line of defence behind structural assertions and display-list goldens. ~~VERIFY: `pdftoppm` availability and version pinning on the GitHub-hosted Ubuntu image.~~ **Moot (2026-10-12, `#1056`):** CI is Azure on Windows, and pages are rendered through the vendored pdfium (DR-153), not `pdftoppm`.
 
 ---
 
@@ -438,7 +439,7 @@ Named here so it is not rediscovered, and scheduled in [Roadmap](09-roadmap.md) 
 | Reproducible signed builds | Post-v1 | A signed release is a supply-chain and reproducibility problem, not only a CI one |
 | In-app auto-update | **Not doing in v1** (RJ-014) | Signed installer plus a version-check ping. Auto-update is a security surface and a support burden before there are users |
 
-VERIFY: MSIX packaging versus a plain signed installer for a desktop app that registers a `.rppj` file association, the file-association path differs between the two and drives the choice.
+VERIFY: MSIX packaging versus a plain signed installer for a desktop app that registers a `.rppj` file association, the file-association path differs between the two and drives the choice. **Answered in part (2026-10-12, `#1056`):** the Store alpha (`#100`) packages as MSIX, and MSIX-7 (`#171`) registers the association in its manifest; a plain installer for copies outside the Store is still undecided.
 
 ---
 

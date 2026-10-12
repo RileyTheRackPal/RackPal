@@ -226,7 +226,7 @@ Cost, stated honestly rather than comfortably: **relative sizes, and no week tot
 | [PDF export](08-pdf-export.md) | The sheet set, the schedule presets, the export contract |
 | [Plan view](15-plan-view.md) | **v1, and SHIPPED.** DR-029 moved it into v1 and DR-135 opened its epic; this row said `v1.1` until DR-168 §11.167 went looking. The floorplan underlay, pins, calibration, the four-tier length model, `T1.01`. The view itself is now the first tab, `Site`, merged with the location tree |
 | [Roadmap](09-roadmap.md) | v1 / v1.1 / v1.2 / v2, the ten milestones, the honest total |
-| [Canonical decisions](canonical-decisions.md) | **Normative.** 120 `CR-nnn`, 59 `AC-nnn`, 17 `RJ-nnn`, canonical naming, the model, the registry, the scope ruling, the milestone plan, and the binding user decisions `DR-001`–`DR-019` |
+| [Canonical decisions](canonical-decisions.md) | **Normative.** The `CR-nnn`, `AC-nnn` and `RJ-nnn` rulings, canonical naming, the model, the registry, the scope ruling, the milestone plan, and the binding user decisions (`DR-nnn`), indexed with their counts in [docs/10](10-decisions.md). This line once stated those counts and was stale twice (`DR-001`–`DR-005`, then `DR-001`–`DR-019` against 248) |
 | [Decisions (ADR log)](10-decisions.md) | The sixteen ADRs and canon §10's questions, none of which is open, summarising the record above |
 | [Testing and quality](11-testing-and-quality.md) | The DRC fixture corpus, goldens, the print test matrix |
 | [Seed devices](catalog/seed-devices.md) | The archetype catalog and its provenance |

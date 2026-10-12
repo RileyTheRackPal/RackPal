@@ -324,6 +324,43 @@ Two more sections live in the same dialog:
 - **Rule severities.** What a check counts as in this project, or off. **Every
   override needs a written reason**, because it is a decision somebody reading
   the drawings is entitled to see. See §21.5.8.
+- **Signal families.** For a signal RackPal does not ship, such as a
+  manufacturer's own control bus. See below.
+
+#### Signal families: a signal RackPal does not ship
+
+A signal family is what a port carries: `Cresnet`, `HDMI`, `Lutron QS`. When
+your equipment uses one that is not in the list, **make it as a copy of the
+closest one that is**. You cannot start one from blank, on purpose: the copy
+keeps what every port of that kind depends on (its domain, its direction and
+its topology), so the checks keep working.
+
+1. `File` ▸ `Project settings…`, then **Signal families**, then
+   **Clone a family...**
+2. Pick the family to start from. It stays in a banner at the top, with what
+   is kept from it.
+3. Give it a **Name** and a **Short tag** (the few letters printed on the
+   drawings), and choose its **Default connector**. The connector may be any
+   connector type, not only the one the original uses.
+4. Pick a **Line**. The menu shows each line in the grey it prints in on a
+   black-and-white printer. **Dimmed lines are taken**; select one and it says
+   which family already prints that way. Pick a free one, then **Clone**.
+
+The new family is in this project, and a copy goes into a library on this
+computer called **My library**, so your next job can use it too. Wherever you
+choose a signal (the port grid in the Device Builder, for one), a copy says
+*clone of Cresnet* (or whatever it came from), and **Clones only** shows just
+yours.
+
+To change how a copy prints, use **Change line...** beside it. Every cable of
+that family is redrawn on the new line. A family that ships with RackPal
+cannot be changed this way, only copied.
+
+**From your libraries** lists the families in your device libraries that this
+project does not have yet, each with **Add to this project**. A family also
+arrives on its own when you place a library device that uses it. If its line
+clashes with one already in the project, it is placed anyway, you are told,
+and it stays marked until you give it a free line with **Change line...**.
 
 `Edit` ▸ `Preferences…` is the other settings dialog, and it holds what stays on
 **this computer** rather than in the file: the undo depth, and the rack presets
@@ -605,6 +642,10 @@ device placed from it, after counting them and the cables they take with them.
   library…** copies a library onto this computer's library shelf, and its
   devices appear in every project's palette. Placing one copies it into the
   project, so the project file never depends on the library being there.
+- A library also carries any **signal families you made** that its devices
+  use, so a device built on your own family works on another computer. A
+  library like that cannot be opened by an older RackPal, which says so
+  rather than losing the families.
 
 ---
 

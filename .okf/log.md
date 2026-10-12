@@ -1,5 +1,23 @@
 # Update Log
 
+## 2026-10-12 (hundred-and-thirty-seventh entry)
+
+* **Progress**: `#1046` (DR-248) **`CONFIRMED`** by the user on 2026-10-12: a smoke test on the global Flutter 3.47.5
+  SDK (the Whole House starter, schematic pan, Ctrl+wheel and pinch, a rack elevation, PDF export, close and
+  reopen). It ran on Impeller, which 3.47 made the Windows default. docs/12 §4.58.
+* **Progress**: `#1047`, the documentation catch-up from a census of the corpus against the product and the board:
+  the user guide describes signal-family cloning; CLAUDE.md carries DR-248's toolchain rules; docs/10 gains
+  DR-130 to DR-133; canon §12.9's DR-006 debt is marked paid; docs/12 records `#1046`; the OKF bundle gains 43
+  decision concepts generated from canon, 3 practices it linked to and never had, and 14 missing index lines,
+  and reports no broken cross-link (from 18); the open `VERIFY:` markers are answered or re-confirmed.
+* **Note**: **A CENSUS FINDS WHAT ITS PATTERN CAN SEE.** Its first passes overcounted twice: docs/10 writes early
+  rulings as links, and docs/12 cites chapters as ranges (`#985` to `#997`). Count the forms, then count.
+* **Note**: **A VERIFY CAN ANSWER A BIGGER QUESTION THAN IT ASKED.** "Is Impeller the Windows default?" was yes,
+  since the upgrade two days earlier, which made a benchmark owed (`#1059`). And "does `maxPages` hold in release?"
+  found a ruled refusal that was never built (`#1058`).
+* **Note**: **A BUNDLE CAN LINK TO KNOWLEDGE IT DOES NOT HOLD.** Four links pointed at practices that existed only
+  in an agent's private memory. They are in the bundle now.
+
 ## 2026-10-11 (hundred-and-thirty-sixth entry)
 
 * **Progress**: `#1046` under [DR-248](/decisions/dr-248-fourteen-day-cooldown-and-flutter-3-47-5.md): a standing

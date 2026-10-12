@@ -327,12 +327,12 @@ List<pw.Widget> buildSchedulePages(ScheduleModel m, ScheduleLayout l) {
 
 Four things this buys:
 
-1. **Header repetition is explicit**: each page's table carries its own header row, sidestepping the question of whether `Table.headerCount` repeats per page fragment. VERIFY: `pw.TableHelper` / `pw.Table` header-repeat behaviour on the pinned `pdf` version.
+1. **Header repetition is explicit**: each page's table carries its own header row, sidestepping the question of whether `Table.headerCount` repeats per page fragment. ~~VERIFY: `pw.TableHelper` / `pw.Table` header-repeat behaviour on the pinned `pdf` version.~~ **Answered (2026-10-12, `#1056`), in `pdf` 3.13.1's source:** `headerCount` styles header rows and does not repeat them; a `TableRow(repeat: true)` is what repeats on each page fragment (`table.dart`, the `!row.repeat` test). The explicit per-page header stays the workaround.
 2. Group continuation bands work at all.
 3. `Widget won't fit into the page` overflow becomes structurally impossible.
 4. Deterministic row counts, so the progress reporter quotes an exact page count before it starts.
 
-**`maxPages` is set explicitly to 2000**: the default is 20 and throws beyond it. The dry run warns above 40 sheets and hard-caps at 2000 (AC-050/A7.4).
+~~**`maxPages` is set explicitly to 2000**: the default is 20 and throws beyond it.~~ **Not so (2026-10-12, `#1056`):** nothing in the export uses `MultiPage`, and in `pdf` 3.13.1 the `maxPages` check sits inside an `assert`, so it would not hold in a release build either. The dry run warns above 40 sheets (`kLargeSetSheets`, built). **The 2000 refusal DR-230 §11.229.2 rules is not built**: `#1058`.
 
 **Long-token protection.** Model strings and labels like `RK1-HDMI-OUT-07-TO-DISPLAY-MSTR-BR` are exactly the shape that overflows or silently disappears in `pw.Text`. Sanitise on the way in, then hard-truncate with a measured ellipsis using the shared `TextMeasurer` (§7.5) rather than trusting the widget:
 
@@ -455,7 +455,7 @@ Changing a scheme offers a **renumber with a before/after diff**, never a silent
 
 **Sheet furniture is a v1 deliverable (DR-005), not a polish item to be traded away under schedule pressure.** The PDF is a client deliverable: border, zone grid, title block, revision block, revision clouds, the `ISSUED FOR CONSTRUCTION` stamp and sheet numbering all ship. Note that this is orthogonal to wire idiom, sheet furniture is drafting polish, and polishing the sheet does not reopen DR-001. The schematic's reader is technical (GC, electrician, low-voltage sub, technically-literate homeowner); the sheet is polished fully and net labels stay the default.
 
-All furniture (border, zone band, title block, revision block, revision clouds, legend swatches) is drawn through `DiagramCanvas` (P1), attached via `pw.PageTheme(buildBackground:)` wrapping `pw.FullPage(ignoreMargins: true, child: pw.CustomPaint(painter: ...))`. It therefore draws on every page including ones `MultiPage` creates by overflow, and it renders identically in the on-screen preview. VERIFY: `PageTheme.buildBackground` / `buildForeground` parameter names on the pinned `pdf` version.
+All furniture (border, zone band, title block, revision block, revision clouds, legend swatches) is drawn through `DiagramCanvas` (P1), attached via `pw.PageTheme(buildBackground:)` wrapping `pw.FullPage(ignoreMargins: true, child: pw.CustomPaint(painter: ...))`. It therefore draws on every page including ones `MultiPage` creates by overflow, and it renders identically in the on-screen preview. ~~VERIFY: `PageTheme.buildBackground` / `buildForeground` parameter names on the pinned `pdf` version.~~ **Confirmed (2026-10-12, `#1056`)** in `pdf` 3.13.1's `page_theme.dart`.
 
 ### 5.1 Border and zone grid
 
@@ -773,8 +773,9 @@ final class PdfFontMeasurer implements TextMeasurer {
           (t, style.font, style.sizePt, style.letterSpacing), () {
         final f = style.font, size = style.sizePt, ls = style.letterSpacing;
         final font = _fonts[f]!;
-        final m = font.stringMetrics(t);   // VERIFY: signature; and whether
-                                           // PdfFontMetrics * double exists
+        final m = font.stringMetrics(t);   // CONFIRMED 2026-10-12: pdf 3.13.1 has
+                                           // stringMetrics(String s, {double letterSpacing})
+                                           // and PdfFontMetrics operator *(double)
         return TextMetrics(
           advanceWidth: m.advanceWidth * size + ls * math.max(0, t.length - 1),
           ascent:      m.ascent.abs()  * size,
@@ -1173,10 +1174,10 @@ Saving uses **the app's own save dialog**, `lib/src/session/file_picker.dart` ov
 | Target | Save | Print | Share |
 |---|---|---|---|
 | Windows / macOS / Linux | `getSaveLocation` + `XFile.saveTo` | `Printing.layoutPdf`: **v1.1** | `Printing.sharePdf` (weak on Win/Linux) |
-| iOS / Android (read-only) | `Printing.sharePdf` | `Printing.layoutPdf` | VERIFY: `bounds:` is reportedly required in practice on iPad |
+| iOS / Android (read-only) | `Printing.sharePdf` | `Printing.layoutPdf` | VERIFY: `bounds:` is reportedly required in practice on iPad. **Still open (2026-10-12, `#1056`)**: `printing` is not a dependency (CR-100) |
 | Web (not a v1 target) | Blob URL, not `data:` | — | download |
 
-VERIFY: 11×17 on Windows reportedly needs `forceCustomPrintPaper: true` to reach the driver; and `dynamicLayout: true` re-invokes the layout callback when the user changes paper size, so the callback must honour the `PdfPageFormat` it receives.
+VERIFY (**still open, 2026-10-12, `#1056`**: `printing` is not a dependency, and the OS print dialog is a v1.1 question under CR-100): 11×17 on Windows reportedly needs `forceCustomPrintPaper: true` to reach the driver; and `dynamicLayout: true` re-invokes the layout callback when the user changes paper size, so the callback must honour the `PdfPageFormat` it receives.
 
 Afterwards, a completion strip rather than a modal: `Exported 14 sheets · 438 KB · 3.1 s` with **[Open] [Show in folder] [Print] [Copy path]**. The file-layer error surface is fully enumerated, including "target PDF is open in Acrobat" (AC-058/D3, D4).
 
@@ -1291,12 +1292,12 @@ Every item below is cheap to confirm with a 30-line spike and expensive to disco
 
 | # | VERIFY: | Why it matters |
 |---|---|---|
-| 1 | `PdfFont.stringMetrics(String)` exact signature, and whether a `PdfFontMetrics * double` operator exists | Everything in §7.5 funnels through one wrapper, so a fix is localised, but confirm before building on it |
-| 2 | Whether `pw.Table.headerCount` repeats the header on each page fragment | §3.7 sidesteps it with manual pagination; confirm anyway so the workaround's necessity is known |
-| 3 | `PageTheme.buildBackground` / `buildForeground` parameter names | All sheet furniture attaches here |
-| 4 | The rotation sign in `drawText`'s counter-flip matrix | Render a 45°-rotated string on both backends and overlay them. Sign errors here are invisible until someone rotates a rail label |
+| ~~1~~ | **Answered (2026-10-12, `#1056`):** `stringMetrics(String s, {double letterSpacing = 0})`, and `PdfFontMetrics operator *(double)` exists | Everything in §7.5 funnels through one wrapper, so a fix is localised, but confirm before building on it |
+| ~~2~~ | **Answered (2026-10-12, `#1056`):** it does not; `TableRow(repeat: true)` does | §3.7 sidesteps it with manual pagination; confirm anyway so the workaround's necessity is known |
+| ~~3~~ | **Confirmed (2026-10-12, `#1056`):** `buildBackground` and `buildForeground` | All sheet furniture attaches here |
+| ~~4~~ | **Answered (2026-10-12, `#1056`)** by `packages/rackpal_core/test/draw/text_rotation_test.dart`, written for this question | Render a 45°-rotated string on both backends and overlay them. Sign errors here are invisible until someone rotates a rail label |
 | 5 | `Printing.layoutPdf` on Windows without fetched pdfium; `forceCustomPrintPaper` for 11×17 | Gates whether the OS print dialog can ship in v1.1 (CR-100) |
-| 6 | `MultiPage.maxPages` validation behaviour in release builds | The 2000 cap must actually hold |
+| ~~6~~ | **Answered (2026-10-12, `#1056`), against the plan:** the check is inside an `assert`, so it does not run in release; nothing uses `MultiPage`; the DR-230 refusal is unbuilt (`#1058`) | The 2000 cap must actually hold |
 
 ### 11.2 Test gates
 
