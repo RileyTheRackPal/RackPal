@@ -497,7 +497,7 @@ Shipped as `PoeSpec{role, standard, type, class, watts}`. `NET-001` checks `Σ(P
 
 ### 7.6 Satellite DC pass-through
 
-`rf.satellite` carries `requiresPowerPassingPort: true`. **Exactly one splitter port passes DC back toward the LNB or multiswitch.** Wire a normal splitter and the dish never powers, a total system failure that looks like a bad receiver. SWM systems additionally have a hard tuner-count budget (SWM8 = 8, SWM16 = 16). VERIFY: SWM tuner budgets against current DIRECTV documentation before seeding. **Re-checked (2026-10-12, `#1056`), still open, correctly:** no tuner-budget field exists, so nothing has been seeded for this to gate.
+`rf.satellite` carries `requiresPowerPassingPort: true`. **Exactly one splitter port passes DC back toward the LNB or multiswitch.** Wire a normal splitter and the dish never powers, a total system failure that looks like a bad receiver. SWM systems additionally have a hard tuner-count budget (SWM8 = 8, SWM16 = 16). VERIFY: SWM tuner budgets against current DIRECTV documentation before seeding. **Re-checked (2026-10-12, `#1056`), still open:** there is no tuner-budget field, but the figure IS seeded, as the SWM-16 template's description text (*"Hard budget: 16 tuners across all 16 outputs"*, `catalog_rf.dart`), and `assets/catalog/sources.md` does not cite it. (This note first said nothing had been seeded; a search for a field missed the text.)
 
 ### 7.7 S/PDIF coax is not an RCA interconnect
 
