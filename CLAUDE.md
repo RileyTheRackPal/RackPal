@@ -227,6 +227,35 @@ a board task instructing weeks of work that a ruling had abolished.
 - File shape gotcha: in a `.rppj`, `registries` is nested under `document`, and
   `Registries.connectorTypes` serializes under the wire name **`connectors`**.
 
+## Toolchain and dependencies (DR-248)
+
+- **The Flutter pin lives in `azure-pipelines.yml`** (`flutterVersion`,
+  `flutterFrameworkRevision`) and nowhere else: `run_local.ps1` reads it. Moving it
+  is a reviewed act (docs/11 §7). **Read the version there**, not here.
+- **Nothing is adopted until it is fourteen days old** (DR-248, standing): a pub
+  package, direct or transitive, or a Flutter release, by its pub.dev publication
+  date or Flutter's release feed. An exception names its reason in the commit.
+  `flutter upgrade` on a developer machine ignores this, so do not run it bare.
+- **`pubspec.lock` is committed** and CI runs `flutter pub get --enforce-lockfile`,
+  which builds exactly the committed graph and checks each archive's sha256. A
+  dependency change is a lock diff someone can read.
+- **AN IDE OPEN ON THIS TREE IS A SECOND WRITER.** Android Studio and VS Code re-run
+  `pub get` with the *global* SDK about two seconds after any `pubspec.yaml` edit,
+  and rewrite the lock behind you. It reverted an upgrade and produced a false
+  finding on 2026-10-11. **Do dependency work in a sibling worktree** no IDE has
+  open (`git worktree add ../wNNNN <branch>`, short names: MAX_PATH).
+- **A lint-set bump moves two things**: the exact pin in the pubspecs AND the
+  versioned include in `analysis_options.yaml`, since every release still ships the
+  old rule files. The include's `formatter:` section can change too; this repo keeps
+  `trailing_commas: preserve` by an override there.
+- **Switching a local SDK by tag**: `git checkout -B stable <tag>`, not a bare
+  `checkout <tag>`. A detached HEAD reports channel `[user-branch]` and the pin gate
+  refuses it; delete `bin/cache/flutter.version.json` so Flutter recomputes it.
+- **The self-hosted agent keeps its tool directory**, so a stale SDK survives a pin
+  move; `ensure_flutter.ps1` replaces an SDK that is not the pin (since build 463).
+- **Commands handed to the user run in Windows PowerShell 5.1**: no `&&`, Windows
+  paths, `if ($LASTEXITCODE -eq 0) { ... }` to chain.
+
 ## Board (Azure DevOps)
 
 Org `https://{org}.visualstudio.com`, project **`RackMate`**, area and iteration
@@ -240,8 +269,9 @@ so the sweep had edited a line inside its own ruling's exclusion list, and every
 `az` command built from it fails with `TF200016: project does not exist`.
 
 Hierarchy is **Saga → Epic → Story → Chapter** (DR-097). A **Saga** is a release
-band from roadmap §2: v1, v1.1, v1.2, v2, so moving an Epic between Sagas *is* the
-visible act of an §8.3 amendment. An **Epic** is a milestone or a ruling-born body
+band from roadmap §2, **read the bands there**: this line listed four (v1, v1.1,
+v1.2, v2) until 2026-10-12, when DR-188 and DR-246 had made it six. Moving an Epic
+between Sagas *is* the visible act of an §8.3 amendment. An **Epic** is a milestone or a ruling-born body
 of scope. **An Epic is `Done` when its exit criterion is met (§8.1), not when its
 children run out**; children still open at that moment are re-parented to whoever
 will deliver them, never left under a closed Epic. **No work item may have no
@@ -249,8 +279,10 @@ parent.**
 
 The process is **`RackPal`** (inherited from Basic), not Basic. `Issue` and `Task`
 still exist but are **disabled**: everything migrated to `Story` and `Chapter` on
-2026-08-28, and the board holds 4 Sagas, 20 Epics, 218 Stories, 524 Chapters with
-zero hierarchy violations and zero parentless items.
+2026-08-28, when the board held 4 Sagas, 20 Epics, 218 Stories, 524 Chapters with
+zero hierarchy violations and zero parentless items. **Those are that day's numbers**,
+kept as the migration's record; this line read as current until 2026-10-12, by
+which time every one had grown. Count the board for today's.
 
 Board columns are **To Do / Ready / Doing / Needs You / Done** over the three
 states, since several columns may map to one state. **`Needs You` is for work
