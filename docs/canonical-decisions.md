@@ -24916,6 +24916,15 @@ Until those edits land, **`docs/12-milestone-board.md` is the index that records
 M6 and M8 entries quote the roadmap verbatim and then state the DR-006 amendment beneath, which is
 the same pattern §12.8 uses inside this record, and its §4.11 carries both tables above.
 
+**DISCHARGED, MEASURED 2026-10-12 (`#1051`).** Every site in both tables above was read in place, not
+inferred from a phrase being absent. docs/11 §11's two certificate rows are struck and superseded;
+roadmap M6's certificate sentence is deleted with a note; M8's first clause is split with a note;
+`RISK-07` is retired in that form and `RISK-08`'s mitigation names the internal population; roadmap §8
+no longer says five are answered; docs/10 carries a `DR-006` row. **docs/00's line had been edited and
+then gone stale again**, reading `DR-001`–`DR-019` and 120 `CR-nnn` against 248 and 121; it now names
+no count and points at docs/10, which is the one place a count may live. The tables stay as the record
+of what was owed; the debt is paid.
+
 **Explicitly NOT superseded: listed here because they will otherwise be cut by association:**
 
 | Ruling | Status under DR-006 |
