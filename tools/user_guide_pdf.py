@@ -225,6 +225,19 @@ def link_sections(fragment: str, ids: set[str]) -> str:
     return re.sub(rf"§({DOC}(?:\.\d+)+)", one, fragment)
 
 
+def frame_slots(fragment: str) -> str:
+    """Give each PLATE / SCREEN blockquote its frame class (docs/22 §2)."""
+
+    return re.sub(
+        r'<blockquote><p><strong>((?:PLATE|SCREEN)) (\S+) · (\w+)',
+        lambda m: (
+            f'<blockquote class="slot slot-{m.group(3).lower()}"><p><strong>'
+            f"{m.group(1)} {m.group(2)} · {m.group(3)}"
+        ),
+        fragment,
+    )
+
+
 def short_title(heading: str) -> str:
     """What the running header says: the number and the words before a colon."""
     return heading.split(":")[0].strip()
@@ -370,6 +383,21 @@ blockquote {{
   margin: 0 0 10pt; padding: 9pt 13pt; color: {ACTIVE};
 }}
 blockquote p:last-child {{ margin-bottom: 0; }}
+/* ILLUSTRATION SLOTS (docs/22 §2). A blockquote whose first words are bold
+   PLATE or SCREEN is reserved space for a picture, drawn as a dashed frame so
+   the layout can be judged before any art exists. The brief inside it is not
+   printed copy and goes when the art arrives. */
+blockquote.slot {{
+  background: transparent; border: 1.2pt dashed {SECONDARY}; border-radius: 4pt;
+  color: {SECONDARY}; font-size: 8pt; line-height: 1.4; break-inside: avoid;
+  display: flex; flex-direction: column; justify-content: flex-start;
+}}
+blockquote.slot strong {{ color: {ACTIVE}; letter-spacing: 0.06em; }}
+blockquote.slot-spot {{ min-height: 50mm; }}
+blockquote.slot-margin {{ min-height: 70mm; width: 55%; }}
+blockquote.slot-half {{ min-height: 85mm; }}
+blockquote.slot-full {{ min-height: 190mm; }}
+blockquote.slot-strip {{ min-height: 45mm; }}
 hr {{ display: none; }}
 table {{
   width: 100%; border-collapse: collapse; margin: 2pt 0 12pt; font-size: 8.6pt;
@@ -452,6 +480,7 @@ def build(out: str) -> None:
     )
 
     body = "".join(chapters)
+    body = frame_slots(body)
     body = link_sections(body, ids)
     # `> ?` AND NOT `>\s?`: `\s` matches the newline after a bare `>`, which
     # is the preface's paragraph break, and ran its paragraphs together.

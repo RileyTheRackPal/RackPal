@@ -111,7 +111,8 @@ And a fourth that is not a tier and matters as much:
 ## 5. Pose and scene catalogue
 
 Numbered so an artist and a writer can refer to the same thing. The first four are the user's; the
-rest are proposed. **Scenes 25 to 30 exist only because the tail and the screwdriver were settled**,
+rest are proposed. **Scenes 31 onward, and the plate slots in the user guide that use them, are in
+[docs/22](22-riley-plate-plan.md).** **Scenes 25 to 30 exist only because the tail and the screwdriver were settled**,
 which is the argument for settling §2 before drawing anything: a prop that generates scenes is worth
 more than one that fills them.
 

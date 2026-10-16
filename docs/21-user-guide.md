@@ -16,10 +16,24 @@
 > each written as the tasks you do there rather than as a list of controls.
 > Read §21.5.1 before you start a real project; read the rest as you reach each
 > view.
+>
+> **Plates.** Boxed notes that begin `PLATE` or `SCREEN` are slots for
+> illustrations and screenshots, in the order a printed manual would hold them.
+> Each says its size, which pose of Riley (numbered as in `docs/19-riley.md` and
+> `docs/22-riley-plate-plan.md`) and what the visor shows. The text of a plate is
+> an art brief: in the finished book it is replaced by the picture, and Riley
+> says nothing in words.
 
 ---
 
 ## 21.1 What it is
+
+> **PLATE 21.1-A · HALF** · Scene 24 · Teaching · Visor: product mark
+>
+> Chapter opener. Riley with their back to the reader, hands on hips,
+> surveying a finished rack (rack-height relative to Riley, the top few U
+> reached by a step). One model, every drawing derived from it: the rack is
+> the whole argument, so give it room.
 
 **RackPal is CAD-lite for AV and low-voltage work:** to scale where scale earns
 its keep, and deliberately representative everywhere else.
@@ -32,6 +46,11 @@ is only one of it. The elevation and the schedule cannot drift apart the way a
 Visio file and a spreadsheet always eventually do.
 
 ### Why "lite" is the feature rather than the apology
+
+> **PLATE 21.1-B · MARGIN** · Scene 30 · Teaching · Visor: none
+>
+> Screwdriver behind the ear, hands busy elsewhere. The smallest way to say
+> Riley has done this a while. Outer margin, level with the first bullet.
 
 In this trade a precise drawing is a fiction by the second week on site. A
 television shifts because of where the sofa ended up. A run gets re-routed. A
@@ -62,6 +81,11 @@ distributor, PSA or ERP system.
 
 ## 21.2 Read this before you install anything
 
+> **PLATE 21.2-A · SPOT** · Scene 31 · Teaching · Visor: punctuation `!`
+>
+> Riley carrying the portable folder under one arm like a toolbox. This is the
+> product: a folder, no installer.
+
 RackPal is **pre-release and pre-installer**. It is being handed to you as a
 folder, not as a product.
 
@@ -80,6 +104,12 @@ missing, and knowing which half you have hit saves everybody's time.
 ---
 
 ## 21.3 Getting it running
+
+> **PLATE 21.3-A · STRIP** · Scene 60 · Teaching · Visor: punctuation, then face `^_^`
+>
+> Wordless, four panels, left to right. A ZIP arrives; right-click, Properties;
+> the Unblock tick (a box and a tick, no words); extract. In panel 1 the visor
+> shows `?`, in panel 4 a face. The tick is drawn as a shape, not a character.
 
 You will be given a folder, most likely inside a ZIP.
 
@@ -126,11 +156,21 @@ the application.
 
 ## 21.4 Your first fifteen minutes
 
+> **PLATE 21.4-A · FULL** · Scene 1 · Teaching · Visor: punctuation `!`
+>
+> Tour opener. Riley points across the gutter at the first step. The directional
+> point exists in four rotations; use the east one here.
+
 **Do not start with your own project.** Start with a starter, because you can
 tell at a glance whether the application is behaving and you have nothing to
 lose if it is not.
 
 ### 1. Open a starter
+
+> **PLATE 21.4-B · SPOT** · Scene 60 · Teaching · Visor: punctuation `!`
+>
+> Riley sliding a starter card into a slot, console-style. The starter opens as
+> a new unsaved project, so the card goes in and nothing is overwritten.
 
 The start screen offers four, a blank project, and a file opener. The starters
 are real projects rather than screenshots:
@@ -151,6 +191,11 @@ copy inside the application, and `Save As` is how you keep it.
 
 ### 2. Look at the six views before touching anything
 
+> **PLATE 21.4-C · SPOT** · Scene 1 · Teaching · Visor: punctuation `?`
+>
+> Riley pointing along a row of six tabs, three groups. Do not draw words on
+> the tabs.
+
 Across the top are six views in three groups. Take one pass through them in
 order and do not edit anything yet:
 
@@ -165,6 +210,10 @@ clicking their tab.
 
 ### 3. Move a device in the rack
 
+> **PLATE 21.4-D · SPOT** · Scene 2 · Teaching · Visor: punctuation `!`
+>
+> A device half-seated at chest height, ears back, tail braced against a rail.
+
 Go to **Rack**. Click a device. Press the **up arrow**: it moves 1U. Press
 `Home`: it drops to its lowest fit. Press `Ctrl+Z`.
 
@@ -172,6 +221,11 @@ Now drag a device onto a space it does not fit. The refusal is the thing to
 watch: it tells you why rather than silently snapping back.
 
 ### 4. Draw a cable
+
+> **PLATE 21.4-E · SPOT** · Scene 21 · Teaching · Visor: product mark, domain glyph
+>
+> Riley holding a cable end up to a pin and looking at the reader, one hand
+> already raised palm out. The spring-back is the point of the step.
 
 Go to **Schematic**. The symbols are laid out automatically.
 
@@ -192,11 +246,19 @@ of drags.
 
 ### 5. Watch the schedule keep up
 
+> **PLATE 21.4-F · SPOT** · Scene 8 · Teaching · Visor: product mark
+>
+> Riley with a clipboard, watching a row disappear from the list.
+
 Go to **Schedule** (`Ctrl+4`). It is the **cable** schedule, derived from the
 same model, live. Go back to the Schematic, delete the cable you drew, return,
 and its row has gone. You never regenerate anything.
 
 ### 6. Arrange the schematic and see that it stays arranged
+
+> **PLATE 21.4-G · SPOT** · Scene 23 · Teaching · Visor: punctuation `&`
+>
+> Patient, not exasperated, untangling a knot of cable.
 
 Back on the **Schematic**, drag a symbol somewhere you prefer. Add or delete a
 device elsewhere.
@@ -207,6 +269,10 @@ right-hand end of the filter bar re-flows everything you have not pinned, and
 tells you how many symbols that is before it does it.
 
 ### 7. Export
+
+> **PLATE 21.4-H · SPOT** · Scene 16 · Teaching · Visor: face `^_^`
+>
+> Riley holding up a printed elevation. The reader has finished the tour.
 
 `File` ▸ `Export PDF…`. See §21.7 for exactly which sheets you get, because it
 is fewer than the design documents describe.
@@ -251,6 +317,11 @@ reachable (a disconnected share, a stick that is not plugged in).
 
 #### What protects unsaved work
 
+> **PLATE 21.5.1-A · SPOT** · Scene 32 · Teaching · Visor: loading face, completing
+>
+> A save point: Riley kneeling at a glowing pedestal. Autosave is a game-manual
+> idea whether or not anyone asked, so lean into it.
+
 - **Autosave never writes over your file.** Only `Save` and `Save As` write the
   `.rppj`. Every 30 seconds while you work, and whenever the window loses
   focus, RackPal writes a recovery snapshot into its own folder instead.
@@ -265,6 +336,10 @@ reachable (a disconnected share, a stick that is not plugged in).
 
 #### Undo
 
+> **PLATE 21.5.1-B · SPOT** · Scene 33 · Teaching · Visor: punctuation `!?`
+>
+> Riley hauling a cable back onto the reel, hand over hand.
+
 **Undo is document-wide.** `Ctrl+Z` undoes, `Ctrl+Y` or `Ctrl+Shift+Z` redoes,
 from any view, and the `Edit` menu names the step it is about to undo. It
 covers everything, including things people do not expect to be undoable, such
@@ -276,6 +351,11 @@ act on the template you are editing instead, and hand back to the project the
 moment you leave it.
 
 #### Sheet set: the title block your PDF prints
+
+> **PLATE 21.5.1-C · SPOT** · Scene 35 · Teaching · Visor: none
+>
+> Riley stamping a blank sheet. **Draw the stamp face empty**: any words on it
+> are set by layout, and nothing here may read as the product's own issue stamp.
 
 `File` ▸ `Sheet set…` holds what the drawing set prints about the job rather than
 how it is modelled. **Title block**: project name and number, drawing number, the
@@ -297,6 +377,10 @@ An SVG that uses effects the PDF cannot draw may preview wrong: check it before
 you issue.
 
 #### Project settings: set these before you place anything
+
+> **PLATE 21.5.1-D · SPOT** · Scene 34 · Teaching · Visor: punctuation `&`
+>
+> Riley setting a bank of DIP switches with the red flip-shaft screwdriver.
 
 `File` ▸ `Project settings…` holds the conventions that travel with the file.
 Every change is undoable. **Set them first**, because designators are allocated
@@ -328,6 +412,10 @@ Two more sections live in the same dialog:
   manufacturer's own control bus. See below.
 
 #### Signal families: a signal RackPal does not ship
+
+> **PLATE 21.5.1-E · SPOT** · Scene 36 · Teaching · Visor: product mark, domain glyph
+>
+> An original and its clone, held side by side, one with a different latch.
 
 A signal family is what a port carries: `Cresnet`, `HDMI`, `Lutron QS`. When
 your equipment uses one that is not in the list, **make it as a copy of the
@@ -370,6 +458,11 @@ list shows).
 ---
 
 ### 21.5.2 Site: rooms, floorplans and where things are
+
+> **PLATE 21.5.2-A · HALF** · Scene 38 · Teaching · Visor: product mark `—`
+>
+> Riley at a map table, the floorplan unrolled, a pin in each hand. The visor
+> shows the dash: the plan is not calibrated yet.
 
 **What it is for.** The rooms are the project's vocabulary: every home run goes
 to a room, the pull sheet sorts by room, and outlet labels are built from room
@@ -438,6 +531,11 @@ use the zoom readout in the corner to fit the plan or return to 100%.
 
 #### Calibrate the plan
 
+> **PLATE 21.5.2-B · SPOT** · Scene 37 · Teaching · Visor: punctuation `?`, then `!`
+>
+> Riley kneeling on an unrolled plan with a tape measure stretched between two
+> marks. Two-panel version if there is room: `?` before, `!` after.
+
 A plan that has not been calibrated is still perfectly usable for marking where
 things go; it simply contributes no numbers. Calibrating it is what lets the
 schedule reason about footage.
@@ -471,6 +569,10 @@ first.
   devices, racks and outlets stay in the project.**
 
 #### Outline the rooms
+
+> **PLATE 21.5.2-C · SPOT** · Scene 39 · Teaching · Visor: none
+>
+> Riley snapping a chalk line along a room's corners, one corner left open.
 
 An outline is what turns a room into a run length. The figure is worked out,
 and kept up to date, whenever all of these are true:
@@ -517,6 +619,10 @@ which it switches to when you create or edit a template.
 
 #### Find a device
 
+> **PLATE 21.5.3-A · SPOT** · Scene 40 · Teaching · Visor: punctuation `?`
+>
+> Riley before a wall of labelled bins, one hand on chin. The item shop.
+
 - **Search** matches the name, the model, and the port types, so `hdbaset`
   finds an extender whose name does not say so.
 - **Filters** narrow by what a device has or is (HDMI, PoE, passthrough panel,
@@ -530,6 +636,11 @@ You do not have to visit this view to place a shipped device: the palette on the
 Rack and Site views searches the same list.
 
 #### Author a device that is not there
+
+> **PLATE 21.5.3-B · HALF** · Scene 41 · Teaching · Visor: product mark `—`
+>
+> A workbench: calipers on a chassis, a datasheet pinned up, the red flip-shaft
+> mid-flip. The dash on the visor is for the field left blank on purpose.
 
 1. Click **New device template…**.
 2. Fill in **Identity**: Display name, Manufacturer (`Generic` is filled in, and
@@ -571,6 +682,11 @@ has its own undo and redo, in the footer and on `Ctrl+Z`, for as long as it
 is open.
 
 #### Add ports
+
+> **PLATE 21.5.3-C · SPOT** · Scene 42 · Teaching · Visor: a cursor
+>
+> Riley typing one line, tail tapping the desk. The visor shows a blinking
+> cursor: drawn as a shape, never as a character.
 
 **Quick Add** is the bar across the top of the Ports section and the fastest
 route. Type one line and press `Enter`; focus stays in the bar for the next.
@@ -633,6 +749,11 @@ open, RackPal takes you to it rather than throwing it away.
 device placed from it, after counting them and the cables they take with them.
 
 #### Share templates between jobs
+
+> **PLATE 21.5.3-D · SPOT** · Scene 43 · Teaching · Visor: face `^_^`
+>
+> Handing a card across the gutter to an outstretched hand, the other character
+> cropped out of frame.
 
 - `File` ▸ `Export device template…` writes one template as a `.rpdx` file.
   `Import device template…` reads one in, and if the project already has one
@@ -698,14 +819,20 @@ If the project has no rack, the view says so and offers **New rack…**.
 
 #### Place equipment
 
+> **PLATE 21.5.4-A · HALF** · Scene 2 · Teaching · Visor: punctuation `!`
+>
+> Mid-rack work done standing, ears back, taking the weight, tail braced.
+
 Three ways, and they all end the same: the new device selected, and a status
 line saying where it went (`Placed AMP-1 at RK-1 U12-U13, front.`).
 
 - **Drag a palette row onto the rails.** A ghost follows the pointer, snaps to
   whole units and shows the U range it would take. Over a space it cannot
   take, it turns red and says why (`Occupied by SW-1 (U4-U5)`, or `Needs 2U,
-  only 1U free at top`), and releasing there places nothing. Releasing outside
-  the rack also places nothing.
+  only 1U free at top`), and releasing there places nothing. **Releasing off
+  the rack altogether sends the device to the Staging Bin** (below), so a drag
+  that wanders down the palette and is let go there creates a device. It is
+  undoable and the status line says so; `Esc` is how you cancel a drag.
 - **Double-click a palette row, or select it and press `Enter`.** With nothing
   selected in the rack, it goes at the **caret**: the highlighted U, which the
   arrow keys move when nothing is selected. If that U cannot take it, you are
@@ -729,6 +856,10 @@ Schematic.
 
 #### Select, move and remove
 
+> **PLATE 21.5.4-B · SPOT** · Scene 6 · Teaching · Visor: product mark
+>
+> The refusal: arms crossed, flat. A device ghosted red in the background.
+
 - Click to select; `Ctrl+click` adds or removes; drag across empty space to
   select a group.
 - Drag a selected device to move it. The same ghost and refusals apply.
@@ -743,15 +874,55 @@ Schematic.
 
 #### Change the rack's height, or close the gaps
 
+> **PLATE 21.5.4-C · SPOT** · Scene 45 · Teaching · Visor: punctuation `&`
+>
+> Riley sliding a row of devices together like bookends, a gap closing.
+
 - The header's **`-` / `+`** step 1U, and repeat while held. You can also drag
   the rack's top edge, or type a height in Rack settings.
 - **Shrinking below a device** opens a dialog instead of evicting it. It lists
   who would lose their position and offers the ways out: trim from the top or
-  the bottom, **compact first, then shrink**, or keep the rack at the smallest
-  height that fits.
+  the bottom, **compact first, then shrink**, move the devices that no longer
+  fit to the Staging Bin, or keep the rack at the smallest height that fits.
+  Enter takes the preselected one: compaction when it fits everyone,
+  otherwise the Staging Bin, so the devices that do not fit wait in the bin
+  with their wiring, one `Ctrl+Z` away. If one of the casualties is **locked**
+  the preselection is *keep the rack at the smallest height that fits* and the
+  bin option is greyed out, naming the locked devices, because a locked device
+  does not move and staging is a move.
 - **Compact Down** and **Compact Up** in the `⋮` menu close the gaps on the
   face you are looking at. They show a preview first; **Apply** (`Enter`) or
   **Cancel** (`Esc`). Locked devices stay put.
+
+#### The Staging Bin: somewhere to put a device that is not placed
+
+> **PLATE 21.5.4-D · HALF** · Scene 44 · Teaching · Visor: product mark
+>
+> Riley sitting beside a tote of gear, every device still wired by a tangle of
+> cables that runs back up into the rack. The wiring is the joke and the point.
+
+A strip appears under the rack canvas **while something is in it, and only
+then**: an empty bin is not drawn. Each staged device is a chip, and a click
+selects it exactly as a click on the rack would. **A device keeps its
+designator, its ports and its cables in the bin**, so staging is a move and
+never a deletion.
+
+Four ways in:
+
+- **Release a drag off the rack.** The ghost fades and a chip follows the
+  pointer saying *Release to send AMP-1 to the Staging Bin, wiring kept*.
+- **`U`**, with the selection in the rack.
+- **Delete a shelf** and choose to move the devices it hosts.
+- **Shrink the rack** below some devices and choose the bin (above).
+
+Two ways out:
+
+- **The return chip** puts a device back where it was: `Return to RK-1 U21`
+  for a rack position, `Return to SHF-1` for a shelf. When a return is not
+  possible yet, the chip says why in its tooltip rather than going missing.
+- **Drag a chip onto a rack or a shelf** to place it anywhere.
+
+Every one of these is a single `Ctrl+Z`.
 
 #### Front and rear
 
@@ -760,6 +931,10 @@ which the template decides: a patch panel takes both faces, a rear lacing bar
 only the rear. The metrics row follows the face on screen. Both faces print.
 
 #### 0U channels
+
+> **PLATE 21.5.4-E · SPOT** · Scene 27 · Teaching · Visor: none
+>
+> Tail wrapped around a rail for balance, both hands overhead at a side channel.
 
 In Rack settings, **0U channels** ▸ **Add channel…** asks for a side (front or
 rear, left or right), a start and end U, and an optional name. A channel's
@@ -795,6 +970,11 @@ switches to the Schematic with that device selected.
 
 #### The metrics row
 
+> **PLATE 21.5.4-F · SPOT** · Scene 5 · Teaching · Visor: product mark `—`
+>
+> Shrug, palms up, shoulders raised, the dash on the visor. This is the
+> superscript made flesh: the product counted what it could not count.
+
 Under the header, for the face on screen: **rack units used** of the capacity,
 **total weight**, **total draw** in VA, and power **outlets** used of those
 provided. **A device that does not state a figure is counted, never guessed**:
@@ -828,6 +1008,10 @@ hand: the first drop you enter creates one.
   **Add outlet**.
 
 #### Enter the drops
+
+> **PLATE 21.5.5-A · SPOT** · Scene 17 · Teaching · Visor: none
+>
+> The label maker, applying a designator to a panel.
 
 Type one room per line into the entry line and press `Enter`:
 
@@ -880,6 +1064,10 @@ TEST, CERT ID, INSTALLED BY, TERMINATED, JACKET and PULLED colour, CLASS,
 
 #### Land the runs at the rack
 
+> **PLATE 21.5.5-B · SPOT** · Scene 11 · Teaching · Visor: punctuation `&`
+>
+> Crouched at a patch panel with a 110 tool, terminated pairs behind, a few to go.
+
 A home run is not finished until its rack end lands on something: a patch
 panel port, a switch port. Three ways:
 
@@ -891,6 +1079,10 @@ panel port, a switch port. Three ways:
 The Schematic's status strip counts the home runs not yet landed.
 
 #### The Matrix tab
+
+> **PLATE 21.5.5-C · SPOT** · Scene 47 · Teaching · Visor: none
+>
+> Riley pencilling counts into a grid, one ear flicked.
 
 Rooms down the side, media across the top, a count in each cell. **Typing a
 count creates or removes drops** to match, as one undo step. It refuses to
@@ -918,6 +1110,10 @@ closes it.
 
 #### The Pathways tab
 
+> **PLATE 21.5.5-D · SPOT** · Scene 14 · Teaching · Visor: punctuation `?`
+>
+> On a ladder in a ceiling grid, a lifted tile, a cable held up into the plenum.
+
 Conduits, J-hooks and trays: kind, length and the runs that go through each.
 The header counts pathways, lengths still unknown and runs through no pathway.
 **Add pathway** adds one; the delete button on a row says how many runs lose
@@ -925,6 +1121,10 @@ their recorded route. Runs are assigned to a pathway with `@pathway=` when they
 are entered, or through a CSV import.
 
 #### The Devices tab
+
+> **PLATE 21.5.5-E · SPOT** · Scene 48 · Teaching · Visor: product mark
+>
+> Riley at a switch with a laptop, ticking a row. The visor shows a tick shape.
 
 Every device that can be on a network, one row each: anything with a network
 jack, anything whose template says **Wi-Fi**, and anything you have already
@@ -955,6 +1155,10 @@ then room by room. This tab is the one place a network value is typed; the
 inspector shows it but does not edit it.
 
 #### Import a spreadsheet
+
+> **PLATE 21.5.5-F · SPOT** · Scene 46 · Teaching · Visor: loading face
+>
+> Feeding a printout into a scanner. Loading means not yet, which is true.
 
 **Import CSV…** reads a contractor's drop list.
 
@@ -1015,6 +1219,10 @@ pins until you ask it to.
 
 #### Draw a cable with the mouse
 
+> **PLATE 21.5.6-A · SPOT** · Scene 1 · Teaching · Visor: punctuation `!`
+>
+> Riley pointing at a pin and tracing a line from it with the other hand.
+
 Press on a pin and drag. The pins that can take this cable light up as
 candidates; release on one. Releasing anywhere else cancels, and so does `Esc`.
 
@@ -1032,6 +1240,11 @@ The status line says what is in hand and how many candidates there are at every
 step.
 
 #### When a cable springs back
+
+> **PLATE 21.5.6-B · HALF** · Scene 7 · Teaching · Visor: product mark, domain glyph
+>
+> Head tilted, one hand raised, palm out. The pause and not the block. This
+> is the specimen the Bestiary's springs-back group reuses.
 
 If a connection is questionable, the cable does not simply fail. It springs
 back and a card appears beside the pin: the rule, what it objects to, and why
@@ -1053,6 +1266,10 @@ one fires on something you do every week, that is exactly what we want to hear
 (§21.9).
 
 #### Draw many cables at once
+
+> **PLATE 21.5.6-C · SPOT** · Scene 49 · Teaching · Visor: punctuation `!`
+>
+> Laying a ribbon of cable across a bank of jacks, one jack at a time, in a row.
 
 1. **Shift+click** a second pin in the same bank to select the run between
    them (or `Shift+Up` / `Shift+Down` from the caret).
@@ -1098,6 +1315,10 @@ the cable with one adapter on it.
 
 #### Arrange the sheet
 
+> **PLATE 21.5.6-D · SPOT** · Scene 23 · Teaching · Visor: punctuation `&`
+>
+> Untangling a knot, patient. Tidy sheet in a picture.
+
 - **Drag a symbol** to move it. Moving it **pins** it: the automatic layout
   leaves it where you put it from then on, and a new device takes a free place
   rather than shoving it aside.
@@ -1111,6 +1332,10 @@ the cable with one adapter on it.
 ---
 
 ### 21.5.7 Schedule: footage you can order from
+
+> **PLATE 21.5.7-A · SPOT** · Scene 51 · Teaching · Visor: product mark
+>
+> Measuring cable off a spool against a wall tape, ears up.
 
 **What it is for.** The cable schedule: one row per cable, derived live from the
 model. **It is read-only.** You change what it says by changing the model, in
@@ -1146,6 +1371,11 @@ If the document has no cables, the Schedule says so and says where cables are
 drawn. That is a statement about the file, not an error.
 
 #### Where each length comes from
+
+> **PLATE 21.5.7-B · SPOT** · Scene 52 · Teaching · Visor: product mark `>=`
+>
+> Holding a string taut between two pins, the other palm flat under it as the
+> floor. A bound, not an estimate. The `>=` is drawn as a shape.
 
 **Unknown values print as a dash and are counted, never estimated.** For
 length, every run resolves through the best source available:
@@ -1187,6 +1417,10 @@ edit. A heuristic should never stand between you and a deliverable you need in
 twenty minutes.
 
 #### Read the drawer
+
+> **PLATE 21.5.8-A · SPOT** · Scene 55 · Teaching · Visor: product mark
+>
+> Walking a corridor with the clipboard, pointing at the next flag.
 
 - **Collapsed**, it reads `No issues`, or counts errors, warnings and
   advisories. It opens by itself the first time an error appears in a session,
@@ -1230,6 +1464,11 @@ in `File` ▸ `Project settings…` (§21.5.1). It needs a reason too.
 
 ## 21.6 Keys worth knowing
 
+> **PLATE 21.6-A · SPOT** · Scene 29 · Teaching · Visor: punctuation `&`
+>
+> Flipping the shaft, Phillips to flat, looking at the reader. "There is
+> another way to do this": the tips beat.
+
 The complete table is
 **[`docs/reference/keymap-windows.md`](reference/keymap-windows.md)**. It is
 GENERATED from the application's own keybinding registry and a test fails when
@@ -1247,6 +1486,7 @@ The handful that pay for themselves immediately:
 | `/` | Rack, Site | Jump to the palette search |
 | Arrow keys | Rack | Nudge the selection 1U, or move the caret |
 | `Ctrl+L` | Rack, Schematic | Lock a position, or pin a symbol |
+| `U` | Rack | Send the selection to the Staging Bin |
 | `Ctrl+Alt+N` / `Ctrl+Alt+U` | Rack | New rack, rack settings |
 | `W`, `Tab`, `Enter` | Schematic | Start a cable, pick the far pin, commit |
 | `Shift+Enter` | Schematic | Commit and re-arm from the device just reached |
@@ -1263,6 +1503,11 @@ floorplan import.
 ---
 
 ## 21.7 What the PDF export actually produces
+
+> **PLATE 21.7-A · HALF** · Scene 56 · Reference · Visor: product mark
+>
+> Riley holding two printed sheets up to the light, side by side, with a
+> magnifier: identical. Same project, same day, same bytes.
 
 `File` ▸ `Export PDF…`. **These sheets are emitted today:**
 
@@ -1342,6 +1587,11 @@ arrange a second sheet; the export splits the one you have.
 
 ## 21.8 What is not built
 
+> **PLATE 21.8-A · HALF** · Scene 57 · Reference · Visor: product mark `—`
+>
+> Riley sitting on a closed hatch with cones around it. The hatch carries a
+> bare numeral 3 as a shape (Ctrl+3 is reserved). No words, no apology.
+
 This section is deliberately specific. Everything here is a known gap rather
 than a defect, and reporting one as a bug costs you time and tells us nothing.
 
@@ -1357,9 +1607,9 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
 - **No Rear Panel view.** `Ctrl+3` does nothing; it is reserved for it. The
   rear panel prints on the rear elevation today; it is just not interactively
   editable.
-- **No staging area.** Dragging a device out of the rack and releasing it
-  anywhere else places nothing, and the shrink dialog's option to move devices
-  aside says it is not available.
+- **Staging Bin: the edges.** The bin is built (§21.5.4). What is not: paste
+  and duplicate do not overflow into it, and the advisory that would name a
+  non-empty bin is held back to a later release.
 - **Circuits cannot be created.** The rack inspector lists a rack's circuits
   and says creation arrives with the power stage.
 
@@ -1402,6 +1652,10 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
 
 ## 21.9 Reporting what you find
 
+> **PLATE 21.9-A · SPOT** · Scene 20 · Teaching · Visor: punctuation `!`
+>
+> Seated at a tablet, beside the reader rather than in front of them.
+
 What makes a report useful here, in rough order:
 
 1. **The project file**, if you can share it. It is a single file and it
@@ -1428,6 +1682,727 @@ something you do every week, or stays silent on something that would fail an
 inspection, is a better find than a crash. Crashes get fixed; a wrong rule gets
 shipped to everybody and quietly teaches them the wrong thing.
 
+
+---
+
+## 21.10 Controls and screens at a glance
+
+One page per view: what is where, and which control does what. Every view has
+a **screen plate** (a labelled screenshot, numbered to match the list under it)
+and the mouse controls that are particular to it. The complete keyboard table is
+Appendix A of the PDF, or `docs/reference/keymap-windows.md`, which is
+generated from the same registry the software dispatches from.
+
+> **PLATE 21.10-A · HALF** · Scene 22 · Reference · Visor: product mark
+>
+> Riley at the left edge of the spread, one finger out, the finger being the
+> leader line that runs to the first numbered callout on the Rack screen plate.
+> Chibi, rack-height relative to the screenshot's rack. No visor text.
+
+#### Three keys that mean the same thing everywhere
+
+The keyboard was built so that one key never wears two meanings. These three
+are the ones to learn first:
+
+| Key | Meaning, in every view |
+|---|---|
+| `Esc` | Cancel whatever is in flight. With nothing in flight, clear the selection. On the Site view an armed pin is dropped first |
+| `Enter` | Commit whatever is in flight: a compaction preview on the Rack, a cable on the Schematic, a Quick Add line in the Device Builder |
+| `Ctrl+Z` | Undo the last step in the document, from any view. Inside the Device Builder it undoes the template you are editing instead |
+
+#### Rack
+
+> **SCREEN 21.10-B · FULL** · Rack view, Whole house starter, one device selected
+>
+> Callouts 1 to 8 in the order of the list below. Capture at the app's default
+> window size with the validation drawer open and one finding showing.
+
+1. **Palette.** Search with `/`. Project devices, favourites, the shipped
+   catalogue and imported libraries, by category.
+2. **Zoom readout.** Fit the rack or return to 100%.
+3. **Rack header.** Designator and name, the `-` / `+` height stepper, the rack
+   switcher when there is more than one rack, and the `⋮` menu.
+4. **Front / Rear switch.**
+5. **Metrics row.** Rack units, weight, draw in VA, outlets. A superscript says
+   how many devices a total could not include.
+6. **The rack.** The rails, the devices, and the caret when nothing is selected.
+7. **Inspector.** The selected device or devices, or the rack itself.
+8. **Validation drawer** along the bottom, and the help line, which turns into a
+   status line whenever something has just happened. The Staging Bin strip
+   appears under the rack canvas while a device is in it.
+
+| Do this | To get |
+|---|---|
+| Drag a palette row onto the rails | A ghost that snaps to whole units and shows the U range, red with a reason where it cannot go |
+| Click / `Ctrl+click` | Select / add to or remove from the selection |
+| Drag across empty space | Select a group |
+| Drag a selected device | Move it, under the same ghost and refusals |
+| Release a drag off the rack | Send the device to the Staging Bin |
+| Right-click a device | Edit this device only, Edit the template, Fork to a new template |
+| Scroll wheel / middle-button drag | Pan |
+| `Ctrl+scroll` | Zoom |
+
+#### Schematic
+
+> **SCREEN 21.10-C · FULL** · Schematic view, Whole house starter, Network
+>
+> domain soloed, one wire in flight with its candidate pins lit.
+
+1. **Filter bar.** One chip per signal domain with its cable count, then
+   **All**, **None** and **Tidy sheet**.
+2. **The sheet.** Symbols and net labels. Wires appear when you ask for them.
+3. **A pin with the caret on it,** ready for `W`.
+4. **A net label,** the default way a cable is drawn.
+5. **The selected-cable bar** under the sheet: Crossover, adapters, **Add a set
+   to this cable**.
+6. **Status strip.** Devices drawn, and what cannot be: devices with no ports,
+   home runs not landed, cables that could not be routed, domains hidden.
+
+| Do this | To get |
+|---|---|
+| Press on a pin and drag | A cable in hand; candidate pins light; release on one, anywhere else cancels |
+| `Shift+click` a second pin in the bank, then drag | Many cables at once, one undo step |
+| Click a net label | Select its cable. `Delete` removes it |
+| Drag a net label onto a free jack | Move that end of the cable, or land a home run |
+| Drag a symbol | Move it, and pin it |
+| Hold `Alt` over a device | Its wires, briefly |
+| Click a domain chip / `Ctrl+click` | Solo a domain / add or remove one |
+| Click a collapsed bank's pin | Unfold the bank |
+
+#### Site
+
+> **SCREEN 21.10-D · HALF** · Site view with a calibrated floorplan, two pins
+>
+> and one room outlined.
+
+1. **Left rail.** Floorplan pages above the room tree; **Add room** under it.
+2. **The plan.** Pins and outlines.
+3. **The strip** under the plan: everything not yet pinned.
+4. **Right panel.** The selected room, its details and its outline.
+
+| Do this | To get |
+|---|---|
+| Scroll / middle-button drag / `Ctrl+scroll` | Pan / pan / zoom |
+| Drag a device from the palette onto the plan | Place and pin in one step |
+| Drag from the strip | Pin something that already exists |
+| Click each corner, click the first again | Outline a room. Right-click takes back a corner |
+| `Delete` | Take the selected pins off the plan. The devices stay in the project |
+| `Ctrl+Shift+-` / `Ctrl+Shift+=` | Rotate the plan left / right |
+
+#### Structured Wiring
+
+> **SCREEN 21.10-E · HALF** · Structured Wiring, Table tab, entry line with one
+>
+> line typed and its preview showing.
+
+1. **Header.** Structure picker, **Import CSV...**, **Manage media types...**,
+   **Connector words...**, the `⋮` menu.
+2. **Tabs.** Table, Matrix, Outlets, Pathways, Devices.
+3. **Rooms** down the left, read-only, with a drop count each.
+4. **Entry line.** One room per line.
+5. **Filter bar,** then **the table**, then the footer with **Add drop** and
+   **Add outlet**.
+
+#### Device Manager and Schedule
+
+> **SCREEN 21.10-F · HALF** · Device Manager, browser in Grid mode.
+
+> **SCREEN 21.10-G · HALF** · Schedule, Pull Sheet preset, takeoff visible.
+
+- **Device Manager browser:** search, filters, Grid / List, the favourites
+  star, and each entry's use count. The builder's sections are Identity, Ports,
+  Panel, Physical, Power and Appearance (§21.5.3).
+- **Schedule:** the preset switch (Pull Sheet / Termination Schedule), Sort,
+  **Show jumpers and power cords**, the summary line, and the takeoff (§21.5.7).
+
+#### Chords, for two hands
+
+> **PLATE 21.10-H · SPOT** · Scene 59 · Reference · Visor: punctuation `!`
+>
+> Riley at a keyboard, one hand on `Ctrl+Shift`, the tail holding a third key.
+> Margin art beside the Appendix A pointer.
+
+The chords that need two hands are the ones in the Device Builder's port grid
+(`Ctrl+Shift+D` for a series, `Ctrl+Shift+G` to ungroup) and the Schematic's
+`Ctrl+Shift+U` to release a pinned symbol.
+
+---
+
+## 21.11 The Bestiary: every check, and what it means
+
+RackPal makes a fixed set of checks. **A check that is not listed here does
+not exist**: the list is closed on purpose, each member was added by a decision
+of its own, and a test fails if the list in the software and the list in the
+design differ. If you want to know whether the software would have caught
+something, look here first.
+
+The reasons below are the ones the software gives on the `Why?` button, lightly
+shortened in places. **Nothing a finding says ever stops a save or an export.**
+
+> **PLATE 21.11-A · FULL** · Scene 61 · Reference · Visor: product marks only
+>
+> The Bestiary opener. Riley as field naturalist: clipboard (scene 8), ears
+> forward, a row of three specimen cards pinned behind them, one for each way
+> the product refuses. The cards are blank frames here; the three specimen
+> postures of §4 of the character reference appear on them in miniature.
+> **No face and no grawlix anywhere in this chapter.**
+
+**How to read an entry.** The heading is the rule id and a name. Under it:
+*how it reaches you*, *how serious*, then what is wrong and what to do. The
+three ways a check can reach you are different things:
+
+| It reaches you as | Meaning | Severity |
+|---|---|---|
+| **Refused** | The document would mean nothing. The edit is not made and there is nothing to override | None. Nothing is filed |
+| **Springs back** | The cable you are drawing is probably wrong. It snaps back with a card, and you may make it anyway | Error or warning, filed as a finding if you connect anyway |
+| **A finding** | Listed in the validation drawer after the fact, and on the Exceptions sheet (`T0.02`) | Error, warning or advisory |
+
+**Error, warning, advisory** are how loudly a finding is reported and how it
+reads to whoever opens the sheet set. An advisory is a note rather than a
+problem. A rule's severity can be changed for one project under **Rule
+severities** in `File` ▸ `Project settings…`, with a written reason.
+
+### Refused: the document would mean nothing
+
+> **PLATE 21.11-B · SPOT** · Scene 6 · Reference · Visor: product mark
+>
+> Arms crossed, flat, no softening. The specimen posture for everything in this
+> group. Pair with the glyph of the subject on the visor.
+
+These are the only checks that can stop you, and they stop only things that
+cannot be drawn.
+
+**TOP-001 · A cable cannot start and end at the same jack.** A cable that
+starts and ends at the same jack is not a cable. Nothing can be pulled to it
+and nothing can be terminated on it.
+
+**TOP-002 · The same pair of pins cannot be wired twice in one cable.** The
+same conductor counted twice. The schedule would call for wire nobody pulls,
+and the terminations would not add up on site.
+
+**TOP-003 · A jack takes only as many plugs as it has.** Two cables in one
+HDMI port asks for something the hardware cannot do.
+
+**TOP-004 · Every end of a cable must land on a port that exists.** This
+usually means the device was deleted after the cable was drawn.
+
+**TOP-005 · A shelf cannot be mounted inside itself.** The elevation could not
+be drawn: the device would have no height and no position.
+
+**PLC-001 · A device must fit the rack where you put it.** A device at U45 of
+a 42U rack is not in the rack. This is the refusal behind the red ghost and
+`Needs 2U, only 1U free at top`.
+
+**PLC-002 · A half-width or part-width device must sit within its unit.** A
+rack unit is divided into twelfths so part-width gear can sit side by side.
+A device claiming more than the full width, or starting past its own right-hand
+edge, is in a place on the rail that does not exist.
+
+**PLC-003 · A zero-U device must be inside a channel the rack has.** Zero-U
+gear mounts in a channel down the side of the rack. One in a channel this rack
+does not have, or hanging past the end of one, has nothing to screw into.
+
+### Springs back: probably wrong, and it is your call
+
+> **PLATE 21.11-C · SPOT** · Scene 7 · Reference · Visor: product mark
+>
+> Head tilted, one hand raised palm out. A pause and not a block. Pair with the
+> glyph of the subject on the visor.
+
+Each of these catches the cable as you draw it. The card names the rule and
+what it objects to; a **remedy** button fixes the cause when the rule has one;
+**Pick a different port** puts the cable back in hand; **Connect anyway** draws
+it as drawn and files the finding; **Why?** opens this text (§21.5.6).
+
+**SIG-001 · HDBaseT into a switch port.** *Error. The flagship: the failure
+this product was built to catch.* HDBaseT extenders often push power down the
+same cable. Plugged into a network switch that is not expecting it, that power
+can destroy the switch.
+
+> **PLATE 21.11-D · HALF** · Scene 28 · Reference · Visor: product mark, domain glyph
+>
+> Riley eyeing their own RJ45 tail beside a PoE switch port, free hand raised
+> palm out (the Tier 2 posture). This is the one
+> place the running gag and the safety statement are the same picture, and it
+> sits BESIDE the sentence below and never over it, behind it or instead of it.
+> Posture only. **No face, no grawlix, no bluescreen on this page** (DR-118
+> §11.117.5).
+
+The card reads, with the real designators in place of the ports named here:
+
+> **\<port\> is HDBaseT and cannot terminate on \<port\>.**
+> HDBaseT uses Ethernet cabling but is not interoperable, and its PoH supply
+> may damage the equipment on the other end.
+
+The remedy is **Insert HDBaseT receiver**, which places the receiver and wires
+the run through it. Landing on a patch panel does not trigger the rule: a panel
+passes the signal through to another connector, which is ordinary structured
+cabling, and whether the far side reaches a switch is a question about the
+path.
+
+**SIG-002 · The signal is not one this input reads.** *Error.* It will show
+nothing, or noise, and the crew will spend a morning swapping cables to find
+out why. If an adapter or converter is going in, declare it on the cable (or
+let the remedy insert it) and this clears.
+
+**DIR-001 · Two outputs, or two inputs, wired together.** *Error.* Nothing is
+driving the run. Two exceptions are real and allowed for: eARC, where both
+ends talk back, and a passive split.
+
+**DIR-003 · An IR emitter into an IR receiver jack.** *Error.* IR emitters and
+receivers use the same plug and different wiring. Swapped, the emitter can be
+damaged, and the connector will not tell you, which is the whole reason this
+is checked in the drawing.
+
+**CON-001 · The plug does not fit the jack.** *Error.* Declaring the adapter
+that is actually going in the box clears it. It is asking what the job
+includes, not refusing the design.
+
+**ELE-006 · A constant-voltage speaker on a low-impedance output, or the
+reverse.** *Error.* 70 V and 100 V speakers and low-impedance amplifier outputs
+are not interchangeable. The wrong pairing is quiet at best and a damaged
+amplifier at worst.
+
+### Findings: listed after the fact
+
+> **PLATE 21.11-E · SPOT** · Scene 8 · Reference · Visor: product mark
+>
+> Clipboard. Not blocking anything: walking the job and writing it down.
+
+These are in the validation drawer, group by rule or by location, and each can
+be acknowledged with a reason that prints on `T0.02`.
+
+#### Power and network
+
+**PWR-003 · More things to plug in than places to plug them.** *Error.* The
+outlets consumed exceed the outlets the rack provides. Somebody will arrive with
+a power strip nobody drew. The finding offers to add one on a shelf, or a
+vertical rack PDU.
+
+**PWR-001 · A circuit is loaded past 80% of its breaker.** *Warning.*
+Continuous load on a breaker is conventionally kept to 80% of its rating; past
+that, expect nuisance trips. **It is a planning estimate from typical draw and
+diversity, not a compliance check**: verify against real nameplates before
+anyone commits to a panel schedule. A device with no typical draw recorded is
+counted as unknown and named, never treated as drawing nothing. It reads a
+rack's circuits, and a circuit cannot be created in this build (§21.8), so it
+can only speak about a project that already carries them.
+
+**NET-001 · A switch's PoE budget is oversubscribed.** *Error.* A switch has a
+total power budget, not only a per-port one. Load every port and it starts
+dropping devices, usually the ones that came up last and usually at the worst
+moment.
+
+**ELE-005 · Speaker taps on a constant-voltage line exceed 80% of the amplifier
+channel.** *Warning.* Overload a 70 V line and the amplifier clips, and clipped
+square waves are what destroy tweeters. The 80% is headroom, a planning figure
+and not a measurement. Taps nobody recorded are counted and named rather than
+estimated, so **the total this reports is a floor**.
+
+**ELE-003 · Speaker polarity is inverted between the two ends of a pair.**
+*Warning.* One speaker of a pair wired backwards cancels bass where the two
+overlap. It measures fine and sounds thin, so it is usually found long after
+handover, if at all. A reversal you mean is marked on the cable (**Polarity
+reversed**, §21.5.6) and listed on the pinout sheet `T5.01` so nobody corrects
+it.
+
+#### Lengths
+
+**LEN-001 · An Ethernet channel is over 100 m.** *Error.* 100 m is the whole
+channel, patch cords at both ends included, not just the horizontal run. Past
+it the link negotiates down or drops. **Where the length is not known, the
+finding says so** (`<cable> carries Ethernet and has no measured length, so the
+100 m channel limit cannot be verified.`) **instead of passing quietly.** And
+where a run is unmeasured but its floorplan straight line is already over the
+limit, it says that instead, because no route is shorter than the straight
+line. Work up the length ladder (§21.5.7) to turn either into a number.
+
+**LEN-002 · A run is past its own medium's limit.** *Warning.* Every medium
+has a distance past which it needs help. The figure comes from the media
+registry rather than from the rule, so the run needs an extender or a different
+cable. An unmeasured run is reported the same way as for `LEN-001`: it says the maximum cannot be verified.
+
+#### Racks and mounting
+
+**RCK-001 · Two devices in the same rack space.** *Error.* One of them is not
+going in, and the elevation shows a rack that cannot be built.
+
+**RCK-002 · A device runs off the end of the rack.** *Error.* Either the rack
+is shorter than the design assumed, or the device is mounted too low to fit.
+
+**RCK-003 · The rack is carrying too much.** *Advisory at 60% of its weight
+capacity, warning at 85%, error over capacity.* A full rack of amplifiers
+reaches its rating faster than people expect. The notice starts early because a
+42U rack at 85% of its rating is already heavy enough for the casters to mark a
+floor. Changing the rule's severity in Project settings replaces all three
+levels with the one you chose.
+
+**RCK-012 · The depth does not add up.** *Error.* Front depth plus rear depth
+plus a 50 mm cable allowance exceeds the usable depth, for devices sharing rack
+units. The 50 mm is what stands between the design and a rear door that will
+not close.
+
+**RCK-013 · A heavy device is hung on its front ears alone.** *Warning.* Gear
+this heavy bends its ears and can tear out of the rail. It needs rear support
+or a shelf. Common on power amplifiers and UPS units, which are heavier than
+they look. The equipment list carries a **rear rail support** for each one
+(§21.7).
+
+**RCK-014 · A half-width device is alone in its unit.** *Advisory.* A
+half-width device has ears for half a rack. On its own it needs an extension
+ear kit, or a shelf, to reach both rails. Two side by side are joined with the
+kit they ship with instead. The equipment list carries the **ear kit**.
+
+> **PLATE 21.11-F · SPOT** · Scene 62 · Reference · Visor: product mark
+>
+> Riley holding two half-width devices side by side like a pair of books, one
+> in each hand, shoulder to shoulder: the case where no kit is needed.
+
+#### Code-adjacent: read the whole sentence
+
+> **PLATE 21.11-G · SPOT** · Scene 14, composed with the Tier 3 clipboard · Reference · Visor: product mark
+>
+> Riley on a ladder at a lifted ceiling tile, reading the jacket print, the
+> clipboard in the free hand. Beside the two sentences below and never over
+> them. **Product-mark register and a section-4 posture only. No grawlix, no
+> face, no bluescreen.**
+
+These two ask you to look something up. **They never decide for you**, and the
+sentences below are exactly what the software prints, with the real designators
+in place of the ones named here.
+
+**CODE-001 · Low-voltage cable shares a pathway with line voltage.** *Warning.*
+
+> **\<cable\> is a Class 2/3 cable in \<pathway\>, which carries line voltage.
+> Verify against NEC 725.136: the article permits arrangements this product does
+> not model, such as barriers and listed assemblies, so this is a check rather
+> than a violation.**
+
+**CODE-002 · A cable in a plenum is not plenum-rated.** *Warning.*
+
+> **\<cable\> runs through \<pathway\>, a plenum space, and its \<LISTING\>
+> listing is not plenum-rated. Verify against NEC 800.154; 300.22(C) permits a
+> metal raceway, which this product does not model.**
+
+A jacket with no listing recorded is treated as unknown and skipped, rather
+than assumed either way. The answer depends on the cable, the barrier and the
+jurisdiction, and on what the building inspector says.
+
+#### Housekeeping
+
+**LNK-020 · Cables drawn but not landed.** *Advisory.* A checklist for the end
+of a design session, not a fault: unbound ends are a normal way to work.
+
+### Site notes: only once a floorplan is imported
+
+These four are a separate set. They file only when the project has a
+floorplan, and none of them is a fault.
+
+**PLN-001 · A plan is not calibrated.** *Advisory.* A plan locates every drop
+whether or not it is calibrated, which is most of what a plan is for. What it
+cannot do uncalibrated is yield a length.
+
+**PLN-002 · Devices or outlets on this plan's floor carry no pin.** *Advisory.*
+A drop that is not on the plan is a drop the installer has to be told about
+some other way. The strip under the plan lists exactly these.
+
+**PLN-003 · A plan has pinned drops but no pinned rack.** *Advisory.* Every
+home run is measured from the head end. With no rack on the plan the floor
+yields no length however well it is calibrated.
+
+**PLN-004 · The image under the pins has changed.** *Warning.* The pins, the
+calibration and every length derived from them were placed against a different
+picture, so they may all be in the wrong place. The file still opens; this says
+why it might not be what you think.
+
+### Dealing with a finding
+
+> **PLATE 21.11-H · STRIP** · Scenes 8, 54, 55 · Reference · Visor: product marks
+>
+> A wordless three-panel strip. Panel 1: Riley reads a flag on the clipboard.
+> Panel 2: Riley signs a note and sticks it to the flag. Panel 3: the flag is
+> still there, now with a note, and Riley moves on. The point of panel 3 is that
+> acknowledging is not the same as the problem having gone.
+
+Open the drawer (§21.5.8). For each row: take the **remedy** if it has one;
+otherwise **Acknowledge** with a reason (just this one, or every such finding in
+the project, and what to treat it as from then on). An acknowledgement prints on
+`T0.02` with your reason, who and when, so **a reader of the sheet set can see
+that you saw it**. **Withdraw** takes one back. If the problem goes away later,
+the sheet marks the acknowledgement as one whose problem has gone, rather than
+dropping it.
+
+---
+
+## 21.12 Field notes: jobs the views do not show you
+
+The chapters above are by view. Jobs are not. These cut across, each in the
+order you would do it, with a pointer to the section that has the detail.
+
+> **PLATE 21.12-A · HALF** · Scene 3 · Teaching · Visor: punctuation `?`
+>
+> Riley in the attic strip at the top of the page, feeding a cable down toward
+> the first field note. The cable continues as the chapter's running rule
+> (page-furniture, section 6 of the character reference).
+
+### Size a UPS without guessing
+
+1. Place the gear on the Rack (§21.5.4). Look at the **metrics row**.
+2. **A superscript beside the VA total** says how many devices it could not
+   include. Point at it: it names them.
+3. For each, open the template (**Edit the template...**) and fill **Typical
+   watts** under **Power**, from the manufacturer's data. **Typical draw is
+   never worked out from the nameplate**, so a blank stays a blank until a
+   person fills it.
+4. If one unit of the job really differs from its template, put the figure on
+   **This device only** in the inspector instead.
+5. When the superscript has gone, the total is a number. Until then it is a
+   floor.
+
+### Take a contractor's drop list from a spreadsheet to a pull sheet
+
+1. **Structured Wiring** ▸ **Import CSV...** (§21.5.5). Choose one row per drop
+   or one row per room, map the columns, and read the preview before you press
+   Import. It is one undo step.
+2. Open **Manage media types...** and merge any typo that became a second cable
+   type.
+3. **Matrix** tab: check the counts room by room.
+4. Land the runs at the rack with **LANDS ON**, or drag the loose ends on the
+   Schematic. The Schematic's status strip counts the ones left.
+5. Record **CUT** lengths as the runs are pulled.
+6. Export. A project where every run is landed at both ends gets no Unused
+   Home Runs sheet; one that is not gets `T6.20` telling the crew which end is
+   loose.
+
+> **PLATE 21.12-B · STRIP** · Scenes 46, 11, 53 · Teaching · Visor: loading face
+>
+> Panel 1: Riley feeds the contractor's printout into a scanner, visor loading.
+> Panel 2: crouched at a patch panel with a 110 tool, a few pairs left. Panel 3:
+> ticking the Pull Sheet's boxes. The loading face is "not yet", not "nobody
+> knows".
+
+### Get a length you can order cable from
+
+Every run resolves through the best source it has (§21.5.7). Work up the
+ladder:
+
+1. Give every room a **Run length from rack**, typed or from an outline.
+2. Calibrate the plan and pin the rack first, then the outlets.
+3. Record **CUT** lengths as runs are pulled; they beat everything else.
+4. Read the takeoff. A line some runs could not contribute to says how many are
+   missing. That number going to zero is the finish line.
+
+> **PLATE 21.12-C · HALF** · Scene 50 · Teaching · Visor: product mark `—` at the bottom
+>
+> Riley climbing a ladder of five rungs. The bottom rung is the dash (unknown)
+> and the top is measured. The dash sits at the foot of the ladder, where the
+> product puts it.
+
+### Take a cable the software dislikes, on purpose
+
+Sometimes a cable you know about trips a check: a converter you have not drawn,
+or an arrangement the rules do not model.
+
+1. Draw it. When it springs back, read the card.
+2. If the cause is real, take the **remedy**, or declare the adapter.
+3. If you mean it, **Connect anyway**.
+4. Open the drawer and **Acknowledge** the finding with a reason a stranger
+   could understand. It prints on `T0.02`.
+5. If the rule is wrong for the whole project, change its severity under
+   **Rule severities**. That also needs a reason.
+6. If the rule is wrong for the trade, tell us (§21.9). That is the more
+   useful thing.
+
+### Build a patch panel in one line
+
+1. **New device template...** Give it a name, a prefix and a height.
+2. In Quick Add, type `24 rj45 pass both` and press `Enter` (§21.5.3).
+3. **Passthrough** on the grid's toolbar makes the template a patch panel, and
+   **Pair front to rear** pairs the two faces.
+4. **Save.** It will place and print like any other panel.
+
+### Hand the set to a client
+
+1. `File` ▸ `Sheet set...`: title block, cover paragraph, logo, legend notes.
+   Leave a field empty and its line is left off.
+2. `F7`, then `F8` through every finding. Remedy, fix or acknowledge each one.
+3. Read `T0.02` in the export preview: it is what your client's reader will see
+   about the decisions you made.
+4. `File` ▸ `Export for construction...` stamps the set only when no error is
+   open. If it comes out unstamped, the status line says how many are open and
+   which sheet lists them.
+5. The same project exported twice on the same day is the same file, byte for
+   byte, so a file comparison shows what actually changed between issues.
+
+> **PLATE 21.12-D · HALF** · Scene 16 · Teaching · Visor: face `^_^`
+>
+> Riley holds up a finished elevation, pleased. This is a teaching chapter and
+> a good one for a face; spend it here and not in the Bestiary.
+
+### Change a device that is already placed
+
+1. Right-click it and pick: **Edit this device only**, **Edit the template...**
+   (every device made from it), or **Fork to a new template**.
+2. Saving a template writes a new version. The chip beside `Save` says whether
+   the change is **Safe**, **Additive** or **Breaking** for devices already
+   placed.
+3. If you change your mind, `Ctrl+Z`. Undo covers a floorplan import and a whole
+   CSV import.
+
+---
+
+## 21.13 When something looks wrong
+
+Find the symptom, then the way out. A good proportion of "it is broken" is in
+§21.8 as a known gap, so check there if nothing below matches.
+
+> **PLATE 21.13-A · FULL** · Scene 58 · Teaching · Visor: classic bluescreen
+>
+> **The only page in the guide where Riley may wear the bluescreen**, and the
+> reason this section carries no domain glyphs or cable colours anywhere on it.
+> Riley sitting on the floor with the tool belt sagging, the visor showing the
+> classic 9x/NT blue (#0000AA), holding the diagnostics folder out to the
+> reader. This is Riley failing, which is not the same thing as the product not
+> knowing (the dash). Keep this section free of both.
+
+### At your desk
+
+| What you see | What is going on | What to do |
+|---|---|---|
+| The ghost turns red and nothing is placed | The device does not fit there. The label says why: `Occupied by ...` or `Needs 2U, only 1U free at top` | Pick another U, or **Compact** first (§21.5.4) |
+| A device I dragged out of the rack has gone | It is in the Staging Bin, strip under the rack, with its wiring | Click its **Return to ...** chip, or `Ctrl+Z` |
+| Double-clicking a device in the Site palette does nothing | A plan has no default spot | Drag it onto the plan |
+| `Ctrl+3` does nothing | Reserved for a Rear Panel view that is not built | Use the rear elevation (§21.8) |
+| The Schedule says there are no cables | The project has none | Draw some on the Schematic; the page says so |
+| A length prints a dash | Nobody has measured or estimated it. A dash is a count, never a zero | Work the length ladder (§21.5.7) |
+| A length prints in italic with `>=` | It is the straight-line floor from a calibrated plan, not an estimate | Add a room run length or a CUT length |
+| I cannot type a decimal in a length cell | Lengths take a whole number of feet (or metres) | Round to the unit; the column prints whole numbers |
+| Calibrate refused my number | A bare number is ambiguous | Type the unit: `3' 6"` or `2.4 m` |
+| A paste created no rows | A paste fills existing rows and never creates drops | Add the drops first, then paste |
+| `Save` is greyed out in the template builder | A name, a prefix and a height are all still needed | Fill those three |
+| A device with Wi-Fi is missing from the Devices tab | Its template does not say **Wi-Fi: Yes** | Set it on the template |
+| A cable I drew is on no interconnect sheet | Its type belongs to no signal domain. The export's notices name it | Give the cable a type that has one |
+| A cable on a folded bank shows no label | It is not on the bank's first port | Click the bank to unfold it. The printed sheet unfolds it for you |
+| `Clear` on the project name is refused | The name heads every sheet | Rename it instead |
+| A rule fires on something I do every week | That is an opinion some people held | Say so (§21.9) |
+
+### Files, windows and exports
+
+| What you see | What is going on | What to do |
+|---|---|---|
+| *Unsaved work was found* on start | The last session ended without saving | **Recover**, **Keep for later** or **Discard**. Recover opens the snapshot as unsaved work, so save it |
+| A banner that cannot be dismissed, and the file is read-only | A newer version of RackPal saved it | Edit and export if you like, then **Save a copy...** |
+| A banner says autosave and recents are off | RackPal could not write beside itself | Move the folder somewhere writable |
+| Windows shows a full-screen warning about the download | The ZIP was extracted before it was unblocked | Unblock the ZIP and extract again (§21.3) |
+| Windows says *Unknown publisher* | Only one of two certificate stores has the certificate | Ask whoever gave you the build (§21.3) |
+| Export is refused | The project has no rack | Add a rack |
+| Export finished, not stamped for construction | An error is open, and acknowledging counts | Clear or acknowledge the errors the status line counts |
+| Export preview shows no pages | The page renderer is missing from this install | **Save...** still writes the file |
+| An export says there are more than 40 sheets | Something may be duplicated | Check the sheet list |
+| An export is refused for size | A set of more than 2,000 sheets is refused before anything is built | Split the job into more than one project |
+
+### If RackPal itself fails
+
+Your work is protected before anything else (§21.5.1). After a crash:
+
+1. Start RackPal again and take **Recover**.
+2. `Help` ▸ `Open diagnostics folder...`. **`rackpal.previous.log`** is the one
+   you want if RackPal closed on you.
+3. Send it with the project file (§21.9). It records what kind of error
+   happened and where in the code, and never a project name, a file name or a
+   path.
+
+---
+
+## 21.14 Glossary
+
+> **PLATE 21.14-A · MARGIN** · Scenes 17 and 30 · Reference · Visor: product mark
+>
+> Two margin spots that alternate down the glossary's outer edge: Riley
+> applying a designator with the label maker, then Riley with the red
+> flip-shaft screwdriver behind the ear. No text.
+
+**Acknowledge.** Telling the software you have seen a finding, with a reason that
+prints on `T0.02`. The finding stays on record.
+
+**Advisory.** The quietest severity: a note, not a problem.
+
+**Bank.** A group of ports on a device (`HDMI Outputs`). The Schematic folds a
+bank so a 48-port switch does not draw 48 pins until you ask.
+
+**Calibrate.** Telling a floorplan how long something on it is, so distance on
+the plan means something. An uncalibrated plan still locates things.
+
+**Caret.** The highlighted U on the Rack, or the highlighted pin on the
+Schematic, which the arrow keys move.
+
+**Sheet id.** `T0.00`, `T6.10` and so on. Every sheet keeps its id whichever
+numbering style you pick.
+
+**Clone (a signal family).** A copy of a family you start from because you
+cannot start from blank. It keeps its domain, direction and topology so the
+checks keep working.
+
+**Compact.** Close the gaps in a rack face, showing a preview first.
+
+**Connect anyway.** Make a cable that a check objected to. The check then shows
+as a finding.
+
+**Domain.** The kind of signal a cable carries (digital video, network, power
+and so on). Colour comes from the domain.
+
+**Drop.** One home run, from a room to the rack.
+
+**Family.** What a port carries within a domain: `HDMI`, `Cresnet`, `Lutron QS`.
+
+**Field.** Not in a rack: speakers, displays, keypads. Also the wall end of a
+home run.
+
+**Finding.** What a check reports after the fact, in the validation drawer.
+
+**Home run.** A cable from a room to the rack. A **link** can be landed at the
+rack and terminated at the room; the Unused Home Runs sheet lists the ones that
+are not.
+
+**Land.** Terminate a home run's rack end on a panel port or a switch port.
+
+**Link.** One physical cable, carrying one or more services over conductors.
+
+**Net label.** The pair of labels, one at each end, that a cable is drawn as
+by default.
+
+**Outlet.** A wall plate and what is on it.
+
+**Pathway.** A conduit, J-hook, tray or plenum space that runs go through.
+
+**Pin (a symbol).** Fix a symbol's place on the Schematic so the automatic
+layout leaves it. Moving a symbol pins it.
+
+**Pin (on a plan).** Put a rack, outlet or device on a floorplan.
+
+**Preset (a rack preset).** A saved rack form factor on this computer.
+
+**RU / U.** A rack unit.
+
+**Spring back.** What a cable does when a check objects as you draw it.
+
+**Starter.** A real project that ships with the application.
+
+**Structure device.** The panel or enclosure a project's home runs belong to.
+
+**Takeoff.** The Schedule's per-cable-type footage, with your waste factor added.
+
+**Template.** What a device is made from: size, ports, power, look. Editing one
+writes a new version.
+
+**Unknown.** A value nobody has supplied. It prints as a dash and is counted,
+never turned into a figure.
+
+**Zero-U (0U).** Gear mounted in a channel beside the rack rather than in its
+rack units.
+
+---
+
 ---
 
 **Related:** [Keyboard reference](reference/keymap-windows.md) (generated) ·
@@ -1435,5 +2410,6 @@ shipped to everybody and quietly teaches them the wrong thing.
 [Rack editor](04-rack-editor.md), [Schematic](05-schematic-editor.md),
 [Device builder](06-device-builder.md), [Structure](07-structure-device.md),
 [Plan view](15-plan-view.md) (design specifications, which describe more than
-is built) · [Milestone board](12-milestone-board.md) (what is demonstrated, and
+is built) · [Riley plate plan](22-riley-plate-plan.md) (where the illustrations
+go) · [Milestone board](12-milestone-board.md) (what is demonstrated, and
 the evidence for it)
