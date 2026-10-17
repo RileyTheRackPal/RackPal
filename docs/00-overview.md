@@ -150,7 +150,7 @@ Two refusals from the raw prior-art analysis were themselves **overruled** and a
 
 | | **RackPal** | **D-Tools SI** | **D-Tools Cloud** | **XTEN-AV X-DRAW** | **Visio + stencils** | **draw.io / Lucidchart** | **RackOnline** |
 |---|---|---|---|---|---|---|---|
-| Price | **Free, GPLv3, and nothing in it is priced** (DR-036). It is not positioned against these at all | **$1,800/user/yr, 5-user min = $9,000/yr floor**; $200/hr services | $99/mo Single to $1,199/mo Enterprise ($89–$1,079 paid annually); **setup fees $250–$2,500**; extra office user $70–$99/mo | $139–$169/user/mo by tier, 25% off annually ($104.25–$126.75); **X-PRO add-on $22.50/mo, $16.88 annually** | Licence + stencil packs; commercial libraries draw open contempt on price | Free–low subscription | **Domain does not resolve: appears defunct** |
+| Price | **Free, AGPLv3-or-later, and nothing in it is priced** (DR-036, DR-189 §11.188.1). It is not positioned against these at all | **$1,800/user/yr, 5-user min = $9,000/yr floor**; $200/hr services | $99/mo Single to $1,199/mo Enterprise ($89–$1,079 paid annually); **setup fees $250–$2,500**; extra office user $70–$99/mo | $139–$169/user/mo by tier, 25% off annually ($104.25–$126.75); **X-PRO add-on $22.50/mo, $16.88 annually** | Licence + stencil packs; commercial libraries draw open contempt on price | Free–low subscription | **Domain does not resolve: appears defunct** |
 | Owns its canvas | Yes | **No**: drives Visio or AutoCAD | Unknown | Yes: X-DRAW is its own editor | N/A (is the canvas) | Yes | Unknown |
 | Typed ports, enforced at drag time | **Yes, and a model-illegal drop is REFUSED OUTRIGHT** (DR-011 §11.11.5): it springs back carrying the `TOP-` rule id and a sentence naming the real designators, and there is **no `[ Connect anyway ]`**. The override exists only for the tier-2 advisories (CR-017), which are M5's. This cell used to promise the escape on both | No pin-level type system | Unknown | Unknown | No | No | Unknown |
 | Unique device designators | **Yes**: allocated at creation and stored (`MTX-1`, `AMP-12`) | Yes | Unknown | **Yes now**: X-DRAW appends a number suffix to identical product names by default (see §1's dated complaint) | Manual discipline only | Manual discipline only | Unknown |
@@ -161,7 +161,7 @@ Two refusals from the raw prior-art analysis were themselves **overruled** and a
 | Diffable local project file | **Yes**: pretty-printed key-sorted JSON, stable UUIDs, `schemaVersion` | Proprietary / cloud | Cloud | Cloud | Binary | Cloud | Unknown |
 | Blocks your export on a heuristic | **Never** (G3) | — | — | — | — | — | — |
 
-**THE PRICE ROW USED TO POSITION RACKPAL AGAINST THIS TABLE AND NO LONGER CAN.** It read *"anchored to Stardraw and free AVSnap, not to D-Tools"*, which was a pricing strategy. **DR-036 rules there is no price**: RackPal is free and GPLv3, so it competes on what it does and not on what it costs. The competitors' figures stay because knowing what a shop pays now is still how you read the rest of the table.
+**THE PRICE ROW USED TO POSITION RACKPAL AGAINST THIS TABLE AND NO LONGER CAN.** It read *"anchored to Stardraw and free AVSnap, not to D-Tools"*, which was a pricing strategy. **DR-036 rules there is no price**: RackPal is free and AGPLv3-or-later (DR-189 §11.188.1 reversed DR-036's GPLv3), so it competes on what it does and not on what it costs. The competitors' figures stay because knowing what a shop pays now is still how you read the rest of the table.
 
 **AND THE STARDRAW FIGURE THE OLD ROW ANCHORED TO WAS WRONG.** This document said *"$275–$1,050 yr 1"* in two places. Those are the RENEWAL prices: Stardraw Design 7 is **$550 first year for Entry and $2,100 for Professional**, renewing at $275 and $1,050. The anchor was set at half the real entry cost, which is the direction that makes a competitor look cheaper than it is. §5's persona carries the corrected figure.
 
@@ -218,17 +218,27 @@ Cost, stated honestly rather than comfortably: **relative sizes, and no week tot
 |---|---|
 | [Domain](01-domain.md) | The trade, the vocabulary, the signal and cable registry |
 | [Data model](02-data-model.md) | `Link` → `Service` → `Conductor`, `Net`, `Placement`, templates, the file format |
-| [Architecture](03-architecture.md) | The five packages, the command stack, the display-list IR, the isolate |
+| [Architecture](03-architecture.md) | The packages and the dependency rule between them, the command stack, the display-list IR, the isolate |
 | [Rack editor](04-rack-editor.md) | Elevations, quick-add, the Staging Bin, compaction |
 | [Schematic editor](05-schematic-editor.md) | Symbols, drag-to-connect, layout and routing, net labels and the domain filter |
 | [Device builder](06-device-builder.md) | Three required fields, the port grid, the three doors |
 | [Structure device](07-structure-device.md) | Outlets, home runs, dual labels, the location tree |
 | [PDF export](08-pdf-export.md) | The sheet set, the schedule presets, the export contract |
 | [Plan view](15-plan-view.md) | **v1, and SHIPPED.** DR-029 moved it into v1 and DR-135 opened its epic; this row said `v1.1` until DR-168 §11.167 went looking. The floorplan underlay, pins, calibration, the four-tier length model, `T1.01`. The view itself is now the first tab, `Site`, merged with the location tree |
-| [Roadmap](09-roadmap.md) | v1 / v1.1 / v1.2 / v2, the ten milestones, the honest total |
+| [Roadmap](09-roadmap.md) | The release bands of §2 (v1 to v1.4, then v2; DR-188 added v1.3 and DR-246 v1.4), the ten milestones, the sizes |
 | [Canonical decisions](canonical-decisions.md) | **Normative.** The `CR-nnn`, `AC-nnn` and `RJ-nnn` rulings, canonical naming, the model, the registry, the scope ruling, the milestone plan, and the binding user decisions (`DR-nnn`), indexed with their counts in [docs/10](10-decisions.md). This line once stated those counts and was stale twice (`DR-001`–`DR-005`, then `DR-001`–`DR-019` against 248) |
 | [Decisions (ADR log)](10-decisions.md) | The sixteen ADRs and canon §10's questions, none of which is open, summarising the record above |
 | [Testing and quality](11-testing-and-quality.md) | The DRC fixture corpus, goldens, the print test matrix |
+| [Milestone board](12-milestone-board.md) | The evidence: every milestone's exit clauses marked by what was run, and §1, the one home of project status |
+| [macOS debt register](13-macos-debt-register.md) | The macOS work list DR-009 makes owed, one item per Windows-only dependency |
+| [Deployment](14-deployment.md) | The portable build and how to hand it over; the version scheme (§14.0) |
+| [M3-G drill](16-m3g-drill.md) | A drill record: the script and verdict form for M3's timed 60-drop clause, which only a person can perform |
+| [M4 clause 2 drill](17-m4q2-drill.md) | A drill record: M4's untimed second clause, whether a template a person authored places into a rack and prints `—` for what it does not know |
+| [Mark legibility check](18-m4r-mark-legibility.md) | A paper check, the half of M4-R that no assertion can perform: whether a person can tell the device marks apart in greyscale |
+| [Riley](19-riley.md) | The mascot's character reference, written for an artist: what is fixed and what is open |
+| [Rule review pack](20-rule-review.md) | Every validation check in plain terms, for a working integrator to mark up |
+| [User guide](21-user-guide.md) | What RackPal does today, for integrators; the only document that describes the built application rather than the intended one |
+| [Riley plate plan](22-riley-plate-plan.md) | **Proposed, not ruled.** Where Riley's art goes in the user guide |
 | [Seed devices](catalog/seed-devices.md) | The archetype catalog and its provenance |
 
 Raw working papers (non-normative rationale, superseded wherever they disagree with the decision record) are in [`docs/research/`](research/).
