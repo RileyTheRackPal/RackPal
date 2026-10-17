@@ -9,7 +9,7 @@ tags: [ruling, settings, designators, cr-045, dr-201]
 timestamp: 2026-09-29T00:00:00Z
 ruling_id: DR-201
 canon_section: "11.200"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-29, choosing the recommended option of three, each put with a price.

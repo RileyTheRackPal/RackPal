@@ -9,7 +9,7 @@ tags: [ruling, keystone, m3, geometry, units, measurement, dr-007, dr-041, dr-04
 timestamp: 2026-08-11T12:00:00Z
 ruling_id: DR-042
 canon_section: "11.41"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-11, with a caliper, one day after

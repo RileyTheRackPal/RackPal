@@ -10,7 +10,8 @@ tags: [ruling, plan-view, marks, cr-078, pal-1, g4, dr-169, m6]
 timestamp: 2026-09-14T00:00:00Z
 ruling_id: DR-169
 canon_section: "11.168"
-status: ruled
+status: superseded-in-part
+superseded_by: [DR-183]
 ---
 
 Settled by the user on 2026-09-13, built as `#896` and its six chapters.

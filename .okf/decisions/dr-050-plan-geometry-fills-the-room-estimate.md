@@ -12,7 +12,7 @@ tags: [ruling, plan-view, estimating, schedule, len-a, dr-050, dr-020, dr-046, d
 timestamp: 2026-09-11T00:00:00Z
 ruling_id: DR-050
 canon_section: "11.49"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-12, from a request for Specifi-styled wire-run

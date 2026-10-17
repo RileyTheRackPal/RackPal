@@ -10,7 +10,7 @@ tags: [ruling, ui, shell, validation, drc, keymap, reachability, m5, dr-129, ac-
 timestamp: 2026-09-06T00:00:00Z
 ruling_id: DR-133
 canon_section: "11.132"
-status: ruled
+status: built
 ---
 
 # DR-133 · The decision had been made and simply never built

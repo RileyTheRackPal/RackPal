@@ -9,7 +9,7 @@ tags: [ruling, m3, structure, termination, g4, dr-027, dr-043, dr-046]
 timestamp: 2026-08-12T12:00:00Z
 ruling_id: DR-046
 canon_section: "11.45"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-12: *"the rack termination shouldn't be

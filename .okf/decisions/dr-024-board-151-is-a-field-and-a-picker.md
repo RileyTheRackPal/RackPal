@@ -6,7 +6,7 @@ tags: [ruling, m3, outlet-templates, scope, dr-024]
 timestamp: 2026-08-08T00:00:00Z
 ruling_id: DR-024
 canon_section: "11.23"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-08, after board #150 closed at `5abb8b3`.

@@ -7,6 +7,7 @@ timestamp: 2026-07-28T00:00:00Z
 ruling_id: DR-008
 canon_section: "11.8"
 status: built
+amended_by: [DR-233]
 ---
 
 Three unrelated questions, ruled together because they arose together during

@@ -11,7 +11,7 @@ tags: [ruling, amendment, ac-040, cr-021, validation, drc, ele-005, constant-vol
 timestamp: 2026-09-06T00:00:00Z
 ruling_id: DR-132
 canon_section: "11.131"
-status: ruled
+status: built
 ---
 
 # DR-132 · The catalogue goes to 29, and a duplicate was two greps away

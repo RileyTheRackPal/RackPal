@@ -7,6 +7,7 @@ timestamp: 2026-08-19T00:00:00Z
 ruling_id: DR-074
 canon_section: "11.73"
 status: built
+amended_by: [DR-075]
 ---
 
 For two milestones the product could record where a cable landed and could

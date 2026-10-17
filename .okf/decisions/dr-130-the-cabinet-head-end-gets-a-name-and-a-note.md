@@ -12,7 +12,7 @@ tags: [ruling, placement, cabinet, off-rack, mount-note, producer-gap, schedule,
 timestamp: 2026-09-06T00:00:00Z
 ruling_id: DR-130
 canon_section: "11.129"
-status: ruled
+status: built
 ---
 
 # DR-130 · A common case needs to be sayable before it needs geometry

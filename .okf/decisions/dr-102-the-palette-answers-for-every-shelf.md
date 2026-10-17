@@ -11,7 +11,7 @@ tags: [ruling, palette, library, rmda, provenance, dr-077, dr-101, cr-104, cr-05
 timestamp: 2026-08-29T00:00:00Z
 ruling_id: DR-102
 canon_section: "11.101"
-status: ruled
+status: built
 ---
 
 # DR-102 · The palette answers for every shelf

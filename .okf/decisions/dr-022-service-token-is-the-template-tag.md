@@ -6,7 +6,7 @@ tags: [ruling, m3, labels, idformat, dr-022]
 timestamp: 2026-08-07T00:00:00Z
 ruling_id: DR-022
 canon_section: "11.21"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-07, before board #152 allocated a single label.

@@ -6,7 +6,7 @@ tags: [m5, nec, validation, jacket, code-rules, g4, cr-024, dr-051, trade]
 timestamp: 2026-08-19T00:00:00Z
 ruling_id: DR-079
 canon_section: "11.78"
-status: ruled
+status: built
 ---
 
 The user reviewed the corpus against NEC and US practice and returned four

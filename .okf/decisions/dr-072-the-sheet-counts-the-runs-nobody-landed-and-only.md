@@ -7,7 +7,7 @@ tags: [ruling, dr-072, canon-11-71]
 timestamp: 2026-08-18T00:00:00Z
 ruling_id: DR-072
 canon_section: "11.71"
-status: ruled
+status: built
 ---
 
 **Generated from canon §11.71 on 2026-10-12** (board `#1055`), because the bundle had no

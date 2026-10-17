@@ -9,7 +9,7 @@ tags: [ruling, m3, structure, templates, seed, g4, dr-007, dr-024, dr-043, dr-04
 timestamp: 2026-08-11T20:00:00Z
 ruling_id: DR-044
 canon_section: "11.43"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-11. This ruling exists because

@@ -9,7 +9,8 @@ tags: [ruling, network, sheets, g4, m6, dr-005, dr-048, reachability]
 timestamp: 2026-08-12T21:00:00Z
 ruling_id: DR-048
 canon_section: "11.47"
-status: ruled
+status: built
+amended_by: [DR-227]
 ---
 
 Settled by the user on 2026-08-12, from a request for static IP settings on the

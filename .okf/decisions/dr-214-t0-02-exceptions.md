@@ -8,7 +8,7 @@ tags: [ruling, t0-02, exceptions, validation, m6-c, dr-214]
 timestamp: 2026-10-01T00:00:00Z
 ruling_id: DR-214
 canon_section: "11.213"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-01, building M6-C (`#322`), on the recommended option four times.

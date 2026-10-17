@@ -6,7 +6,7 @@ tags: [m4-f, grid, selection, ux, decomposition-gap]
 timestamp: 2026-08-15T00:00:00Z
 ruling_id: DR-061
 canon_section: "11.60"
-status: ruled
+status: built
 ---
 
 The Device Builder port grid's selection is:

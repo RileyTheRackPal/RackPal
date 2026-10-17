@@ -9,7 +9,8 @@ tags: [ruling, m4, m4-j, m4-j2, port-grid, g4, dr-012, dr-063, m5, dr-081]
 timestamp: 2026-08-21T00:00:00Z
 ruling_id: DR-081
 canon_section: "11.80"
-status: ruled
+status: superseded-in-part
+superseded_by: [DR-134]
 ---
 
 Settled by the user on 2026-08-21 (board `#747`, `#749`), on a gap

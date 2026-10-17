@@ -12,7 +12,7 @@ tags: [ruling, validation, drc, code-001, code-002, nec, remedy, rulemeta, conso
 timestamp: 2026-09-06T00:00:00Z
 ruling_id: DR-129
 canon_section: "11.128"
-status: ruled
+status: built
 ---
 
 # DR-129 · A shape says "different kind" where a colour says "different amount"

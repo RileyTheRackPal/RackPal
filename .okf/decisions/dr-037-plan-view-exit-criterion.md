@@ -11,7 +11,7 @@ tags: [ruling, plan-view, exit-criterion, decomposition, g4, cr-117, dr-037]
 timestamp: 2026-08-10T12:00:00Z
 ruling_id: DR-037
 canon_section: "11.36"
-status: ruled
+status: partially-built
 ---
 
 Settled by the user on 2026-08-10, discharging board #589 (`PLAN-0`).

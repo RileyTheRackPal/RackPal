@@ -10,7 +10,7 @@ tags: [ruling, zero-u, elevation, ac-044, g4, plc-003, dr-166, m5]
 timestamp: 2026-09-13T00:00:00Z
 ruling_id: DR-166
 canon_section: "11.165"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-13, closing `#883`.

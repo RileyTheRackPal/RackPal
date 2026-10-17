@@ -9,7 +9,8 @@ tags: [ruling, m3, structure, plate, materials, g4, dr-007, dr-045, dr-047]
 timestamp: 2026-08-12T18:00:00Z
 ruling_id: DR-047
 canon_section: "11.46"
-status: ruled
+status: built
+amended_by: [DR-070]
 ---
 
 Settled by the user on 2026-08-12, answering the question

@@ -9,7 +9,7 @@ tags: [ruling, legend, t0-01, m6-b, dr-209, ui]
 timestamp: 2026-09-30T00:00:00Z
 ruling_id: DR-209
 canon_section: "11.208"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-30, building M6-B6 (`#969`), on the recommended option both times.

@@ -11,7 +11,8 @@ tags: [ruling, placement, device-builder, occupancy, dr-157, ac-031, ac-049, pla
 timestamp: 2026-09-12T00:00:00Z
 ruling_id: DR-157
 canon_section: "11.156"
-status: ruled
+status: built
+amended_by: [DR-203]
 ---
 
 Settled by the user on 2026-09-12, closing `#869`. Reported while running the

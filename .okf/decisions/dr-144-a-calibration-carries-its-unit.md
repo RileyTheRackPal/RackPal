@@ -10,7 +10,7 @@ tags: [ruling, plan-view, calibration, units, g4, dr-144, dr-141, dr-143, plan-f
 timestamp: 2026-09-08T00:00:00Z
 ruling_id: DR-144
 canon_section: "11.143"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-08 at `PLAN-F`'s decomposition, before a line of the

@@ -10,7 +10,7 @@ tags: [ruling, keystone, m3, geometry, units, measurement, dr-007, dr-028, dr-03
 timestamp: 2026-08-11T00:00:00Z
 ruling_id: DR-041
 canon_section: "11.40"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-11, with a caliper, at the point M3-H/2 needed

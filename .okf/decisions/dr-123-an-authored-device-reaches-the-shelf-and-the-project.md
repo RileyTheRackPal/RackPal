@@ -8,6 +8,7 @@ timestamp: 2026-09-05T00:00:00Z
 ruling_id: DR-123
 canon_section: "11.122"
 status: ruled
+amended_by: [DR-245]
 ---
 
 **Generated from canon §11.122 on 2026-10-12** (board `#1055`), because the bundle had no

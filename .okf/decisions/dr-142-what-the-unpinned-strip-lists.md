@@ -11,7 +11,7 @@ tags: [ruling, plan-view, pins, unpinned-strip, g4, dr-142, dr-140, plan-e, cr-1
 timestamp: 2026-09-08T00:00:00Z
 ruling_id: DR-142
 canon_section: "11.141"
-status: ruled
+status: built
 ---
 
 Ruled at `PLAN-E/4`'s decomposition.

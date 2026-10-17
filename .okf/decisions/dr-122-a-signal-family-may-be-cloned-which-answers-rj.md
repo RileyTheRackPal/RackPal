@@ -7,7 +7,8 @@ tags: [ruling, dr-122, canon-11-121]
 timestamp: 2026-09-05T00:00:00Z
 ruling_id: DR-122
 canon_section: "11.121"
-status: ruled
+status: built
+amended_by: [DR-244, DR-245]
 ---
 
 **Generated from canon §11.121 on 2026-10-12** (board `#1055`), because the bundle had no

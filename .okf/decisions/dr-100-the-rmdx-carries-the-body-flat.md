@@ -11,7 +11,7 @@ tags: [ruling, persistence, file-format, rmdx, rmda, cr-117, cr-053, cr-063, dr-
 timestamp: 2026-08-29T00:00:00Z
 ruling_id: DR-100
 canon_section: "11.99"
-status: ruled
+status: built
 ---
 
 # DR-100 · A `.rmdx` carries the body flat

@@ -9,7 +9,7 @@ tags: [ruling, library, device-templates, file-errors, import, dr-199]
 timestamp: 2026-09-25T00:00:00Z
 ruling_id: DR-199
 canon_section: "11.198"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-25, choosing the recommended option of three, each put with a price.

@@ -12,7 +12,7 @@ tags: [ruling, plan-view, validation, drc, cr-019, cr-021, cr-022, ac-051, g4, d
 timestamp: 2026-09-10T00:00:00Z
 ruling_id: DR-154
 canon_section: "11.153"
-status: ruled
+status: built
 ---
 
 Ruled and built on 2026-09-10 as `PLAN-I/1` (`#645`) and `PLAN-I/2` (`#646`).

@@ -8,7 +8,7 @@ tags: [ruling, equipment-list, materials, outlet-map, m6-f, dr-219]
 timestamp: 2026-10-02T00:00:00Z
 ruling_id: DR-219
 canon_section: "11.218"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-02, building M6-F (`#335`), on the recommended option three times.

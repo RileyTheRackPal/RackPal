@@ -10,7 +10,7 @@ tags: [ruling, device-builder, templates, versioning, cr-050, dr-077, dr-202]
 timestamp: 2026-09-29T00:00:00Z
 ruling_id: DR-202
 canon_section: "11.201"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-29, choosing the recommended option on both questions, each put

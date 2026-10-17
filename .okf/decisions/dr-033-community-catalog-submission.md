@@ -6,7 +6,7 @@ tags: [ruling, v1.1, catalog, device-builder, oauth, scope, dr-033]
 timestamp: 2026-08-09T00:00:00Z
 ruling_id: DR-033
 canon_section: "11.32"
-status: ruled
+status: partially-built
 ---
 
 Settled by the user on 2026-08-09. §10.9 ruled what the **shipped** catalog

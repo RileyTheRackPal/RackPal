@@ -9,7 +9,8 @@ tags: [ruling, schedule, pull-sheet, termination-schedule, lifecycle, cr-064, cr
 timestamp: 2026-09-30T00:00:00Z
 ruling_id: DR-206
 canon_section: "11.205"
-status: ruled
+status: built
+amended_by: [DR-222]
 ---
 
 Settled by the user on 2026-09-30, resolving `#576`.

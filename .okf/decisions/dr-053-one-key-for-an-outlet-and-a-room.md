@@ -9,7 +9,7 @@ tags: [ruling, structure, csv, drop-line, m3, cr-042, dr-053]
 timestamp: 2026-08-13T00:00:00Z
 ruling_id: DR-053
 canon_section: "11.52"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-13, closing board #654, which was filed during

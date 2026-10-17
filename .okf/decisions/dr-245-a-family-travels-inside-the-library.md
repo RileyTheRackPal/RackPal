@@ -10,7 +10,7 @@ tags: [ruling, signal-family, clone, library, rmda, shelf, sfe, dr-245, dr-122, 
 timestamp: 2026-10-08T00:00:00Z
 ruling_id: DR-245
 canon_section: "11.244"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-07 and 2026-10-08 for SFE-C4 (board `#832`), which became `#1033` to

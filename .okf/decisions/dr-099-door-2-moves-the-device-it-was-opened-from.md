@@ -12,7 +12,7 @@ tags: [ruling, device-builder, templates, copy-on-place, ac-041, cr-054, cr-106,
 timestamp: 2026-08-29T00:00:00Z
 ruling_id: DR-099
 canon_section: "11.98"
-status: ruled
+status: built
 ---
 
 # DR-099 · Door 2 moves the device it was opened from, and the Device Manager holds one draft

@@ -7,6 +7,7 @@ timestamp: 2026-08-19T00:00:00Z
 ruling_id: DR-077
 canon_section: "11.76"
 status: built
+amended_by: [DR-202]
 ---
 
 M4's exit criterion has two clauses and the second one could not be performed at

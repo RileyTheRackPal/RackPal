@@ -11,7 +11,7 @@ tags: [ruling, zero-u, inspector, ac-044, cr-025, dr-163, m5]
 timestamp: 2026-09-13T00:00:00Z
 ruling_id: DR-163
 canon_section: "11.162"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-13, closing `#876`, the last of the eight `#872`

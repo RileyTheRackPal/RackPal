@@ -12,7 +12,7 @@ tags: [ruling, plan-view, pdf-export, callouts, pal-1, gates, layering, dr-150, 
 timestamp: 2026-09-09T00:00:00Z
 ruling_id: DR-150
 canon_section: "11.149"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-09 at `PLAN-H/3`'s census.

@@ -3,6 +3,15 @@
 Numbered decisions that settle a question the corpus could not answer on its own.
 Each requires a user decision and is recorded in `docs/canonical-decisions.md` §11.
 
+Each concept's `status` is one of five words. `ruled` is a ruling with nothing to build, or
+nothing built yet. `partially-built` is built in part, with the rest owed. `built` is built and
+in force. `superseded` is replaced whole, and `superseded-in-part` has a clause replaced while
+the rest stands; both carry `superseded_by`, the DRs that replaced it, as canon §12 or the
+superseding ruling names them. `amended_by` is separate and leaves the status alone: canon §12
+lists the ruling as amended, narrowed, corrected or answered by the DRs it names, and the
+ruling still stands. A status reads the evidence at the time it was set (board closure,
+commits, canon §12); it is not a promise that nothing has moved since.
+
 * [DR-001, net labels by default](dr-001-net-labels-by-default.md) - every Link renders as net labels, not a drawn wire; deletes 4-5 weeks of routing work from v1.
 * [DR-002, residential CI primary, commercial capable](dr-002-residential-ci-primary-commercial-capable.md) - from canon §11.2: Residential CI primary, commercial capable. Confirms the recommendation and makes the bet explicit
 * [DR-003, the device builder ships in v1](dr-003-the-device-builder-ships-in-v1.md) - from canon §11.3: The device builder ships in v1; M4 stays. Confirms the recommendation. The roadmap's 'move M4 after M6' lever is withdrawn

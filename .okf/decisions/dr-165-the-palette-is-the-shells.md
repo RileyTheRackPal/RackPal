@@ -10,7 +10,7 @@ tags: [ruling, palette, plan-view, reachability, dr-143, dr-165, m5]
 timestamp: 2026-09-13T00:00:00Z
 ruling_id: DR-165
 canon_section: "11.164"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-13, from their own report: *"Device templates are

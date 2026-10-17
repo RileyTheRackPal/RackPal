@@ -12,7 +12,7 @@ tags: [ruling, palette, library, rmda, copy-on-place, ac-041, ac-042, dr-102, dr
 timestamp: 2026-08-30T00:00:00Z
 ruling_id: DR-103
 canon_section: "11.102"
-status: ruled
+status: built
 ---
 
 # DR-103 · A library row copies itself in

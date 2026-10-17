@@ -6,7 +6,7 @@ tags: [ruling, m6, branding, pdf, scope, dr-030]
 timestamp: 2026-08-09T00:00:00Z
 ruling_id: DR-030
 canon_section: "11.29"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-09: *"Let's add the logo in; likely during M6. If

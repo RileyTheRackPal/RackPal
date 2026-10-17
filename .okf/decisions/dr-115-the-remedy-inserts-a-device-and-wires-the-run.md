@@ -7,7 +7,7 @@ tags: [ruling, dr-115, canon-11-114]
 timestamp: 2026-10-12T00:00:00Z
 ruling_id: DR-115
 canon_section: "11.114"
-status: ruled
+status: built
 ---
 
 **Generated from canon §11.114 on 2026-10-12** (board `#1055`), because the bundle had no

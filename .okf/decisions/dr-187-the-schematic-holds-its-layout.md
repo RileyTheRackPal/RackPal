@@ -10,7 +10,7 @@ tags: [ruling, schematic, layout, sheet-item, keymap, dr-187, dr-011, cr-068, cr
 timestamp: 2026-09-18T00:00:00Z
 ruling_id: DR-187
 canon_section: "11.186"
-status: ruled
+status: built
 ---
 
 Ruled by the user on 2026-09-18 on board `#914`.

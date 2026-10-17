@@ -6,7 +6,7 @@ tags: [m4, m4-f, device-builder, keymap, macos, bulk-edit, cr-051, dr-009, dr-06
 timestamp: 2026-08-19T00:00:00Z
 ruling_id: DR-078
 canon_section: "11.77"
-status: ruled
+status: built
 ---
 
 Three questions raised by censusing M4-F's six remaining tasks before writing

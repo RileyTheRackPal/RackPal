@@ -7,6 +7,7 @@ timestamp: 2026-08-06T00:00:00Z
 ruling_id: DR-021
 canon_section: "11.20"
 status: built
+amended_by: [DR-185]
 ---
 
 Settled by the user on 2026-08-06, before board #144 wrote a line of the four

@@ -12,7 +12,7 @@ tags: [ruling, templates, deletion, undo, confirmation, dr-158, dr-013, cr-050, 
 timestamp: 2026-09-12T00:00:00Z
 ruling_id: DR-158
 canon_section: "11.157"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-12, closing `#871`. Reported while running the

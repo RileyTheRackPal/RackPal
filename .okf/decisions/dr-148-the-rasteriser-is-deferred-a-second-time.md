@@ -12,7 +12,8 @@ tags: [ruling, plan-view, pdf-import, deferral, exit-criterion, dr-148, dr-145, 
 timestamp: 2026-09-09T00:00:00Z
 ruling_id: DR-148
 canon_section: "11.147"
-status: ruled
+status: superseded
+superseded_by: [DR-153]
 ---
 
 Settled by the user on 2026-09-09 at `PLAN-H`'s census.

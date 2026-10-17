@@ -9,7 +9,7 @@ tags: [ruling, cover, t0-00, title-block, m6-a, dr-210, ui]
 timestamp: 2026-10-01T00:00:00Z
 ruling_id: DR-210
 canon_section: "11.209"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-01, building M6-A1 (`#312`), on the recommended option four times.

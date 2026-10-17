@@ -9,7 +9,7 @@ tags: [ruling, zero-u, inspector, ac-044, dr-163, dr-166, dr-167, m5]
 timestamp: 2026-09-13T00:00:00Z
 ruling_id: DR-167
 canon_section: "11.166"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-13, closing `#887`.

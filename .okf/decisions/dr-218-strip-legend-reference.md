@@ -8,7 +8,7 @@ tags: [ruling, sheet-furniture, title-block, legend, m6-h, dr-218]
 timestamp: 2026-10-02T00:00:00Z
 ruling_id: DR-218
 canon_section: "11.217"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-02, building M6-H (`#347`); the defect is `#971`.

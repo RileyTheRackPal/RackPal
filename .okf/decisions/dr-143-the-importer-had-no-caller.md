@@ -10,7 +10,7 @@ tags: [ruling, plan-view, import, reachability, gates, dr-143, dr-091, plan-e]
 timestamp: 2026-09-08T00:00:00Z
 ruling_id: DR-143
 canon_section: "11.142"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-08 at `PLAN-E/5`'s census, before a line of the

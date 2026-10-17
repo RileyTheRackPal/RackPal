@@ -9,7 +9,7 @@ tags: [ruling, m4, m4-r, elevation, glyph, cr-078, dr-059, dr-080, dr-083]
 timestamp: 2026-08-21T00:00:00Z
 ruling_id: DR-083
 canon_section: "11.82"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-21 (board `#694`, `#751`), at M4-R's pick-up and

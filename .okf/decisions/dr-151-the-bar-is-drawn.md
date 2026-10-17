@@ -13,7 +13,7 @@ tags: [ruling, plan-view, pdf-export, scale, gates, copy, g4, dr-151, dr-149, pl
 timestamp: 2026-09-09T00:00:00Z
 ruling_id: DR-151
 canon_section: "11.150"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-09 at `PLAN-H/4`'s census.

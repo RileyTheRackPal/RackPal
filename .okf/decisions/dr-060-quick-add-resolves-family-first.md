@@ -7,6 +7,7 @@ timestamp: 2026-08-15T00:00:00Z
 ruling_id: DR-060
 canon_section: "11.59"
 status: built
+amended_by: [DR-221]
 ---
 
 A Quick Add token yields a **pair**, and each half is resolved by its own
