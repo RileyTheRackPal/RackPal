@@ -111,6 +111,6 @@ bump site, not the lookup site.
 
 [1] docs/12 §5.1.9, the measurement and the ruling that followed it
 [2] Board `#702` (the fix, blocking M6), `#424` (M8-F1, the probe)
-[3] `packages/rackmate_core/test/scene/schematic_perf_test.dart`, the headroom group
-[4] `apps/rackmate/tool/scale_probe.dart`
+[3] `packages/rackpal_core/test/scene/schematic_perf_test.dart`, the headroom group
+[4] `apps/rackpal/tool/scale_probe.dart`
 [5] AC-008, whose per-domain partition was built for paint and not for recompute

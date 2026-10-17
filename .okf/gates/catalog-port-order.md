@@ -7,8 +7,8 @@ timestamp: 2026-08-01T00:00:00Z
 status: adopted
 ---
 
-`packages/rackmate_core/test/catalog/catalog_order_test.dart`. Runs in the
-`rackmate_core` suite, so on every push.
+`packages/rackpal_core/test/catalog/catalog_order_test.dart`. Runs in the
+`rackpal_core` suite, so on every push.
 
 # What it defends
 
@@ -49,7 +49,7 @@ fixture's banks to choose a test target, and a human reading `A01` as
 # Its blind spot
 
 **It gates the CATALOG, not the model.** A `TemplateBody` assembled anywhere
-else, a hand-built test fixture, a `.rackmate` file, M4's device builder,
+else, a hand-built test fixture, a project file (`.rppj`), M4's device builder,
 can still carry a scrambled order and this says nothing. The deeper fix would
 be `FracIndex` owning its own comparison, which is a change to a type used for
 racks, links and sheets as well, and was not made under a gesture ticket.

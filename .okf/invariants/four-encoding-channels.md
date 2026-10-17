@@ -80,4 +80,4 @@ unvalidated reel colours for a CVD-validated palette.
 
 [1] `docs/05-schematic-editor.md` §6.1–6.4
 [2] `tools/pal1_check.py`, the authority
-[3] `packages/rackmate_core/lib/src/draw/scene/signal_style.dart`
+[3] `packages/rackpal_core/lib/src/draw/scene/signal_style.dart`

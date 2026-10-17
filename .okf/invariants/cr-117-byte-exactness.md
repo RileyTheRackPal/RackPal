@@ -54,6 +54,6 @@ because that re-encodes consistently. What kills it is an **absence** assertion:
 
 # Citations
 
-[1] `packages/rackmate_core/test/command_roundtrip_test.dart`
-[2] `packages/rackmate_core/test/byte_roundtrip_test.dart`
-[3] `apps/rackmate/test/gitattributes_byte_exactness_test.dart`
+[1] `packages/rackpal_core/test/command_roundtrip_test.dart`
+[2] `packages/rackpal_core/test/byte_roundtrip_test.dart`
+[3] `apps/rackpal/test/gitattributes_byte_exactness_test.dart`

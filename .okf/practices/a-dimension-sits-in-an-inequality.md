@@ -94,5 +94,5 @@ somebody edits a constant, which is the only version of this that survives.
 # Citations
 
 [1] canonical-decisions.md §11.40 ([DR-041](/decisions/dr-041-plate-opening-and-cell-pitches.md))
-[2] `packages/rackmate_core/lib/src/draw/scene/plate_geometry.dart`
-[3] `packages/rackmate_core/test/scene/plate_geometry_test.dart`
+[2] `packages/rackpal_core/lib/src/draw/scene/plate_geometry.dart`
+[3] `packages/rackpal_core/test/scene/plate_geometry_test.dart`

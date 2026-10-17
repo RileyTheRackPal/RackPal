@@ -4,7 +4,7 @@ title: The .gitattributes byte-exactness sweep
 description: Proves every extension sitting in a byte-exact root is pinned, so a fresh clone receives the bytes that were committed.
 tags: [gate, ci, persistence, cr-117]
 timestamp: 2026-07-28T00:00:00Z
-resource: apps/rackmate/test/gitattributes_byte_exactness_test.dart
+resource: apps/rackpal/test/gitattributes_byte_exactness_test.dart
 status: enforced
 ---
 
@@ -16,7 +16,8 @@ is that guarantee; this gate proves the rule is present and correct.
 
 `*.json` was pinned, and everything else fell through to `* text=auto` with `eol`
 unspecified, so on Windows it checked out per `core.autocrlf`. The four starters
-are `assets/starters/*.rackmate`, matched no rule, and were untracked. The moment
+are `assets/starters/*.rackmate` (today `apps/rackpal/assets/starters/*.rppj`),
+matched no rule, and were untracked. The moment
 they were committed, the next Windows clone would have received them
 CRLF-normalised and the byte-exact suite would have failed **on a clean checkout
 while staying green for everyone who already had the tree**.
@@ -45,6 +46,6 @@ enumeration does not protect the enumeration.
 
 # Citations
 
-[1] `apps/rackmate/test/gitattributes_byte_exactness_test.dart`
+[1] `apps/rackpal/test/gitattributes_byte_exactness_test.dart`
 [2] `.gitattributes`
 [3] Commit `abbd532`

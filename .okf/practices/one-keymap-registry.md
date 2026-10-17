@@ -7,7 +7,7 @@ timestamp: 2026-07-29T00:00:00Z
 status: adopted
 ---
 
-Every keybinding in RackMate is a row in `kKeymap`. Nothing constructs a
+Every keybinding in RackPal is a row in `kKeymap`. Nothing constructs a
 `SingleActivator` anywhere else. The primary modifier (`Ctrl` on Windows,
 `Cmd` on macOS) resolves in exactly one function,
 `KeyBinding.activatorFor(TargetPlatform)`, through `defaultTargetPlatform`.
@@ -107,7 +107,7 @@ needs it and can argue for it.
 
 # Citations
 
-[1] `packages/rackmate_ui/lib/src/keymap/keymap.dart`
+[1] `packages/rackpal_ui/lib/src/keymap/keymap.dart`
 [2] `docs/13-macos-debt-register.md` §3, §3.1
 [3] canonical-decisions.md §11.9.2 (the ordering argument), §11.11.6 (the
     shared-label retrofit [DR-011](/decisions/dr-011-connect-gesture.md) needs)
