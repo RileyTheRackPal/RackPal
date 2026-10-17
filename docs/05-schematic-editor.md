@@ -497,7 +497,7 @@ Drag-to-connect and click-click ("sticky") share one state machine; the drag thr
 
 ## 8. Validation feedback
 
-Severity is `error | warning | advisory | off` (CR-018); "info" is renamed `advisory` everywhere and "Class A" does not exist. `Finding` is computed and **never stored**. v1's rules are listed once in [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue--three-tiers); a rule not in that catalogue does not exist (CR-021, AC-040). No rule ships without a known-bad fixture and a known-good near-miss (AC-051).
+Severity is `error | warning | advisory | off` (CR-018); "info" is renamed `advisory` everywhere and "Class A" does not exist. `Finding` is computed and **never stored**. v1's rules are listed once in [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue-three-tiers); a rule not in that catalogue does not exist (CR-021, AC-040). No rule ships without a known-bad fixture and a known-good near-miss (AC-051).
 
 **Rendering.** Marks are drawn *over* the wire so the cable's own colour, dash and weight stay readable underneath:
 
