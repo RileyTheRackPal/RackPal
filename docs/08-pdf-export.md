@@ -143,14 +143,14 @@ Rows per page    ⌊(659 − 18) / 15⌋ = 42   (≈28 with heavy notes)
 | # | Header | Width | Just. | Font | Content |
 |---|---|---|---|---|---|
 | 1 | `CABLE ID` | 52 | left | `RackMono` 8 Bold | `Link.designator`: `W042` |
-| 2 | `TYPE` | 44 | left | `RackBody` 7 | Chip (§3.5) + domain tag + family `shortTag` |
+| 2 | `TYPE` | 44 | left | Jost 7 | Chip (§3.5) + domain tag + family `shortTag` |
 | 3 | `FIELD LABEL` | 54 | left | `RackMono` 7.5 | `StructureOrigin.fieldLabel`: `LR-TV-1` |
 | 4 | `RACK LABEL` | 50 | left | `RackMono` 7.5 | `StructureOrigin.rackLabel`: `1A-A12` |
-| 5 | `FROM — ROOM / OUTLET` | 68 | left | `RackCond` 7 | `Location.name` / `Outlet` designator |
-| 6 | `TO — RACK / RU / FACE` | 64 | left | `RackCond` 7 | `RK-1 / U14 / rear` |
-| 7 | `MEDIA` | 58 | left | `RackCond` 7 | `MediaTypeDef.displayName` + jacket |
+| 5 | `FROM — ROOM / OUTLET` | 68 | left | Jost 7 | `Location.name` / `Outlet` designator |
+| 6 | `TO — RACK / RU / FACE` | 64 | left | Jost 7 | `RK-1 / U14 / rear` |
+| 7 | `MEDIA` | 58 | left | Jost 7 | `MediaTypeDef.displayName` + jacket |
 | 8 | `LEN` | 28 | **right** | `RackMono` 7.5 | `cutLength`; **italic** when derived from either estimate, `Outlet.nominalRunLength` first and then `Location.estimatedRunLengthFromRack` (DR-026 §11.25.2); `—` when null |
-| 9 | `PATHWAY` | 36 | left | `RackMono` 7 / `RackBody` 7 | `Pathway.designator`; **falls back to `Pathway.name`** when the trunk carries none, and the FONT says which (M3-E/2, DR-026 §11.25.1). Mono for a designator, because it is an identifier somebody wrote on a trunk; body for a name, because it is prose. `ScheduleEntry.pathwayLabelIsDesignator` is the flag. `—` when the run is in no pathway at all |
+| 9 | `PATHWAY` | 36 | left | `RackMono` 7 / Jost 7 | `Pathway.designator`; **falls back to `Pathway.name`** when the trunk carries none, and the FONT says which (M3-E/2, DR-026 §11.25.1). Mono for a designator, because it is an identifier somebody wrote on a trunk; body for a name, because it is prose. `ScheduleEntry.pathwayLabelIsDesignator` is the flag. `—` when the run is in no pathway at all |
 | 10 | `SIGN-OFF` | 56 | centre | — | `☐ P` 12 · `☐ T` 12 · `☐ T` 12 · `INIT` 20 |
 
 **Grouped by lifecycle (DR-206 §11.205.2).** Rows fall into sections, each with its own header and
@@ -164,18 +164,18 @@ ANSI A landscape, 792 × 612 pt, usable 690 pt, body 479 pt, **30 rows per page*
 | # | Header | Width | Just. | Font | Content |
 |---|---|---|---|---|---|
 | 1 | `CABLE ID` | 56 | left | `RackMono` 8 Bold | `W042` |
-| 2 | `TYPE` | 44 | left | `RackBody` 7 | chip + tag |
+| 2 | `TYPE` | 44 | left | Jost 7 | chip + tag |
 | 3 | `RACK LABEL` | 52 | left | `RackMono` 7.5 | |
 | 4 | `FIELD LABEL` | 52 | left | `RackMono` 7.5 | |
-| 5 | `RACK / RU / FACE` | 62 | left | `RackCond` 7 | |
-| 6 | `DEVICE` | 74 | left | `RackBody` 7.5 | `designator` over model, 2-line only when the row is already 2-line |
+| 5 | `RACK / RU / FACE` | 62 | left | Jost 7 | |
+| 6 | `DEVICE` | 74 | left | Jost 7.5 | `designator` over model, 2-line only when the row is already 2-line |
 | 7 | `PORT` | 46 | left | `RackMono` 7.5 | `Port.designator` + label |
-| 8 | `FAR END` | 84 | left | `RackBody` 7.5 | device, `Outlet`, or `— OPEN —` for an `OpenEndpoint` |
+| 8 | `FAR END` | 84 | left | Jost 7.5 | device, `Outlet`, or `— OPEN —` for an `OpenEndpoint` |
 | 9 | `FAR PORT` | 46 | left | `RackMono` 7.5 | |
-| 10 | `MEDIA` | 42 | left | `RackCond` 7 | |
+| 10 | `MEDIA` | 42 | left | Jost 7 | |
 | 11 | `FIELD TERM` | 44 | left | `RackMono` 7 | `KEYSTONE T568B` · `F BARREL` · `LC-A` · `EURO 3` |
 | 12 | `RACK TERM` | 44 | left | `RackMono` 7 | `PUNCHDOWN A03 T568B` · `LC-A`; `—` when undecided |
-| 13 | `CONDUCTOR / NOTES` | 44 | left | `RackBody` 6.5 | `Conductor.colorCode` per role; wraps to 2 lines then ellipsis |
+| 13 | `CONDUCTOR / NOTES` | 44 | left | Jost 6.5 | `Conductor.colorCode` per role; wraps to 2 lines then ellipsis |
 
 **Thirteen columns since DR-055 (§11.54), and the widths above are that ruling's.** `TERM` was one
 column resolving to the **field** end while the sheet is filtered, sorted and grouped by rack, so the
@@ -281,7 +281,7 @@ Sort is single-select with a stable secondary sort on `Link.designator`. Groupin
 | `cutLength` descending | Reel planning and cut lists |
 | `roughInStatus`, then `designator` | Punch list |
 
-A group inserts a full-width band row, 14 pt, 12% grey fill, 2 pt leading rule in the domain colour, `RackBody` 8 Bold, count and footage subtotal right-aligned:
+A group inserts a full-width band row, 14 pt, 12% grey fill, 2 pt leading rule in the domain colour, Jost 8 Medium, count and footage subtotal right-aligned:
 
 ```
 ▌ NETWORK — 24 runs ──────────────────────────────────────────  1,860 ft total
@@ -1132,13 +1132,12 @@ Four design notes.
 ```dart
 // main isolate: gather everything Flutter-dependent, then hand over bytes.
 final assets = ExportAssets(
-  bodyTtf:     await _bytes('assets/fonts/IBMPlexSans-Regular.ttf'),
-  bodyBoldTtf: await _bytes('assets/fonts/IBMPlexSans-SemiBold.ttf'),
-  condTtf:     await _bytes('assets/fonts/IBMPlexSansCondensed-Regular.ttf'),
-  monoTtf:     await _bytes('assets/fonts/IBMPlexMono-Regular.ttf'),
-  monoBoldTtf: await _bytes('assets/fonts/IBMPlexMono-Bold.ttf'),
-  symbolTtf:   await _bytes('assets/fonts/NotoSansSymbols2-Regular.ttf'),
+  bodyTtf:     await _bytes('assets/fonts/Jost-Regular.ttf'),
+  bodyBoldTtf: await _bytes('assets/fonts/Jost-Medium.ttf'),
+  monoTtf:     await _bytes('assets/fonts/SpaceMono-Regular.ttf'),
+  monoBoldTtf: await _bytes('assets/fonts/SpaceMono-Bold.ttf'),
 );
+// Today's loader (`loadExportFontsFromBundle`) takes Jost Regular only (§10.1).
 
 final rx = ReceivePort()..listen((m) {
   if (m is ExportProgress) controller.update(m);
@@ -1236,21 +1235,19 @@ SVG export is one file with no new geometry or text handling, and Y-down is nati
 
 ## 10. Fonts
 
-### 10.1 IBM Plex, and why not the built-ins
+### 10.1 Jost and Space Mono, and why not the built-ins
 
 The 14 standard Type1 fonts embed nothing but are single-byte WinAnsiEncoding, and any codepoint outside Latin-1 throws `Helvetica has no Unicode support`. For this product that is not theoretical: A/V documentation routinely carries `Ω`, `°`, `±`, `µ`, `→`, `×`, `≈`, `′`/`″`, em dashes, smart quotes pasted from a proposal, and client names with accents. Never ship default Helvetica. `PdfGoogleFonts` is equally out; it does a network round-trip, so it cannot run in a background isolate and fails offline, which is exactly the rack room with no Wi-Fi where someone re-exports a drawing.
 
-**CR-080 rules IBM Plex**, over `design-architecture.md §12.3`'s asserted Inter + JetBrains Mono.
+**The faces that ship are ruled by DR-249 (canon §11.248), which amended CR-080.** CR-080 had ruled IBM Plex Sans, Plex Sans Condensed and Plex Mono with a Noto Sans Symbols 2 fallback; canon §11.248 re-measured its three arguments against the bundle as built and kept the bundle (history only, canon §12.57).
 
-| Alias | Font | Licence | Size |
-|---|---|---|---|
-| `RackBody` | IBM Plex Sans Regular + SemiBold | SIL OFL 1.1 | ~300 KB |
-| `RackCond` | IBM Plex Sans Condensed Regular | SIL OFL 1.1 | ~140 KB |
-| `RackMono` | IBM Plex Mono Regular + Bold | SIL OFL 1.1 | ~260 KB |
-| *(fallback)* | Noto Sans Symbols 2 Regular | SIL OFL 1.1 | ~300 KB, subsettable to ~25 KB |
-| | | **Bundle** | **~1.0 MB** |
+| Family | Font | Weights | Licence | Size |
+|---|---|---|---|---|
+| `Jost` (the text face) | Jost, a modified build (`tools/build_jost_glyphs.py`) | Regular 400, Medium 500 | SIL OFL 1.1 | ~60 KB each |
+| `RackMono` | Space Mono | Regular 400, Bold 700 | SIL OFL 1.1 | ~100 KB each |
+| | | **Bundle** | | **~0.3 MB** |
 
-Three arguments carry it, and they are worked rather than asserted. Plex Mono disambiguates `0`/`O`, `1`/`l`/`I`, `5`/`S`, `8`/`B`, in a document whose purpose is transcribing identifiers onto physical labels, `W014` vs `WO14` is a real failure mode, which makes this a safety property rather than an aesthetic one. Plex Sans Condensed is a true condensed cut worth ~12% of schedule column width, which is the difference between a 10-column and a 12-column table. And Greek coverage gives `Ω` and `µ` without a fallback hop. Runners-up rejected: Inter (no true condensed cut, mono companion is a separate project with different metrics) and Roboto (reads as Android UI, and Roboto Condensed's metrics do not match Roboto's).
+There is no condensed face and no fallback face. `RackCond` is retired: schedules are set in Jost, as they print today (§11.248.3), and nothing in this document names it any more. The ruling's own caveat is carried here: the physical print clauses (AC-054) are unperformed, and a schedule column too tight for Jost at its printed size is what they would show; that would be new evidence and a new ruling. `RackMono` is the face for identifiers that are transcribed onto physical labels (`CABLE ID`, §3.2): its `0` carries a third contour where `O` has two, so `W014` and `WO14` differ, and Jost's `0` and `O` differ only in width. An identifier set in Jost accepts that cost (§11.248.2). Greek differs by face: Jost carries `U+03A9` and `U+00B5`, Space Mono carries `U+2126` and `U+00B5` and not `U+03A9`, so the codepoint a string uses has to be the one its face carries (the glyph gate sees string literals only). `RackMono` Italic, which §3.2 wants for a derived `LEN`, is not bundled: `FontRef` has no slant field. The PDF export loader takes only Jost Regular today (`kExportFontAsset` in `export_controller.dart`); the other three files serve Flutter widgets until the PDF backend loads them.
 
 **Licensing:** SIL OFL 1.1 is registered via `LicenseRegistry` and surfaced through `showLicensePage` (AC-058/D7). OFL permits commercial use, PDF embedding and redistribution with no attribution obligation in the output document; the only clause that matters is that the fonts themselves are not sold, which they are not.
 
@@ -1261,26 +1258,29 @@ Declaring a font under `fonts:` makes it available to Flutter's text engine but 
 ```yaml
 flutter:
   fonts:
-    - family: RackBody
+    - family: Jost
       fonts:
-        - asset: assets/fonts/IBMPlexSans-Regular.ttf
-        - asset: assets/fonts/IBMPlexSans-SemiBold.ttf
-          weight: 600
-    - family: RackCond
-      fonts:
-        - asset: assets/fonts/IBMPlexSansCondensed-Regular.ttf
+        - asset: assets/fonts/Jost-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Jost-Medium.ttf
+          weight: 500
     - family: RackMono
       fonts:
-        - asset: assets/fonts/IBMPlexMono-Regular.ttf
-        - asset: assets/fonts/IBMPlexMono-Bold.ttf
+        - asset: assets/fonts/SpaceMono-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/SpaceMono-Bold.ttf
           weight: 700
   assets:
-    - assets/fonts/          # ← REQUIRED as well, for rootBundle.load()
+    # REQUIRED as well, for rootBundle.load(): the same four files again
+    - assets/fonts/Jost-Regular.ttf
+    - assets/fonts/Jost-Medium.ttf
+    - assets/fonts/SpaceMono-Regular.ttf
+    - assets/fonts/SpaceMono-Bold.ttf
 ```
 
-`fontFallback: [plexMono, notoSymbols2]` is set on the document theme even where it seems unnecessary: it is per-glyph, and the failure mode without it is a thrown exception mid-export. Belt and braces, a sanitiser maps unrepresentable codepoints to ASCII (`→` → `->`, `☐` → `[ ]`) rather than throwing, and it runs **in the scene builder, not the backend**, so the screen shows exactly what the PDF will show. A CI test asserts that every glyph in `SignalDomainDef` resolves in `RackBody` or the Noto fallback; a tofu box in an exported drawing is the defect that test exists to prevent.
+**No `fontFallback` is set and no fallback face ships** (DR-249 §11.248.4). The face's own modified build carries the codepoints the product emits, and `tools/glyph_coverage_check.py` reads the binary and holds them; a codepoint neither face carries draws as nothing, which is the defect that gate exists to prevent. Its blind spot is in its own header: runtime-composed strings and user data are not literals. A sanitiser that maps unrepresentable codepoints to ASCII (`→` → `->`, `☐` → `[ ]`) in the scene builder, so the screen shows exactly what the PDF will show, is a design and not a build: no such sanitiser exists in the tree today.
 
-**Size cost, honestly.** ~1.0 MB in the app bundle, irrelevant on desktop and irrelevant next to the Flutter engine on mobile. In the PDF, dart_pdf subsets TrueType to used glyphs, a rack drawing uses perhaps 80 distinct glyphs across three faces, so the embedded contribution is **~8–25 KB**, and a 14-sheet vector set lands at 300–500 KB.
+**Size cost, honestly.** ~0.3 MB in the app bundle, irrelevant on desktop and irrelevant next to the Flutter engine on mobile. In the PDF, dart_pdf subsets TrueType to used glyphs, a rack drawing uses perhaps 80 distinct glyphs across two faces, so the embedded contribution is **~8–25 KB**, and a 14-sheet vector set lands at 300–500 KB.
 
 ---
 

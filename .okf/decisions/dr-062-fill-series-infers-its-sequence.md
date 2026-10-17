@@ -4,6 +4,8 @@ title: DR-062 — Fill series infers its sequence from the top selected cell
 description: docs/06 §4.6 says fill series re-applies "the label pattern"; no such pattern is stored anywhere in the tree, and storing one would cover only the ports Quick Add made.
 tags: [m4-f, grid, fill, labels, ux, g4]
 timestamp: 2026-08-15T00:00:00Z
+ruling_id: DR-062
+canon_section: "11.61"
 status: built
 ---
 

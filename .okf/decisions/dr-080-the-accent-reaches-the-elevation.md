@@ -10,7 +10,7 @@ tags: [ruling, m4, m4-r, m4-k, elevation, cr-078, accessibility, dr-059, dr-080]
 timestamp: 2026-08-21T00:00:00Z
 ruling_id: DR-080
 canon_section: "11.79"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-21 (board `#747`, `#748`), on the question

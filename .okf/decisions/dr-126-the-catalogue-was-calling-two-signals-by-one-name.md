@@ -14,7 +14,8 @@ tags: [ruling, validation, drc, dir-003, sig-002, signal-family, catalog, ir, pa
 timestamp: 2026-09-05T00:00:00Z
 ruling_id: DR-126
 canon_section: "11.125"
-status: ruled
+status: built
+amended_by: [DR-221]
 ---
 
 # DR-126 · The catalogue was calling two signals by one name

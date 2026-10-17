@@ -52,7 +52,7 @@ Both are the same class as the
 [salvage post-mortem](/practices/diagnose-before-fixing.md)'s finding: **a
 mechanism that reads as working because one of its invocations does.** The unit
 tests at each end were true and the composition was false, which is what
-`apps/rackmate/test/session/signposting_test.dart` exists for; it is the only
+`apps/rackpal/test/session/signposting_test.dart` exists for; it is the only
 place that can observe the two halves being wired to each other.
 
 # How to catch it next time

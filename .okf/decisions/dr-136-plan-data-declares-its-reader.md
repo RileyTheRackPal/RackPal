@@ -13,7 +13,7 @@ tags: [ruling, persistence, format, versioning, plan-view, dr-019, dr-037, cr-11
 timestamp: 2026-09-07T00:00:00Z
 ruling_id: DR-136
 canon_section: "11.135"
-status: ruled
+status: built
 ---
 
 # DR-136 · The remedy and the hazard agreed with each other and not with the problem

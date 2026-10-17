@@ -7,7 +7,7 @@ tags: [ruling, builder, undo, unsaved, dr-190, dr-099]
 timestamp: 2026-09-23T00:00:00Z
 ruling_id: DR-190
 canon_section: "11.189"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-23, choosing the recommended option of three, each put with a price.

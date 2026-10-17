@@ -3,6 +3,15 @@
 Numbered decisions that settle a question the corpus could not answer on its own.
 Each requires a user decision and is recorded in `docs/canonical-decisions.md` §11.
 
+Each concept's `status` is one of five words. `ruled` is a ruling with nothing to build, or
+nothing built yet. `partially-built` is built in part, with the rest owed. `built` is built and
+in force. `superseded` is replaced whole, and `superseded-in-part` has a clause replaced while
+the rest stands; both carry `superseded_by`, the DRs that replaced it, as canon §12 or the
+superseding ruling names them. `amended_by` is separate and leaves the status alone: canon §12
+lists the ruling as amended, narrowed, corrected or answered by the DRs it names, and the
+ruling still stands. A status reads the evidence at the time it was set (board closure,
+commits, canon §12); it is not a promise that nothing has moved since.
+
 * [DR-001, net labels by default](dr-001-net-labels-by-default.md) - every Link renders as net labels, not a drawn wire; deletes 4-5 weeks of routing work from v1.
 * [DR-002, residential CI primary, commercial capable](dr-002-residential-ci-primary-commercial-capable.md) - from canon §11.2: Residential CI primary, commercial capable. Confirms the recommendation and makes the bet explicit
 * [DR-003, the device builder ships in v1](dr-003-the-device-builder-ships-in-v1.md) - from canon §11.3: The device builder ships in v1; M4 stays. Confirms the recommendation. The roadmap's 'move M4 after M6' lever is withdrawn
@@ -188,7 +197,6 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` �
 * [DR-048, a network value is dated and T6.50 ships in v1](dr-048-network-value-is-dated-and-t650-ships.md) - the field had no writer anywhere, not even a test fixture, while a reserved sheet id made it read as nearly shipped; and G4 handles unknown but has no mechanism for stale, which is exactly the failure this data has.
 
 * [DR-049, the tabular exports and a label that is not a sheet](dr-049-tabular-exports-and-a-label-that-is-not-a-sheet.md) - CSV out, labels out, no printer drivers and no vendor exporter; a page of adhesive labels cannot be a slot in a client deliverable, and both refusals are refusals because neither can be demonstrated.
-* [DR-050, geometry fills the room estimate that already exists](dr-050-geometry-fills-the-room-estimate.md) - the census corrected the question before the answer: DR-020 forbids a BOUND from summing, not an estimate, and the room estimate has been summing since M2-B, so the ruling adds no tier at all.
 * [DR-051, documentation is referenced and never embedded](dr-051-documentation-is-referenced-never-embedded.md) - four grounds, and the one that makes it never rather than later is the one the request did not raise; three could be engineered around and copyright cannot.
 * [DR-052, git sync is v1.2 and live collaboration is never](dr-052-git-sync-v12-collaboration-never.md) - diffable is not mergeable, and a v2 row that read as one feature was two, so splitting it moved one half forward and the other to never.
 

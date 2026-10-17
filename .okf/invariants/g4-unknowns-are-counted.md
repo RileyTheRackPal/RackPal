@@ -86,7 +86,7 @@ correctly".
 
 # Citations
 
-[1] `packages/rackmate_core/lib/src/derived/totals.dart`
-[2] `packages/rackmate_core/lib/src/derived/schedule.dart`
-[3] `packages/rackmate_core/lib/src/derived/link_class.dart`
-[4] `packages/rackmate_core/lib/src/derived/cable_footage.dart`
+[1] `packages/rackpal_core/lib/src/derived/totals.dart`
+[2] `packages/rackpal_core/lib/src/derived/schedule.dart`
+[3] `packages/rackpal_core/lib/src/derived/link_class.dart`
+[4] `packages/rackpal_core/lib/src/derived/cable_footage.dart`

@@ -11,7 +11,7 @@ timestamp: 2026-08-25T00:00:00Z
 status: adopted
 ---
 
-`apps/rackmate/test/dependency_table_test.dart`.
+`apps/rackpal/test/dependency_table_test.dart`.
 
 # What it defends
 
@@ -71,8 +71,8 @@ capable of failing.
 
 # What it deliberately does not flag
 
-**The workspace's own packages.** `rackmate_core`, `rackmate_ui`, `rackmate_text`
-and `rackmate_export` are path dependencies on this repository, and §10.1
+**The workspace's own packages.** `rackpal_core`, `rackpal_ui`, `rackpal_text`
+and `rackpal_export` are path dependencies on this repository, and §10.1
 documents third-party choices. The exclusion is **derived by listing
 `packages/`**, never enumerated, so a new package is covered the moment it exists.
 
@@ -108,7 +108,7 @@ report the offending name before the file was trusted:
 | Break | Reported |
 |---|---|
 | `printing` flipped to `in use` while uninstalled | `line 883: printing` |
-| the `screen_retriever` row deleted | `screen_retriever (apps/rackmate/pubspec.yaml)` |
+| the `screen_retriever` row deleted | `screen_retriever (apps/rackpal/pubspec.yaml)` |
 | `path` flipped to `planned (M6)` while installed | `line 882: path is planned (M6)` |
 | the **Status column removed from the header** | the header it actually found, quoted back |
 

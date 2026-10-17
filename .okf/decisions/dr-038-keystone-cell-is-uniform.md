@@ -10,7 +10,7 @@ tags: [ruling, keystone, m3, dr-007, dr-028, measurement, dr-038]
 timestamp: 2026-08-10T18:00:00Z
 ruling_id: DR-038
 canon_section: "11.37"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-10, with a caliper.

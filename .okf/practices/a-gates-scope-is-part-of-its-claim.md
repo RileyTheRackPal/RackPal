@@ -27,9 +27,9 @@ contain a floorplan. The board was green throughout.
 
 The gate could not have fired. It scans:
 
-- **function-typed fields on `*Actions` records** — the importer is free
+- **function-typed fields on `*Actions` records**: the importer is free
   functions;
-- inside **`packages/rackpal_ui/lib`** — the importer is in `apps/rackpal/lib`.
+- inside **`packages/rackpal_ui/lib`**: the importer is in `apps/rackpal/lib`.
 
 Two independent misses, and the file is called `plan_import_actions.dart`, which
 reads like something that gate covers.

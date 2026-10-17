@@ -10,7 +10,7 @@ tags: [ruling, dependencies, supply-chain, cooldown, flutter, pin, lints, analyz
 timestamp: 2026-10-11T00:00:00Z
 ruling_id: DR-248
 canon_section: "11.247"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-11 for `#1046`.

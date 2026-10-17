@@ -7,7 +7,8 @@ tags: [ruling, dr-091, canon-11-90]
 timestamp: 2026-08-26T00:00:00Z
 ruling_id: DR-091
 canon_section: "11.90"
-status: ruled
+status: built
+amended_by: [DR-168]
 ---
 
 **Generated from canon §11.90 on 2026-10-12** (board `#1055`), because the bundle had no

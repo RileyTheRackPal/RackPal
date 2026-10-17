@@ -10,7 +10,7 @@ tags: [ruling, device-builder, archetype, switch, poe, sfp, m4-i, dr-093, g4, ce
 timestamp: 2026-08-26T00:00:00Z
 ruling_id: DR-093
 canon_section: "11.92"
-status: ruled
+status: built
 ---
 
 # DR-093 · The generator copies the seeded switch, including its silences

@@ -11,7 +11,7 @@ tags: [ruling, plan-view, pins, keymap, focus, dr-162, dr-011, dr-143, cr-102]
 timestamp: 2026-09-13T00:00:00Z
 ruling_id: DR-162
 canon_section: "11.161"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-13, closing `#878`. Found by `#872`'s

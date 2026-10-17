@@ -7,7 +7,8 @@ tags: [ruling, dr-005, canon-11-5]
 timestamp: 2026-10-12T00:00:00Z
 ruling_id: DR-005
 canon_section: "11.5"
-status: ruled
+status: superseded-in-part
+superseded_by: [DR-048, DR-051]
 ---
 
 **Generated from canon §11.5 on 2026-10-12** (board `#1055`), because the bundle had no

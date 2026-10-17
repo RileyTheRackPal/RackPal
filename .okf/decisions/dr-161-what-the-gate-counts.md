@@ -11,7 +11,7 @@ tags: [ruling, gates, census, testing, dr-161, dr-013, cr-117]
 timestamp: 2026-09-13T00:00:00Z
 ruling_id: DR-161
 canon_section: "11.160"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-13, closing `#880` and `#881`. **Neither was a

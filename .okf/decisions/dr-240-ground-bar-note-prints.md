@@ -10,6 +10,7 @@ timestamp: 2026-10-06T00:00:00Z
 ruling_id: DR-240
 canon_section: "11.239"
 status: built
+amended_by: [DR-241]
 ---
 
 Settled by the user on 2026-10-06 for `#1016`, found while building

@@ -11,7 +11,7 @@ tags: [ruling, import, device-builder, rmdx, cr-050, cr-062, ac-042, dr-101, dr-
 timestamp: 2026-08-29T00:00:00Z
 ruling_id: DR-101
 canon_section: "11.100"
-status: ruled
+status: built
 ---
 
 # DR-101 · An id collision on import is a question

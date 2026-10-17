@@ -145,9 +145,9 @@ RackPal/
    │                                  recovery_service · recent_files
    ├─ lib/export/export_service.dart  font preload on main isolate → Isolate.spawn
    ├─ lib/diagnostics/                log.dart · crash_reporter.dart
-   ├─ assets/fonts/                   IBM Plex Sans / Sans Condensed / Mono + Noto Sans
-   │                                  Symbols 2, declared TWICE in pubspec (fonts: and
-   │                                  assets:). CR-080
+   ├─ assets/fonts/                   Jost Regular + Medium, Space Mono Regular + Bold
+   │                                  (RackMono), declared TWICE in pubspec (fonts: and
+   │                                  assets:). No fallback face. CR-080, DR-249
    └─ windows/ macos/
 ```
 
@@ -780,7 +780,7 @@ Defining every connector symbol once as an SVG path `d` string eliminates the re
 
 ## 9. Persistence
 
-Full field-level detail is in [the file format](02-data-model.md#6-the-rackpal-file-format); this section covers the machinery.
+Full field-level detail is in [the file format](02-data-model.md#6-the-rppj-file-format); this section covers the machinery.
 
 ### 9.1 Container and envelope
 
@@ -798,12 +798,14 @@ The envelope puts format metadata at the root and all entity maps under a `"docu
 ```json
 {
   "generator": "RackPal",
-  "schemaVersion": 2,
-  "minReaderVersion": 2,
+  "schemaVersion": <kSchemaVersion>,
+  "minReaderVersion": <kMinReaderVersion>,
   "appVersion": "1.0.0",
   "document": { "racks": {}, "devices": {}, "links": {}, "nets": {} }
 }
 ```
+
+The two integers are written as the constants they come from because their values move with the format: `packages/rackpal_core/lib/src/units/constants.dart` owns `kSchemaVersion`, `kMinReaderVersion` and the plan-data stamp `kPlanMinReaderVersion`, and [docs/02 §7](02-data-model.md#7-schema-versioning-and-the-migration-chain) lists the chain.
 
 Two codec rules: **enums are strings, never ordinals** (`"hdmi"`, not `3`), with unknown values falling back to a round-tripping `unknown(raw)` variant; and **every persisted object preserves unknown fields** in a `Map<String, Object?> unknown` and re-emits them, so a v1.0 app opening a v1.4 file round-trips without destroying newer data.
 
@@ -814,13 +816,15 @@ Two codec rules: **enums are strings, never ordinals** (`"hdmi"`, not `3`), with
 ### 9.2 Migration
 
 ```dart
-const kSchemaVersion = 2;
+// kSchemaVersion: constants.dart owns the number.
 typedef JsonMap = Map<String, Object?>;
 typedef Migration = JsonMap Function(JsonMap);
 
 /// APPEND-ONLY. A shipped migration is a historical record — editing one
-/// corrupts users' files. Never delete, never modify.
-const migrations = <int, Migration>{0: _v0ToV1, 1: _v1ToV2};
+/// corrupts users' files. Never delete, never modify. One entry per version
+/// step, keyed by the version it leaves: migrations.dart owns the list, and
+/// docs/02 §7 tabulates it.
+const migrations = <int, Migration>{0: migrateV0ToV1, 1: migrateV1ToV2, /* … */};
 
 Outcome<MigratedDoc> migrateToCurrent(JsonMap raw) { … }
 ```
@@ -895,7 +899,7 @@ Recent files are a JSON list in application support (`{path, displayName, lastOp
 | `image` | `in use` | `^4.9.1` | app | **Decoding a floorplan on import and flattening its alpha before it is stored** (PLAN-D/2, DR-029). Promoted from transitive to declared on `archive`'s and `crypto`'s precedent, which is one rule stated three times now: already resolved as somebody else's dependency is **not a licence to import it** (`depend_on_referenced_packages`). **DECLARED IN THE APP AND NOT IN CORE**: `rackpal_core` is decoder-free by design and reads only a HEADER (`persistence/image_header.dart`), so the pixels never cross that boundary. | low. Pure Dart, no native plugin, MIT (compatible with DR-036's GPLv3), and already compiled into this project through `pdf` whether this row exists or not. **The real risk is not the package**: an image decoder is a memory-safety surface, which is why the caps in `image_header.dart` run BEFORE it is handed anything (AC-058/D8). | the header parser already gives dimensions without it, so a fallback that refused alpha instead of flattening it is conceivable and worse: it would push a real architectural export back onto a manual conversion step, which is the thing DR-029 spent 2 to 3 weeks buying out |
 | `xml` | `in use` | `^7.0.1` | app | **Reading an SVG logo's size and checking it before it is drawn** (`#590`, DR-217 §11.216.2): the root `<svg>`'s `viewBox` or `width` and `height`, which give the page the SVG is drawn on, and every embedded `data:` image, which is put through `image_header.dart`'s caps before `pdf`'s SVG support decodes it uncapped. Promoted from transitive to declared on `image`'s precedent: `pdf` already parses SVG with it, so this is the same parser reading the same file one step earlier. | low. Pure Dart, no native plugin, MIT (compatible with DR-036's GPLv3), and already compiled in through `pdf`. **It expands no DTD entity**, so an entity-expansion bomb is inert, and the import refuses an `<!ENTITY` declaration outright anyway. The 4 MB SVG cap runs before it is handed anything. | a regular expression over the root tag would read the size, and is the kind of parser that is right until an attribute contains a `>`; the embedded-image walk needs a real tree |
 | `pdfrx` | **`rejected`** | n/a | n/a | **REJECTED 2026-09-07 BY DR-138, AND THE ROW IS KEPT RATHER THAN DELETED** so the next person does not re-derive the same choice. `PLAN-D/1` picked it and recorded two unknowns; verifying them refuses it twice. **Every route DOWNLOADS pdfium at build time** (2.3.0+ via Dart native assets from `bblanchon/pdfium-binaries`, earlier via a CMake download), and **CR-100 rules that pdfium is vendored into the repo rather than downloaded**, on supply-chain and reproducibility grounds that DR-006's self-signed distribution sharpens rather than softens. Independently, `pdfrx` 2.x needs **Flutter 3.47 / Dart 3.13** and this repo is pinned at **3.44.4 / 3.12.2**. | n/a | the licence was the half that came back clean: `pdfrx`, `pdfrx_engine`, `pdfium_dart` and `pdfium_flutter` are all MIT and compatible with DR-036. **The licence was never the risk.** When a PDF needs a real rasteriser, CR-100's vendoring problem is waiting unchanged, and a direct FFI binding over a vendored pdfium is the route that satisfies it. **A PDF HAS NOW NEEDED IT** (DR-145 §11.144, 2026-09-08): the second real plan set is an AutoCAD plot with zero `/XObject`, and the lifter refuses all three of its pages. **The deferral stands and is re-examined at `PLAN-H`**, which is the first chapter whose own work needs an underlay rendered rather than stored; this row is what it will be re-examined against  **AND WHAT REPLACED IT LANDED AT `PLAN-K`, 2026-09-10** (DR-153 §11.152): a direct FFI binding over a **vendored** pdfium, in `rackpal_pdfium`, which is the route DR-138 named when it refused this package and which nothing had built. The rejection stands on both of its original grounds, re-checked rather than assumed.|
-| `printing` | `planned (M6)` | `^5.15.0` | app | **Behind an explicit "Verify output" button only.** `PdfPreview`; `layoutPdf` is v1.1. | `PdfPreview`/`raster` need **pdfium**, which the plugin's CMake downloads at build time, a fresh or network-restricted machine fails `flutter build windows` | **Binaries are vendored into the repo (CR-100)**; a network-fetched binary in a signed release is a supply-chain and reproducibility problem, not just a CI one. Degrade to export + "Open in system viewer", which needs no pdfium |
+| `printing` | `planned (v1.1)` | `^5.15.0` | app | **The OS print dialog only (`layoutPdf`), and that is v1.1** (CR-100). **It is no longer the preview and there is no "Verify output" button**: the preview is the generated PDF rendered by the vendored pdfium in `rackpal_pdfium` (DR-230 §11.229.1, DR-153 §11.152). **Not a dependency today**, so nothing here is installed. | the plugin's CMake downloads pdfium at build time, so a fresh or network-restricted machine fails `flutter build windows` (DR-153 §11.152.2 re-checked this and it still holds); whether `layoutPdf` on Windows avoids the fetch is open item 3 in §15 | **Binaries are vendored into the repo (CR-100)**; a network-fetched binary in a signed release is a supply-chain and reproducibility problem, not just a CI one. Degrade to export + "Open in system viewer", which needs no pdfium |
 | `desktop_drop` | `planned (unscheduled)` | `^0.6.0` | app | Drag a `.rppj` onto the window. | 0.x, low activity | a nicety: degrade to File ▸ Open. Alternative `super_drag_and_drop` |
 | `logging` | `planned (unscheduled)` | `^1.3.0` | app | Structured, level-based, zero-dependency. Sinks are ours. | none | — |
 | `intl` | `planned (M7)` | `^0.20.0` | app | Number/date/unit formatting; the runtime half of ARB localization. | none | — |

@@ -9,6 +9,7 @@ timestamp: 2026-10-03T00:00:00Z
 ruling_id: DR-227
 canon_section: "11.226"
 status: built
+amended_by: [DR-246]
 ---
 
 Settled by the user on 2026-10-03, building NET-A/2 (`#683`). A §8.3 amendment.

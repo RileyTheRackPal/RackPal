@@ -8,7 +8,7 @@ tags: [ruling, sheet-furniture, zones, revisions, m6-g, dr-215]
 timestamp: 2026-10-01T00:00:00Z
 ruling_id: DR-215
 canon_section: "11.214"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-01, opening M6-G (`#341`).

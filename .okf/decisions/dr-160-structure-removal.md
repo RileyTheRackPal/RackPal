@@ -12,7 +12,7 @@ tags: [ruling, structure, outlets, deletion, undo, confirmation, dr-160, dr-013,
 timestamp: 2026-09-13T00:00:00Z
 ruling_id: DR-160
 canon_section: "11.159"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-13, closing `#877`. Found by `#872`'s reachability

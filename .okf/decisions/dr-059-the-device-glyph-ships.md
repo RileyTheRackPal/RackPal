@@ -10,7 +10,7 @@ tags: [ruling, m4, m4-d, m4-k, scope-amendment, cr-078, accessibility, dr-059]
 timestamp: 2026-08-14T00:00:00Z
 ruling_id: DR-059
 canon_section: "11.58"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-14 while censusing M4-D (board `#175`, `#201`).

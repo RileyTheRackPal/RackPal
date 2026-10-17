@@ -4,6 +4,8 @@ title: DR-063 — A disagreement is not an unknown, and the identity columns are
 description: docs/06 §4.6 spells "these rows disagree" the same way the whole product spells "nobody has measured this"; and one label written across eight rows mints eight colliding keys.
 tags: [m4-f, grid, batch, g4, cr-114, ux]
 timestamp: 2026-08-15T00:00:00Z
+ruling_id: DR-063
+canon_section: "11.62"
 status: built
 ---
 

@@ -1,20 +1,20 @@
 # RackPal
 
-RackPal is a desktop application for designing A/V equipment racks for custom-integration work, **residential-CI-first, commercial-capable** (DR-002): you enter a rack height in rack units, populate the rack from a seeded catalog of generic archetypes, wire the gear together on a schematic canvas, and export a PDF sheet set containing both the drawing and the cable schedule. The repository holds the specification (the canonical decision record, twelve documents derived from it, and the working papers they were adjudicated from) **and a Flutter application that builds and runs on Windows**.
+RackPal is a desktop application for designing A/V equipment racks for custom-integration work, **residential-CI-first, commercial-capable** (DR-002): you enter a rack height in rack units, populate the rack from a seeded catalog of generic archetypes, wire the gear together on a schematic canvas, and export a PDF sheet set containing both the drawing and the cable schedule. The repository holds the specification (the canonical decision record, the documents derived from it, and the working papers they were adjudicated from) **and a Flutter application that builds and runs on Windows**.
 
-## Status: IN BUILD: M0, M1 and M2 shipped, M3 next
+## Status: IN BUILD
 
 | | |
 |---|---|
-| Phase | M0 (foundations), M1 (the elevation release) and M2 (wiring and the live schedule) have all met their exit criteria. M2's was confirmed on 2026-08-01, four clauses by tests and the fifth by a person. M3 (Structure and the field) is next, and its M2 block has lifted |
+| Phase | [docs/12 §1](docs/12-milestone-board.md#1-the-board-at-a-glance) is the one place that says which milestones have met their exit criteria, which is open now, and what is not started. This page does not restate it, because a status written here went stale at M3 |
 | Platform | Windows. macOS ships in v1 (DR-009) and is not built yet; the debt is enumerated in [docs/13](docs/13-macos-debt-register.md) |
-| Tests | 3 077 passing, 0 failing across five packages, behind **fourteen local gates** (`tools/ci/run_local.ps1`) including a pinned analyzer ratchet and `dart format` (DR-017) |
-| Next step | M3: Structure and the field (see [Roadmap](docs/09-roadmap.md)) |
-| Estimated effort to v1 | 42–65 weeks of implementation; 11–17 months to a shipped v1 with normal overhead |
+| Tests and gates | Counted by the code, not by this page. The gates are the `Invoke-Gate` calls in `tools/ci/run_local.ps1`, the suite floors are in `tools/ci/run_suite.ps1`, and the analyzer ratchet is pinned in `tools/ci/analyze_info_baseline.txt` |
+| Next step | The open milestone on the board above; the plan it belongs to is the [Roadmap](docs/09-roadmap.md) |
+| Cost to v1 | Stated as relative sizes, not weeks (DR-182 §11.181.2): [docs/09 §6](docs/09-roadmap.md#6-what-this-costs-in-sizes) carries the sizes and what the closed milestones actually took |
 
-**The status above is a summary, not the evidence.** [docs/12, the milestone board](docs/12-milestone-board.md) is the audit: it marks every exit clause of every milestone with what was *run* rather than what is believed, cites the file or test that would have to be wrong for the mark to be wrong, and records where those citations have gone stale. Read it before trusting any claim on this page. In particular it records that **no CI service has ever executed the pipeline definition**: the gates are local, and "CI passes" is not yet a thing this project can say.
+**The status above is a pointer, not the evidence.** [docs/12, the milestone board](docs/12-milestone-board.md) is the audit: it marks every exit clause of every milestone with what was *run* rather than what is believed, cites the file or test that would have to be wrong for the mark to be wrong, and records where those citations have gone stale. Read it before trusting any claim on this page.
 
-The estimate above is the record's own honest number, not a target. It is stated rather than softened because a detailed design with no cost attached stalls, and one with a *wrong* cost attached stalls while also destroying trust in the plan.
+No week total is given here on purpose. A detailed design with no cost attached stalls, and one with a *wrong* cost attached stalls while also destroying trust in the plan (AC-017); the week total this page used to carry was written before any of it was built, and the milestones that have closed came in several times under it.
 
 ## Features
 
@@ -30,7 +30,7 @@ The seven core requirements of the brief, and what v1 does about each. All seven
 | 6 | Structure device | A `DeviceInstance` with `kind == structure` rendering as an edge bank of off-page flags; `Outlet` is the creation atom, a home run is a `Link` carrying a `StructureOrigin` (CR-016, AC-019) |
 | 7 | PDF with diagram **and** schedule | Cover and drawing index, legend, exceptions page, front and rear elevations, **N interconnect sheets: one per domain partition of the single schematic `Sheet`**, Pull Sheet, Termination Schedule, Unused Home Runs, Equipment List and Materials, and plate/panel/pinout details where a non-standard pinout exists (AC-025, AC-055, CR-073, DR-005) |
 
-Beyond the seven: a live [Schedule](docs/05-schematic-editor.md) tab that fills in as you wire rather than appearing at export time (AC-035), 28 validation rules that never block an export (CR-022), a Staging Bin, a project-level location tree, pathways, three separate cable-length fields, and CSV import for structured wiring.
+Beyond the seven: a live [Schedule](docs/05-schematic-editor.md) tab that fills in as you wire rather than appearing at export time (AC-035), validation rules that never block an export (CR-022; the catalogue and its count are [docs/02 §5](docs/02-data-model.md#5-the-v1-validation-rule-catalogue-three-tiers)), a Staging Bin, a project-level location tree, pathways, three separate cable-length fields, and CSV import for structured wiring.
 
 ## Documentation
 
@@ -47,20 +47,30 @@ Read [00-overview](docs/00-overview.md) first, then [canonical-decisions](docs/c
 | [docs/06-device-builder.md](docs/06-device-builder.md) | Template authoring, the port grid, the three doors, `.rmdev` |
 | [docs/07-structure-device.md](docs/07-structure-device.md) | Structured wiring entering the rack: outlets, home runs, dual labels |
 | [docs/08-pdf-export.md](docs/08-pdf-export.md) | The sheet set, schedule presets, the PDF backend, greyscale and print tests |
-| [docs/09-roadmap.md](docs/09-roadmap.md) | M0–M9, exit criteria, the honest total, v1.1 / v1.2 / v2 buckets |
-| [docs/15-plan-view.md](docs/15-plan-view.md) | **v1.1, not built.** Floorplan underlay, pins, two-point calibration, the four-tier length model, the `T1.01` plan sheet |
-| [docs/canonical-decisions.md](docs/canonical-decisions.md) | **Normative.** The full decision record: 120 `CR-nnn`, 59 `AC-nnn`, 17 `RJ-nnn`, canonical naming, the data model, the registry, the scope ruling, the milestone plan, and Part 4's binding user decisions `DR-001`–`DR-019`. Every other document defers to this one |
-| [docs/10-decisions.md](docs/10-decisions.md) | Short-form ADR log: sixteen ADRs summarising the record for readers who want the shape without the adjudication, plus the open questions. A summary with a pointer, not a ruling |
+| [docs/09-roadmap.md](docs/09-roadmap.md) | M0–M9, exit criteria, relative sizes, and the release bands of §2 (read them there, they have grown more than once) |
+| [docs/10-decisions.md](docs/10-decisions.md) | Short-form ADR log: a summary of the record for readers who want the shape without the adjudication, plus the open questions. A summary with a pointer, not a ruling; where it and a ruling differ, the ruling wins |
 | [docs/11-testing-and-quality.md](docs/11-testing-and-quality.md) | Fixture corpora, golden files, parity tests, performance budgets, accessibility |
+| [docs/12-milestone-board.md](docs/12-milestone-board.md) | **The evidence.** Every milestone's exit clauses, marked by what was run; §1 is the board at a glance and the one home of project status |
+| [docs/13-macos-debt-register.md](docs/13-macos-debt-register.md) | The macOS work list that DR-009 (macOS ships in v1) makes owed |
+| [docs/14-deployment.md](docs/14-deployment.md) | The portable build and how to hand it over, and the version scheme (§14.0) |
+| [docs/15-plan-view.md](docs/15-plan-view.md) | Floorplan underlay, pins, two-point calibration, the four-tier length model, the `T1.01` plan sheet. Added to v1 by DR-029; its status is on the board |
+| [docs/16-m3g-drill.md](docs/16-m3g-drill.md) | A drill record: the script, conditions form and verdict form for M3's timed 60-drop exit clause, a test only a person can perform |
+| [docs/17-m4q2-drill.md](docs/17-m4q2-drill.md) | A drill record: M4's second exit clause, whether a template a person authored places into a rack and prints `—` for what it does not know |
+| [docs/18-m4r-mark-legibility.md](docs/18-m4r-mark-legibility.md) | A paper check: whether a person can tell the device marks apart on a greyscale print |
+| [docs/19-riley.md](docs/19-riley.md) | The character reference for Riley, the mascot, written to be handed to an artist: what is fixed and what is open |
+| [docs/20-rule-review.md](docs/20-rule-review.md) | A review pack for a working integrator to mark up: every validation check in plain terms, and the signal families |
+| [docs/21-user-guide.md](docs/21-user-guide.md) | The user guide. Unlike every other document here, it describes what the application does today, not what it should be |
+| [docs/22-riley-plate-plan.md](docs/22-riley-plate-plan.md) | **Proposed, not ruled.** Where Riley's art goes in the user guide: scenes, slot sizes, a budget for the visor |
+| [docs/canonical-decisions.md](docs/canonical-decisions.md) | **Normative.** The full decision record: the `CR`, `AC`, `RJ` and `DR` rulings, canonical naming, the data model, the registry, the scope ruling and the milestone plan. Every other document defers to this one |
 | [docs/catalog/seed-devices.md](docs/catalog/seed-devices.md) | The seeded archetypes. **The only place a template count is stated** (CR-061) |
-| [docs/research/](docs/research/) | The raw working papers: four research briefs, six design documents, four critiques, one feasibility study. **Non-normative rationale.** They explain *why*, and they are wrong wherever [canonical-decisions](docs/canonical-decisions.md) contradicts them |
+| [docs/research/](docs/research/) | The raw working papers: research briefs, design documents, critiques and a feasibility study (listed in [its README](docs/research/README.md)). **Non-normative rationale.** They explain *why*, and they are wrong wherever [canonical-decisions](docs/canonical-decisions.md) contradicts them |
 
 ## Target platforms
 
 | Platform | v1 | Notes |
 |---|---|---|
-| Windows 11 desktop | Full editor | The primary and only shipping target for v1 |
-| macOS desktop | Not in v1 | Recommended (not ruled) as the first post-v1 milestone; nothing in M0–M6 may take an unrecorded Windows-only dependency (§10.10) |
+| Windows 11 desktop | Full editor | The only target built so far |
+| macOS desktop | Full editor, in v1 (DR-009) | Not built yet. DR-009 overturned §10.10's recommendation of Windows only; the work is the list in [docs/13](docs/13-macos-debt-register.md) |
 | iOS / Android / tablet | Read-only | Exactly three surfaces (rack elevation, schedule table, exported PDF) and the app says so rather than shipping a squeezed editor (AC-056) |
 | Web | No | One `kIsWeb` guard exists in the export path; a read-only viewer is a v2 distribution question |
 
@@ -70,7 +80,7 @@ Mobile is read-only by confirmed product decision. The architecture must not pre
 
 | Layer | Choice | Why |
 |---|---|---|
-| Language / SDK | Dart 3.12.2 stable | `package:pdf` ^3.13.0 requires Dart ≥ 3.12.0, matches exactly |
+| Language / SDK | Dart, with Flutter pinned in `azure-pipelines.yml` (DR-248) | The pin is the `flutterVersion` variable there and nowhere else; `package:pdf` ^3.13.0 requires Dart ≥ 3.12.0 |
 | UI | Flutter desktop | Single codebase across the desktop target and the read-only mobile shell |
 | State / DI | No package. Constructor injection plus hand-rolled `Listenable`s | One `AppServices` is built in `main` and passed down; the document lives in a plain-Dart `DocumentController`, and `DocEpochs` holds seven `SimpleNotifier<int>` counters that painters subscribe to directly. `flutter_riverpod` was accepted by ADR-011 and never built; **DR-088** ratifies what exists and rejects the dependency (docs/03 §4.1) |
 | PDF | `pdf` ^3.13.0 | Pure Dart, therefore isolate-safe; Apache-2.0. `pw.Widget` for schedules, `PdfGraphics` for vector diagram output |
@@ -85,7 +95,7 @@ VERIFY: every version above is taken from the design corpus and has not been re-
 
 ## Running it
 
-There is nothing to run. Once M0 lands, the entry point will be:
+The application builds and runs on Windows:
 
 ```text
 flutter pub get
@@ -96,11 +106,11 @@ flutter test                    # widget and golden tests in ui / app
 
 ## Continuous integration
 
-> **NO AZURE DEVOPS RUN HAS EVER EXECUTED THIS PIPELINE.** `azure-pipelines.yml` was written and its gate scripts were mutation-tested on a developer machine; no CI service has parsed the YAML, resolved a task name, fetched the pinned SDK archive, or built on a hosted image. Until a run number can be cited, this section describes a **plan**, not a green build. The file's own header lists the four things only the first real run can prove — the YAML schema itself, the Flutter SDK download URL, whether the hosted image can build desktop Windows, and the wall-clock timeout — plus the fact that PR validation on Azure Repos comes from a branch policy and not from the `pr:` block. `docs/12-milestone-board.md` §4.1 carries the same caveat.
+**The pipeline runs.** It first executed on 2026-08-27 (build `20260827.1`, definition 1, `RackPal CI (Windows)`), and [docs/12 §4.1](docs/12-milestone-board.md#41-discharged-2026-08-27-the-pipeline-runs-and-it-has-been-red) records what that run proved, what it did not, and the runs since that have gone red. This page used to carry a box saying no run had ever happened; it was true when written and is not now. `main` is protected by a build-validation policy, so work lands by pull request. `azure-pipelines.yml`'s header says which of its claims are verified and which are not, and where the build agent runs.
 
-What the file *defines*: a Windows agent, the Flutter version **pinned to 3.44.4 and verified after install** (docs/03 §10.2), the analyzer gate, the two palette gates, the JUnit converter self-test, all five suites with non-vacuity floors, `flutter build windows --release`, and publication of the test results and the release ZIP.
+What the file *defines*: a Windows agent, the Flutter version pinned in its `flutterVersion` variable and **verified after install** (DR-248, docs/03 §10.2), the analyzer gate, the two palette gates, the JUnit converter self-test, every suite with a non-vacuity floor, `flutter build windows --release`, and publication of the test results and the release ZIP.
 
-What **is** verified, because it runs here: every gate script under `tools/ci/`. Run them the way the pipeline does:
+Every gate script under `tools/ci/` also runs on a developer machine. Run them the way the pipeline does:
 
 ```text
 pwsh -File tools/ci/run_local.ps1                 # everything
@@ -108,17 +118,16 @@ pwsh -File tools/ci/run_local.ps1 -SkipBuild      # skip the Windows build
 pwsh -File tools/ci/run_local.ps1 -SkipTests -SkipBuild   # fast gates only
 ```
 
-Three things it does **not** cover, stated so none is mistaken for done:
+What a local run does **not** cover, stated so it is not mistaken for done:
 
-- **No goldens.** There are none in this repository, so the roadmap's *"goldens pass"* limb is not satisfied by a green pipeline and the pipeline deliberately does not pretend to run them.
-- **No clean checkout.** `run_local.ps1` runs against your working tree; the pipeline runs against a fresh clone, which is itself a gate (a `.gitattributes` defect in the byte-exact starter assets is only visible there). The cheap half of that is mechanised: `tools/ci/verify_tracked_sources.ps1` fails if any `lib/` Dart source is untracked, which is how a barrel `export` of a file no clone would receive gets caught before it is committed rather than on run 1.
-- **No run.** See the box above.
+- **A clean checkout.** `run_local.ps1` runs against your working tree; the pipeline runs against a fresh clone, which is itself a gate (a `.gitattributes` defect in the byte-exact starter assets is only visible there). The cheap half of that is mechanised: `tools/ci/verify_tracked_sources.ps1` fails if any `lib/` Dart source is untracked, which is how a barrel `export` of a file no clone would receive gets caught before it is committed.
+- **A second machine.** The pipeline's agent is self-hosted (see the header of `azure-pipelines.yml`), so a green run does not show the tree builds on a machine that is not the author's.
 
-The analyzer gate is **zero errors, zero warnings, and a ratcheted info count** pinned in `tools/ci/analyze_info_baseline.txt`, not `--fatal-infos`, which would make `main` permanently red at today's 195 infos. Each suite also has a non-vacuity floor counted over **non-skipped** cases, so neither a runner that discovers no tests nor a batch silenced with `skip:` can pass.
+The analyzer gate is **zero errors, zero warnings, and a ratcheted info count** pinned in `tools/ci/analyze_info_baseline.txt`, not `--fatal-infos`, which would make `main` permanently red at the pinned number of infos. Each suite also has a non-vacuity floor (in `tools/ci/run_suite.ps1`) counted over **non-skipped** cases, so neither a runner that discovers no tests nor a batch silenced with `skip:` can pass.
 
-## Planned project layout
+## Project layout
 
-Five packages, not one tree. The split is mechanically enforced by `no_flutter_import_test`, which bans `package:flutter/`, `dart:ui` **and** `package:pdf/` from `rackpal_core` (CR-083). Rejected alternative: a single `lib/` tree with the Flutter and PDF canvas backends in one directory; it puts a concrete font engine in the core package and breaks the isolate-safety guarantee within a month.
+Six packages, not one tree: the five of the original split plus `rackpal_pdfium`, the vendored pdfium binding that joined at DR-153. The split is mechanically enforced by `no_flutter_import_test`, which bans `package:flutter/`, `dart:ui` **and** `package:pdf/` from `rackpal_core` (CR-083). Rejected alternative: a single `lib/` tree with the Flutter and PDF canvas backends in one directory; it puts a concrete font engine in the core package and breaks the isolate-safety guarantee within a month.
 
 ```text
 RackPal/
@@ -130,6 +139,8 @@ RackPal/
 │  │                      declares abstract TextMeasurer + TextMetrics
 │  ├─ rackpal_text/      pure Dart. core + package:pdf for PdfTtfFont only.
 │  │                      ~5 files. The single concrete TextMeasurer.
+│  ├─ rackpal_pdfium/    the vendored pdfium binding (dart:ffi, DR-153).
+│  │                      the binary is committed, not downloaded (CR-100).
 │  ├─ rackpal_export/    pure Dart. core + text + pdf.
 │  │                      PdfDiagramCanvas, sheets, furniture, tables,
 │  │                      document assembly. The isolate entry point.
@@ -141,7 +152,7 @@ RackPal/
 ├─ assets/
 │  └─ catalog/            seeded templates + sources.md (a cited source for
 │                         every numeric field in every shipped template)
-├─ tools/ci/              the thirteen gates, runnable locally
+├─ tools/ci/              the gate scripts, runnable locally
 ├─ .okf/                  the knowledge bundle — rulings, invariants, gates
 │                         and practices, maintained as changes land
 └─ docs/                  the specification set + research/

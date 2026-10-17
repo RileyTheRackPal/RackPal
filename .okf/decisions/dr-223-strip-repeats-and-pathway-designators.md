@@ -8,7 +8,7 @@ tags: [ruling, title-block, pull-sheet, pathway, m6-l, dr-223]
 timestamp: 2026-10-03T00:00:00Z
 ruling_id: DR-223
 canon_section: "11.222"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-03, building M6-L (`#982`), on the recommended options.

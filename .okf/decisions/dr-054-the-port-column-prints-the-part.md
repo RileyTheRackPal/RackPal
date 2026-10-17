@@ -9,7 +9,7 @@ tags: [ruling, schedule, designators, dr-040, dr-046, cr-042, dr-054]
 timestamp: 2026-08-13T00:30:00Z
 ruling_id: DR-054
 canon_section: "11.53"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-13, closing board #667. It **discharges an open

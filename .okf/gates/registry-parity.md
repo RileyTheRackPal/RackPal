@@ -85,4 +85,4 @@ earth symbol to the hollow hexagon exits **1** and names the row.
 
 [1] `tools/registry_parity.py`
 [2] `tools/pal1_check.py`, the authority
-[3] `packages/rackmate_core/lib/src/catalog/seed_registries.dart`
+[3] `packages/rackpal_core/lib/src/catalog/seed_registries.dart`

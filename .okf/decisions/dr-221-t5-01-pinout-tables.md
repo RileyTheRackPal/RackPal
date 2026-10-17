@@ -8,7 +8,7 @@ tags: [ruling, pinout, t5-01, auto-sheet, ir, euroblock, m6-e, dr-221]
 timestamp: 2026-10-02T00:00:00Z
 ruling_id: DR-221
 canon_section: "11.220"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-02, building M6-E2 (`#333`, `#974` to `#976`).

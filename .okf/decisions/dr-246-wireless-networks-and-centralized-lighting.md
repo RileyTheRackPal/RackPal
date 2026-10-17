@@ -11,6 +11,7 @@ timestamp: 2026-10-09T00:00:00Z
 ruling_id: DR-246
 canon_section: "11.245"
 status: ruled
+amended_by: [DR-247]
 ---
 
 Settled by the user on 2026-10-09 from `#1038`, *"Feasibility of adding wireless network support"*.

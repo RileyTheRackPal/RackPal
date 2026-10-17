@@ -9,7 +9,7 @@ tags: [ruling, m4, m4-b, m4-k, catalog, connectors, g4, cr-071, dr-057]
 timestamp: 2026-08-14T00:00:00Z
 ruling_id: DR-057
 canon_section: "11.56"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-14 during M4-B (board `#173`). It supersedes

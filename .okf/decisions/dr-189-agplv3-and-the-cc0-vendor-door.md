@@ -9,7 +9,7 @@ tags: [ruling, licence, agplv3, cc0, catalog, provenance, dr-189, dr-036]
 timestamp: 2026-09-23T00:00:00Z
 ruling_id: DR-189
 canon_section: "11.188"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-23. Reverses

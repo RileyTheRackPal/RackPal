@@ -9,7 +9,7 @@ tags: [ruling, m3, m6, sheets, termination, g4, dr-027, dr-046, dr-055]
 timestamp: 2026-08-13T00:00:00Z
 ruling_id: DR-055
 canon_section: "11.54"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-13, closing board #679 and answering the

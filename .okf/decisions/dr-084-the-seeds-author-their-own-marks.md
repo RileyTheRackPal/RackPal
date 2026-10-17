@@ -9,7 +9,7 @@ tags: [ruling, m4, m4-r, catalog, glyph, census, dr-059, dr-083, dr-084]
 timestamp: 2026-08-21T00:00:00Z
 ruling_id: DR-084
 canon_section: "11.83"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-21 (board `#694`, `#758`), from a probe run while

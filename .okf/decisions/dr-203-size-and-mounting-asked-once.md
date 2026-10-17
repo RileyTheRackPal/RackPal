@@ -10,7 +10,7 @@ tags: [ruling, device-builder, occupancy, cr-036, cr-030, ac-049, dr-157, dr-203
 timestamp: 2026-09-30T00:00:00Z
 ruling_id: DR-203
 canon_section: "11.202"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-29, from a mockup, choosing the recommended option each time. One

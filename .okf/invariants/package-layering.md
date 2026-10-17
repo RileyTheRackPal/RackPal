@@ -1,7 +1,7 @@
 ---
 type: Invariant
 title: Package layering — what may import what
-description: rackmate_core imports no Flutter; rackmate_export never imports rackmate_ui. Both are enforced by tests, and both shape where new code goes.
+description: rackpal_core imports no Flutter; rackpal_export never imports rackpal_ui. Both are enforced by tests, and both shape where new code goes.
 tags: [invariant, architecture, layering]
 timestamp: 2026-09-23T12:00:00Z
 status: enforced
@@ -11,18 +11,19 @@ status: enforced
 
 | Package | Role | May not import |
 |---|---|---|
-| `rackmate_core` | pure-Dart domain: model, commands, persistence, derivations, the drawing IR | `package:flutter`, `dart:ui`, `package:pdf` |
-| `rackmate_ui` | Flutter widgets and canvases | — |
-| `rackmate_export` | PDF/sheet backends | `rackmate_ui` |
-| `rackmate_text` | text measurement | — |
-| `apps/rackmate` | the shell, storage, session | — |
+| `rackpal_core` | pure-Dart domain: model, commands, persistence, derivations, the drawing IR | `package:flutter`, `dart:ui`, `package:pdf` |
+| `rackpal_ui` | Flutter widgets and canvases | — |
+| `rackpal_export` | PDF/sheet backends | `rackpal_ui` |
+| `rackpal_text` | text measurement | — |
+| `apps/rackpal` | the shell, storage, session | — |
 
 # Why it keeps deciding things
 
 The layering is not bookkeeping; it has settled real design questions:
 
 - **CR-071 put the schematic symbol in core.** *"A symbol only `rackmate_ui` can
-  draw is a symbol that cannot print."* Hence `symbol_layer.dart` and the
+  draw is a symbol that cannot print."* (The package is `rackpal_ui` now; the
+  quotation keeps the name of its day.) Hence `symbol_layer.dart` and the
   Sugiyama layout live under `core/draw/`, not in the UI package.
 - **It decided [DR-010](/decisions/dr-010-seeded-registries.md).** Core imports no
   Flutter, so it **cannot load an asset**: `rootBundle` is Flutter-only. That is
@@ -69,7 +70,7 @@ layering one, and it has not been made.
   This is why the platform split is an injected `isWindows` flag rather than a
   `Platform.isWindows` call, see [DR-009](/decisions/dr-009-macos-in-v1.md).
 - `internal_setter_grep_test.dart` asserts that `@internal` entity setters are
-  called only from `src/commands/`, it scans `rackmate_ui` too, deliberately,
+  called only from `src/commands/`, it scans `rackpal_ui` too, deliberately,
   because a panel of editable fields is the wrong place to rely on a lint.
 
 # Practical consequence
@@ -81,6 +82,6 @@ dependency.
 
 # Citations
 
-[1] `packages/rackmate_core/test/no_flutter_import_test.dart`
-[2] `packages/rackmate_core/test/internal_setter_grep_test.dart`
-[3] `packages/rackmate_core/lib/rackmate_core.dart`, the barrel's own header
+[1] `packages/rackpal_core/test/no_flutter_import_test.dart`
+[2] `packages/rackpal_core/test/internal_setter_grep_test.dart`
+[3] `packages/rackpal_core/lib/rackpal_core.dart`, the barrel's own header

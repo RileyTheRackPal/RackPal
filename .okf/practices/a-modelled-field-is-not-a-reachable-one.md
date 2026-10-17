@@ -36,7 +36,7 @@ the four signature bytes: zero throws, every time.
 So the `catch` arm was unreachable, and the consequence was not cosmetic. Every
 truncated project would have fallen through to the *foreign archive* state,
 been told "this is not a RackPal project", and been **refused the backup that
-would have rescued it** — a user-facing failure caused entirely by a state
+would have rescued it**, a user-facing failure caused entirely by a state
 nothing could reach. The fix was to make *zero entries* the damage signature and
 to write down that the exception arm is the belt-and-braces one.
 
@@ -124,7 +124,7 @@ The only absent thing is a widget that says `actions.onRemoveGang(...)`, and no
 Dart type can require one.
 
 **It is a gate now rather than a habit.** `actions_have_callers_test.dart` scans
-every function-typed callback on a `*Actions` record in `rackmate_ui` and fails
+every function-typed callback on a `*Actions` record in `rackpal_ui` and fails
 when one has no call site: 18 callbacks, one hole on its first run. It was
 **watched failing** before being trusted, and it deliberately skips nested
 records (`StructureEditorActions.dropEntry`, `.outlets`) because those are passed
@@ -409,7 +409,7 @@ cheap habit is to build the count when the sentence that prints it is settled.
 
 # Citations
 
-[1] `packages/rackmate_core/lib/src/commands/pathway_commands.dart`, file header
-[2] `packages/rackmate_core/lib/src/commands/media_type_commands.dart`
+[1] `packages/rackpal_core/lib/src/commands/pathway_commands.dart`, file header
+[2] `packages/rackpal_core/lib/src/commands/media_type_commands.dart`
 [3] `LinkField.pathwayId`, `deriveLocationCode`
 [4] docs/07 §5.1, §5.3.1; RJ-012, RJ-009

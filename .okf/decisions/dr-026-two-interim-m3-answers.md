@@ -6,7 +6,8 @@ tags: [ruling, m3, pathways, lengths, reversibility, dr-026]
 timestamp: 2026-08-09T00:00:00Z
 ruling_id: DR-026
 canon_section: "11.25"
-status: ruled
+status: built
+amended_by: [DR-037]
 ---
 
 Settled by the user on 2026-08-09. Both halves are settled **for

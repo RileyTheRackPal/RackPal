@@ -10,7 +10,8 @@ tags: [ruling, m3, structure, drop-line, templates, g4, dr-007, dr-024, dr-043]
 timestamp: 2026-08-11T18:00:00Z
 ruling_id: DR-043
 canon_section: "11.42"
-status: ruled
+status: superseded-in-part
+superseded_by: [DR-044]
 ---
 
 Settled by the user on 2026-08-11, from board #668: nothing in the product sets

@@ -100,7 +100,7 @@ packages/rackpal_core/test/fixtures/drc/
   expectations.json         # ruleId -> {bad: [findingId...], near: []}
 ```
 
-One table-driven test walks `expectations.json`: the `.bad` document must produce **exactly** that finding, not merely include it, and the `.near` document must produce **none** from that rule. A near-miss that is one field away from the bad case is what stops a rule from being written as `return true`. Three further assertions ride along: every `ruleId` in [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue--three-tiers) resolves to a registered function and vice versa (a rule not in the catalogue does not exist, CR-021); every rule's severity is one of the CR-018 vocabulary with `Severity.info` absent; and **no rule at any severity prevents a PDF from being written to disk** (CR-022, G3), asserted by exporting each `.bad` fixture and checking the file exists.
+One table-driven test walks `expectations.json`: the `.bad` document must produce **exactly** that finding, not merely include it, and the `.near` document must produce **none** from that rule. A near-miss that is one field away from the bad case is what stops a rule from being written as `return true`. Three further assertions ride along: every `ruleId` in [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue-three-tiers) resolves to a registered function and vice versa (a rule not in the catalogue does not exist, CR-021); every rule's severity is one of the CR-018 vocabulary with `Severity.info` absent; and **no rule at any severity prevents a PDF from being written to disk** (CR-022, G3), asserted by exporting each `.bad` fixture and checking the file exists.
 
 Fixtures are `.rmpj` files, not Dart builders, so a domain expert can open one in the app during the M5 sign-off review (AC-051) without reading code.
 
@@ -140,7 +140,7 @@ The §6.7 acceptance criteria are unit tests, not aspirations, and they run in `
 |---|---|---|
 | PAL-1 | pairwise over **rendered family values**; reference implementation is `tools/pal1_check.py`, ported to Dart at M0, see below | §6.7/4, AC-054, canon §14 |
 | Dash floor | every shipped dash period ≥ 4.5 pt (1.5875 mm), 4.25 pt is 1.4992 mm and therefore *below* the 1.5 mm physical floor the rule derives from | §6.7/5 |
-| Glyph coverage | every registry glyph resolves in `RackBody` or `Noto Sans Symbols 2` | §6.7/6, CR-080 |
+| Glyph coverage | every non-ASCII character in a Dart string literal exists in both bundled Jost weights (`tools/glyph_coverage_check.py` reads the binary); no fallback face ships | §6.7/6, DR-249 §11.248.4 |
 | Referential integrity | every `defaultConnector`, `typicalMedia`, `MediaTypeDef.supports` and `SignalFamilyDef.domain` resolves; every connector on a shipped template has a footprint | §6.7/7, AC-050/A2.2 |
 | Documented IDs resolve | every `media.*`, `conn.*`, `SignalDomainId` and signal-family ID appearing in any repository document, template or fixture resolves in `assets/catalog/registries.json`, see below | N1, §6.7/7, seed-devices C2 |
 | Documented **values** match | every hue, dash pattern and weight multiplier printed in a prose table beside such an ID equals the registry's effective value for that family, see below | N1, §6.7/7 |
@@ -233,12 +233,12 @@ Pixel goldens then serve one narrow purpose: proving the two backends are faithf
 
 ### 3.1 Font strategy: the thing that actually makes goldens flaky
 
-Three families ship, aliased so no test ever names a system font: `RackBody` = IBM Plex Sans (Regular + SemiBold), `RackCond` = IBM Plex Sans Condensed, `RackMono` = IBM Plex Mono (Regular + Bold), fallback Noto Sans Symbols 2, all SIL OFL 1.1 (CR-080). Rejected alternative: Inter + JetBrains Mono, which lacks a true condensed cut and the `Ω`/`µ` coverage the schedule needs.
+Two families ship, named so no test ever names a system font: **Jost** (Regular 400 and Medium 500, a modified build) for text, and `RackMono` = Space Mono (Regular + Bold), both SIL OFL 1.1 (CR-080 as amended by DR-249, canon §11.248). `RackCond` is retired and schedules are set in Jost; no fallback face ships, and `tools/glyph_coverage_check.py` holds the codepoints. The earlier Plex trio and its Noto fallback are history (canon §12.57).
 
 Four rules remove the system-font variable entirely:
 
 1. Register the bundled TTFs in `flutter_test_config.dart` via `FontLoader` before any golden runs.
-2. A test asserts **no golden scene references a family other than `RackBody`, `RackCond` or `RackMono`**: a fallback silently substituting Ahem or Roboto is the classic invisible golden drift.
+2. A test asserts **no golden scene references a family other than `Jost` or `RackMono`**: a fallback silently substituting Ahem or Roboto is the classic invisible golden drift.
 3. Goldens run on **Linux only**, with a **pinned** Flutter version. Windows and macOS jobs run `--exclude-tags golden`. Per-platform golden sets collapse under maintenance cost within months; this is the only approach that holds.
 4. Golden regeneration is a deliberate, reviewed step of every Flutter upgrade, because a minor bump routinely shifts antialiasing by a pixel.
 
@@ -434,7 +434,7 @@ Named here so it is not rediscovered, and scheduled in [Roadmap](09-roadmap.md) 
 |---|---|---|
 | ~~Windows OV/EV certificate procurement~~ **Self-signing, with a timestamp** | M8: **not M6, and there is no procurement** | **Superseded by DR-006 (canon §12.9); owed edit paid 2026-08-03.** `New-SelfSignedCertificate` + `Set-AuthenticodeSignature` **with a timestamp server**, public `.cer` to `LocalMachine\Root` and `\TrustedPublisher`, ideally by GPO. **Microsoft Trusted Signing is the named fallback**, adoptable at M8, verify eligibility for an Individual Partner Center account before relying on it (#101). The lead time the old row defended against was OV/EV identity verification, the SmartScreen reputation ramp and hardware-token logistics; none attaches to either path DR-006 names |
 | Signed MSIX / installer, symbol archival | M8 | **The criterion SPLITS (canon §11.6.2).** Build-side gate: signed, timestamped, valid publisher in file properties, **and the signature still validates after the signing certificate has expired**. Distribution-side, documented and not gated: Local Intranet UNC or Intune/GPO, plus docs/14 §14.2's ZIP trap. **"No SmartScreen warning" is not a build-side property**: SmartScreen evaluates Mark-of-the-Web, which is how a file arrived, not what it is |
-| Vendored pdfium | M8 | The `printing` plugin's CMake downloads binaries at build time; a network-restricted runner fails `flutter build windows` (CR-100). Vendor and point CMake at the vendored copy |
+| Vendored pdfium | **Built (DR-153, canon §11.152); the macOS binary is still owed** | Windows x64 is vendored under `third_party/pdfium/` and placed by a person; nothing fetches it (CR-100). It was scheduled here for M8 because the `printing` plugin's CMake downloads binaries at build time; DR-153 vendored the binary through `rackpal_pdfium` instead, and the export preview renders through it (DR-230 §11.229.1). The macOS binary and its loader are docs/13 D9's debt |
 | macOS notarisation and stapling | Not v1 unless §10.10 resolves for macOS | Costs `Cmd`/`Ctrl` keymap work across ~40 bindings, a second font-availability check, and a second print matrix, 3–5 weeks plus ongoing CI |
 | Reproducible signed builds | Post-v1 | A signed release is a supply-chain and reproducibility problem, not only a CI one |
 | In-app auto-update | **Not doing in v1** (RJ-014) | Signed installer plus a version-check ping. Auto-update is a security surface and a support burden before there are users |

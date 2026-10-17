@@ -10,7 +10,9 @@ tags: [ruling, naming, trademark, sweep, dr-096, rj-017, dr-006, dr-089, m8]
 timestamp: 2026-08-26T00:00:00Z
 ruling_id: DR-096
 canon_section: "11.95"
-status: ruled
+status: superseded-in-part
+superseded_by: [DR-179]
+amended_by: [DR-251]
 ---
 
 # DR-096 · The product is RackPal, and the wordmark is the one thing this repository cannot re-cut

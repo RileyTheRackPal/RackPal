@@ -12,7 +12,7 @@ tags: [ruling, plan-view, pdf-export, sheets, screening, gates, dr-149, dr-029, 
 timestamp: 2026-09-09T00:00:00Z
 ruling_id: DR-149
 canon_section: "11.148"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-09 at `PLAN-H/1`'s census. Two presentation calls

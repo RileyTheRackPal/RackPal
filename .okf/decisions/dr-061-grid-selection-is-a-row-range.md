@@ -4,7 +4,9 @@ title: DR-061 — The port grid's selection is a row range and a focused column,
 description: docs/06 §4.6 describes the selection two incompatible ways and no M4-F task built either; a 2D cell rectangle would have been consulted by one of the table's fourteen operations.
 tags: [m4-f, grid, selection, ux, decomposition-gap]
 timestamp: 2026-08-15T00:00:00Z
-status: ruled
+ruling_id: DR-061
+canon_section: "11.60"
+status: built
 ---
 
 The Device Builder port grid's selection is:

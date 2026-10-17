@@ -2,7 +2,7 @@
 type: Gate
 title: Callbacks have callers
 description: >-
-  Every function-typed member of a *Actions record in rackmate_ui must be invoked
+  Every function-typed member of a *Actions record in rackpal_ui must be invoked
   somewhere in that package. Written after a gesture shipped with a command, an
   implementation, tests for both, and nothing that called it.
 tags: [gate, ui, verification, practice, m3-h]
@@ -10,11 +10,11 @@ timestamp: 2026-08-12T00:00:00Z
 status: adopted
 ---
 
-`packages/rackmate_ui/test/structure/actions_have_callers_test.dart`.
+`packages/rackpal_ui/test/structure/actions_have_callers_test.dart`.
 
 # What it defends
 
-The surfaces in `rackmate_ui` take their gestures as **callback records**:
+The surfaces in `rackpal_ui` take their gestures as **callback records**:
 `OutletsActions`, `PathwaysActions`, `StructureEditorActions`,
 `DropEntryActions`, `OutletTemplateActions`. The package may not depend on the
 app, so a record is the seam.
@@ -62,9 +62,9 @@ ignore: **it would have cried wolf twice on its first run.**
 * **It is a grep, not a parser.** A call site inside a comment or a string counts.
   False negatives are acceptable here; a flaky false positive is not.
 * **It does not check the app side.** A callback invoked by a widget but wired to
-  a no-op in `apps/rackmate` passes. That is a different defect and would want a
+  a no-op in `apps/rackpal` passes. That is a different defect and would want a
   different gate.
-* **It only scans `rackmate_ui`.** Records living elsewhere are unguarded.
+* **It only scans `rackpal_ui`.** Records living elsewhere are unguarded.
 
 # The second blind spot came true at DR-047, and it is worth the detail
 
@@ -73,14 +73,14 @@ openings it tears down, because that gesture rebuilds a plate from nothing. Had
 that loop been missing, the gesture would have **deleted a part somebody chose**,
 and:
 
-* `rackmate_core` proves `planPlateArrangement` returns the pass-throughs to keep;
+* `rackpal_core` proves `planPlateArrangement` returns the pass-throughs to keep;
 * `outlets_view_test.dart`'s harness **reimplements** arrange over the raw
   commands, so it never runs the app's version at all;
 * this gate is satisfied, because `onArrange` has a caller;
 * and `buildOutletsActions` had **no test of its own**, in any package.
 
 Four green signals around twenty untested lines. The fix is a test file for the
-**app-side builder** (`apps/rackmate/test/session/outlet_plate_actions_test.dart`),
+**app-side builder** (`apps/rackpal/test/session/outlet_plate_actions_test.dart`),
 watched failing with the loop disabled before being trusted.
 
 **The generalisation: a callback has three parts and this gate checks one.** The

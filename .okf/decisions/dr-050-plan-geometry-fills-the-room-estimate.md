@@ -8,27 +8,62 @@ description: >-
   the figure rather than a person. Built as LEN-A, where a census found the
   ruling had priced a tree that was not there: the vertices it assumed existed
   never did, and the field it fills had no editor anywhere since M3-D.
-tags: [ruling, plan-view, estimating, schedule, len-a, dr-050, dr-020, dr-147, g4, ac-024]
+tags: [ruling, plan-view, estimating, schedule, len-a, dr-050, dr-020, dr-046, dr-147, g4, ac-024]
 timestamp: 2026-09-11T00:00:00Z
 ruling_id: DR-050
 canon_section: "11.49"
-status: ruled
+status: built
 ---
 
-Settled by the user on 2026-08-12. Built as `LEN-A`, 2026-09-10 to 2026-09-11.
+Settled by the user on 2026-08-12, from a request for Specifi-styled wire-run
+length estimation off plan vertices and ceiling heights. Built as `LEN-A`,
+2026-09-10 to 2026-09-11.
 
 # No new tier, because the census corrected the question first
 
-The request was put against the claim that DR-020 forbids an estimate from
-entering the footage rollup. **It forbids a BOUND**, which is not the same
-object, and the difference is the whole ruling: `cable_footage.dart`'s
+The request was put against the claim that
+[DR-020](/decisions/dr-020-no-predicted-routes.md) §11.19.2(2) forbids an
+estimate from entering the footage rollup. **It forbids a BOUND**, which is not
+the same object, and the difference is the whole ruling: `cable_footage.dart`'s
 `_isQuantity` returns true for `roomEstimate` today and says why in its own
 comment.
 
+| Source | Reachable? | Sums into a purchase? |
+|---|---|---|
+| `cut` | yes | **yes** |
+| `outletNominal` | yes | **yes** |
+| `roomEstimate` (`Location.estimatedRunLengthFromRack`) | **yes** | **yes** |
+| `planLowerBound` | not built | **no**, DR-020 |
+
+`_isQuantity` says, in its own comment: *"AC-024's own example is an ESTIMATED
+total plus waste, so an estimate is a quantity here. `estimatedCount` is what
+keeps the figure's standing visible."*
+
+**So the shipped position was never that estimates may not buy cable.** It is that
+they may, and that the count of them is reported beside the total. A framing built
+on the opposite reached the user as an option list, and the census is what caught
+it. Same shape as
+[re-read a task against canon](/practices/re-read-a-task-against-canon.md), one
+level out: the thing re-read was my own question.
+
 So plan geometry becomes a **better way to populate a field that already
 exists**. `ScheduleLengthSource` gains nothing. A fourth tier would buy a
-provenance distinction the user's own ground says does not pay: wire is a
-consumable quoted with margin.
+provenance distinction the user's own ground says does not pay: *"it's used to
+estimate quotes, with a healthy margin for error ... in most A/V companies, wire
+is a consumable."* **Machinery for a distinction nobody acts on gets read as
+significant by the next person.**
+
+# DR-020 is not weakened
+
+`planLowerBound` remains forbidden from the rollup. The route is still
+**discovered rather than designed**; the route polyline, `routingFactor` and
+`slackAllowance` are still deleted and still not to be re-argued from. Framing
+decides the path and framing is not knowable when the plan is drawn.
+
+**A room's dimensions are not a route.** What this adds is a way to compute a
+*room-level* figure from measured geometry instead of from recollection, into a
+tier that already existed for room-level figures. **A per-drop figure derived from
+a drawn path remains forbidden.**
 
 # The ruling assumed a tree that was not there
 
@@ -85,6 +120,26 @@ unrecorded origin counts as a person's (G4).
 Closing an outline writes the shape and the figure in ONE transaction,
 because it is one act to whoever drew it.
 
+# Marking the figure is DR-046 honoured, not bent
+
+[DR-046](dr-046-rack-end-is-its-own-termination.md) ruled that nothing may copy a
+field termination into the rack termination, because a schedule that fills the
+second column can no longer tell a stated value from an assumed one. The marker
+above is what keeps that rule true here.
+
+**What differs is the cost of being wrong, and that is why the answers differ.**
+
+| | Termination | Length |
+|---|---|---|
+| Kind of fact | discrete part | continuous estimate |
+| A wrong value | orders a keystone jack for an F barrel | is absorbed by a margin the user sets |
+| So the default is | nothing infers it | geometry may fill it, marked |
+
+**A rule applied without that test would have forbidden this feature on the
+strength of a precedent about a different kind of fact.** The marker is one
+nullable field, and it exists so a later reader asking *"did somebody measure this
+room or did the software guess"* has an answer.
+
 # And it does not print, because the drawing already says it
 
 `T1.01` shows no outline, settled 2026-09-11 (§11.49.9) without the print run the
@@ -131,3 +186,9 @@ another package. See
 [DR-144](dr-144-a-calibration-carries-its-unit.md) ·
 [DR-154](dr-154-the-plan-advisories.md) ·
 [DR-029](dr-029-plan-view-in-v1.md)
+
+# Citations
+
+[1] `docs/canonical-decisions.md` §11.49
+[2] `packages/rackmate_core/lib/src/derived/cable_footage.dart`, `_isQuantity`
+[3] `packages/rackmate_core/lib/src/derived/schedule.dart`, `ScheduleLengthSource`

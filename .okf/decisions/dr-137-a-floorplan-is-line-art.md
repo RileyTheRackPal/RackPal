@@ -6,7 +6,7 @@ tags: [ruling, persistence, container, compression, plan-view, dr-137, dr-019, c
 timestamp: 2026-09-07T00:00:00Z
 ruling_id: DR-137
 canon_section: "11.136"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-07, on measurements taken against an 18-sheet

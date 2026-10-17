@@ -139,8 +139,9 @@ const kPinPitch          = 2;                 // gu
 const kBtuPerWattHour    = 3.412142;          // CR-005 — derived heat, never stored
 const kBankCollapseThreshold = 8;
 const kMaxRackHeightU    = 60;                // CR-038
-const kSchemaVersion     = 2;
 ```
+
+`kSchemaVersion` (the container format this build writes) is not in the block above on purpose: its value moves with every format advance, so a copy here goes stale. `packages/rackpal_core/lib/src/units/constants.dart` owns the number, the `kMinReaderVersion` stamp and the plan-data stamp `kPlanMinReaderVersion` beside it, and carries the history of why each moved; §7 has the chain.
 
 Two unit tests are written **before any other code** (AC-001): exact 1/32-in inter-panel clearance, and zero accumulated error across a 45U stack.
 
@@ -164,7 +165,7 @@ Four rules from CR-045 and §4.0 govern every identifier in this document. They 
 ```dart
 final class RackDocument {
   final Uuid id;
-  int schemaVersion, minReaderVersion;      // 2, 2
+  int schemaVersion, minReaderVersion;      // kSchemaVersion, kMinReaderVersion (§7)
   String appVersion;                        // diagnostics only
   DateTime createdAt, modifiedAt;
 
@@ -1011,6 +1012,8 @@ Two container decisions and their rejected alternatives. **Plain JSON over zip (
 
 A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel, one Structure body with one outlet, and four Links, one home run still `structure.undetermined` at rough-in, one patch jumper, one multi-service Cat5e, and one design-intent HDMI run to a device that does not exist yet.
 
+**This example is an illustration of the file's shape, not a fixture the codec reads.** Its two envelope integers, `schemaVersion` and `minReaderVersion`, are those of an early version of the format and do not track the codec: a file written by a current build stamps `kSchemaVersion` and `kMinReaderVersion` from `packages/rackpal_core/lib/src/units/constants.dart` (or `kPlanMinReaderVersion` where the document carries plan data), and §7 says why each moved. The checked-in starters under `apps/rackpal/assets/starters/` are the files that stay byte-true to the live format (CR-117).
+
 **Presentation note.** The codec key-sorts every object, which would place the enormous `document` value between `createdAt` and `generator`. It is shown last here so the envelope reads as a unit. Port arrays inside templates are elided with an explicit sentinel string. This listing is therefore *derived from* `test/fixtures/v1_sample.rmpj` and is not itself byte-identical to it.
 
 ```json
@@ -1751,7 +1754,7 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
 
 ### 6.4 `.rpdx`: the single-template file
 
-A `.rpdx` is one `TemplateBody` plus its identity, in plain JSON, under the **same unit regime** as `.rppj`, `depthNm`, `weightUg`, integers throughout (CR-063). ~~Its `identity.` / `physical.` / `power.` sections are a **file layout only**; the codec flattens them onto `TemplateBody` (CR-053).~~ **Superseded by DR-100 §11.99: there are no sections.** The file is five envelope keys (`schemaVersion`, `kind`, `templateId`, `version`, `contentHash`) over a `body` that is `templateBodyToJson`'s own map, verbatim, so the format acquires **no second description of a `TemplateBody`** and inherits CR-117's gate instead of drifting from it. The sectioned layout was drawn in docs/06 §7.3 and placed 18 of the encoder's 39 keys; `model` was one of the 21 it dropped. It has its own migration chain (AC-050/A8.2), starting at `schemaVersion` 1 independent of `.rppj`'s 2, and a newer one is **refused rather than opened read-only**, because AC-012 makes `TemplateBody` closed with no `unknown` passthrough, so there is nothing to open read-only with. The `signature` field and the provenance chain are **cut from v1** (AC-042); single `.rpdx` export and import stay, because that is the unit people email each other.
+A `.rpdx` is one `TemplateBody` plus its identity, in plain JSON, under the **same unit regime** as `.rppj`, `depthNm`, `weightUg`, integers throughout (CR-063). ~~Its `identity.` / `physical.` / `power.` sections are a **file layout only**; the codec flattens them onto `TemplateBody` (CR-053).~~ **Superseded by DR-100 §11.99: there are no sections.** The file is five envelope keys (`schemaVersion`, `kind`, `templateId`, `version`, `contentHash`) over a `body` that is `templateBodyToJson`'s own map, verbatim, so the format acquires **no second description of a `TemplateBody`** and inherits CR-117's gate instead of drifting from it. The sectioned layout was drawn in docs/06 §7.3 and placed 18 of the encoder's 39 keys; `model` was one of the 21 it dropped. It has its own migration chain (AC-050/A8.2), starting at `schemaVersion` 1 independent of `.rppj`'s (its own `kRmdxSchemaVersion` lives in `packages/rackpal_core/lib/src/library/rmdx_codec.dart`), and a newer one is **refused rather than opened read-only**, because AC-012 makes `TemplateBody` closed with no `unknown` passthrough, so there is nothing to open read-only with. The `signature` field and the provenance chain are **cut from v1** (AC-042); single `.rpdx` export and import stay, because that is the unit people email each other.
 
 **`.rpda`: the device archive.** Many `TemplateBody` in one file: a manifest plus an array, in the `.rpdx` unit regime, reusing the `.rpdx` migration chain rather than inventing a second one. **A single JSON file, not a zip**: DR-015 §11.15.4 has the argument, and it is CR-091's argument applied a second time: the zip in the original `.rmlib` spec existed to carry per-face device images, images are cut (AC-057), and a zip of pure JSON buys compression at the cost of the whole zip-slip / entry-count / decompression-bomb surface D8 lists as needed-and-absent. It carries **neither `signature` nor `provenance`**: AC-042 kept `contentHash` and cut the cryptographic apparatus, and an archive needs only the half that was kept. **This renames `.rmlib` and re-opens the part of AC-042 that cut it**: a scope edit under roadmap §8.3, ruled in DR-015 and not yet built.
 
@@ -1768,18 +1771,37 @@ Two integers, and they do different jobs (CR-092, CR-093):
 
 > **`kMinReaderVersion` IS 2, AND THAT SENTENCE IS ABOUT WHAT WE WRITE RATHER THAN HOW WE READ.** The two rows above describe how a reader treats a file it is handed. The constant decides what goes INTO every file this build saves, and it moved to 2 with `migrateV1ToV2`: so **a v1 reader refuses a file written today** rather than opening it read-only, which is the row above running in the other direction. That is correct and deliberate, because v1 had no `sequence` and a v1 reader silently round-tripping a v2 document would drop it. It is written down here because raising the constant is a one-line change with a product consequence, and the consequence lived in nobody's head (docs/12 §4.7).
 
+**Correction to the sentence above, which was true when written and is not now:** the constant has moved once since, to 3 with `migrateV2ToV3`, and has then stayed behind while `kSchemaVersion` advanced. The mechanism it describes is unchanged. Read the live value from `kMinReaderVersion` in `packages/rackpal_core/lib/src/units/constants.dart`; a document that carries plan data stamps `kPlanMinReaderVersion` instead of it.
+
+**The chain, as the code has it** (`packages/rackpal_core/lib/src/persistence/migrations.dart` owns it, and `kSchemaVersion` is the version it ends at). Each step is keyed by the version it leaves:
+
+| Step | What it does | `kMinReaderVersion` | Ruling |
+|---|---|---|---|
+| v0 to v1 | Synthetic. Renames the root `revision` key to `sequence` to prove the chain runs end to end. v1 was the first real ship. | n/a | CR-094 |
+| v1 to v2 | `PowerProfile.outletsProvided` and `outletsConsumed` became nullable and the encoder began omitting an unauthored count. Re-stamps only: a v1 `0` is a measurement and is left alone. A **breaking write**. | moved to 2 | CR-114, CR-117 |
+| v2 to v3 | `PortDef.position` became nullable, null meaning automatic layout; drops the all-zero positions each older file carried. A **breaking write**. | moved to 3 | DR-105 |
+| v3 to v4 | Deletes `PortDef.carriedProtocols`. Not a breaking write: an older reader reads the absent key as `[]`. | stays at 3 | DR-134 |
+| v4 to v5 | The Plan model arrives. Re-stamps and converts nothing; the advance exists so the conditional `kPlanMinReaderVersion` stamp has a version to name. | stays at 3 | DR-037, DR-136 |
+| v5 to v6 | Deletes the two outlet-count keys from every template body, re-takes each content hash the old body attested, and moves a device's `TemplateRef.contentHash` with it. | stays at 3 | DR-171 |
+
+The v3 to v4 and v5 to v6 steps meet the trigger the constant's own comment states: every file on disk stops re-encoding byte for byte (CR-117), so the version is owed an advance even though no older reader is hurt. A step that only adds optional keys does not meet it, which is why v4 to v5 needed the separate reason in its row.
+
 Migration returns an `Outcome<T>`, never an exception (CR-093), the source snippet's `throw NewerSchemaException` is a control-flow defect in a path that must degrade gracefully.
 
 ```dart
-const kSchemaVersion = 2;
+// kSchemaVersion, kMinReaderVersion, kPlanMinReaderVersion: constants.dart owns them.
 typedef JsonMap  = Map<String, Object?>;
 typedef Migration = JsonMap Function(JsonMap);
 
 /// APPEND-ONLY. Frozen the moment a version ships. A migration is a historical
-/// record — editing one corrupts users' files.
+/// record — editing one corrupts users' files. Keyed by the version it leaves.
 const migrations = <int, Migration>{
-  0: _v0ToV1,      // synthetic, and it exists to prove the chain runs
-  1: _v1ToV2,      // the first REAL one. Never deleted. Never edited.
+  0: migrateV0ToV1,   // synthetic, and it exists to prove the chain runs
+  1: migrateV1ToV2,   // the first REAL one. Never deleted. Never edited.
+  2: migrateV2ToV3,
+  3: migrateV3ToV4,
+  4: migrateV4ToV5,
+  5: migrateV5ToV6,
 };
 
 sealed class LoadOutcome { }

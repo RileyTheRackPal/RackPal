@@ -8,7 +8,7 @@ tags: [ruling, sheet-furniture, ifc, logo, m6-g, dr-216]
 timestamp: 2026-10-01T00:00:00Z
 ruling_id: DR-216
 canon_section: "11.215"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-01, building M6-G5 (`#346`) and M6-G6 (`#590`), on the recommended

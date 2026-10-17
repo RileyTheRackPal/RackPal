@@ -63,7 +63,7 @@ a model change nobody ruled.
 
 # Citations
 
-[1] `packages/rackmate_core/lib/src/builder/archetypes.dart`: `_acInlet`
+[1] `packages/rackpal_core/lib/src/builder/archetypes.dart`: `_acInlet`
 [2] [DR-092](/decisions/dr-092-the-archetype-emits-the-port-4-3-could-not.md)
 [3] [a modelled field is not a reachable one](a-modelled-field-is-not-a-reachable-one.md), the sibling shape one layer up
 [4] [census the field, not the name](census-before-building.md)

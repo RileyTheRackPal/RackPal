@@ -6,7 +6,7 @@ tags: [ruling, plan-view, pins, decomposition, dr-140, plan-e, pln-003]
 timestamp: 2026-09-08T00:00:00Z
 ruling_id: DR-140
 canon_section: "11.139"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-08, on a hole found by

@@ -65,5 +65,5 @@ the shape of test that would have reached it exists.**
 # Citations
 
 [1] `docs/m1-implementation-log.md`, commit `b560a50`
-[2] `packages/rackmate_ui/lib/src/canvas/render_rack_canvas.dart` (the pattern that was correct all along
-[3] `packages/rackmate_ui/test/canvas/schematic/`) the three regression tests
+[2] `packages/rackpal_ui/lib/src/canvas/render_rack_canvas.dart` (the pattern that was correct all along
+[3] `packages/rackpal_ui/test/canvas/schematic/`) the three regression tests

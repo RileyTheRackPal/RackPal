@@ -1215,6 +1215,12 @@ is a real failure mode on a physical label), a true condensed cut worth 12% of s
 width, and Greek coverage for `Ω`/`µ`. `design-architecture.md`'s font list is asserted, not
 argued. The golden-test assertion is updated to the three families.
 
+> **Amended by DR-249 (§11.248, §12.57).** The ruling above is history. The faces that ship are
+> **Jost** (Regular and Medium) for text and **Space Mono** (Regular and Bold) for `RackMono`;
+> `RackCond` is retired and schedules are set in Jost; no fallback face ships, and
+> `tools/glyph_coverage_check.py` holds the codepoints instead. Bundled twice, SIL OFL only and no
+> system font all stand.
+
 ### CR-081 · Text-metric source of truth
 
 - **design-pdf-export.md §12 decision 11:** "**`PdfFont.stringMetrics` is the single source of
@@ -3435,6 +3441,10 @@ never touches a locked ID (CR-034).
 | `assets/catalog/sources.md` | A cited source for every numeric field in every shipped template. AC-052. |
 | Fonts | `RackBody` = IBM Plex Sans (Regular + SemiBold) · `RackCond` = IBM Plex Sans Condensed · `RackMono` = IBM Plex Mono (Regular + Bold) · fallback Noto Sans Symbols 2. SIL OFL 1.1. CR-080. |
 
+> **Amended by DR-249 (§11.248, §12.57).** The *Fonts* row above is history: the faces that ship are
+> Jost for text and Space Mono for `RackMono`, `RackCond` is retired and no fallback face ships.
+> SIL OFL 1.1 stands.
+
 ---
 
 ### 4.7 Banned names
@@ -4229,6 +4239,10 @@ All glyphs are drawn from Geometric Shapes, Dingbats, or Miscellaneous Technical
 that every glyph in the registry resolves in one of those two faces**: a tofu box in an exported
 drawing is a defect this test exists to prevent.
 
+> **Amended by DR-249 (§11.248, §12.57).** The text face is **Jost**, not Plex Sans, and no
+> `Noto Sans Symbols 2` fallback ships. The glyphs are held by the face's own modified build, and
+> `tools/glyph_coverage_check.py` reads the binary to hold them (§11.248.4).
+
 #### 6.2.5 `SignalDomainDef`: the eight shipped entries
 
 `SignalDomainDef{id, displayName, tagPrefix, color, colorDark, dashPattern, lineWeightPermille,
@@ -4640,6 +4654,10 @@ These are named milestone exit criteria, not aspirations.
    1.4992 mm and is *below* the 1.5 mm physical floor the rule derives from (§14.4).
 6. **Glyph coverage is a unit test.** Assert every glyph in the registry resolves in `RackBody` or
    `Noto Sans Symbols 2`.
+
+   > **Amended by DR-249 (§11.248, §12.57).** `RackBody` is Jost and no Noto fallback ships; the
+   > glyph-coverage gate `tools/glyph_coverage_check.py` holds the codepoints (§11.248.4).
+
 7. **Referential integrity is a unit test.** Every `defaultConnector` resolves; every
    `typicalMedia` entry resolves; every `MediaTypeDef.supports` entry resolves; every
    `SignalFamilyDef.domain` resolves to one of the eight; every connector referenced by a shipped
@@ -5644,11 +5662,14 @@ every binding user decision, not only of the §10 answers.
 1. **Part 4 (this Part)**: the user's decisions and everything derived from them.
 2. **Parts 1–3**: `CR-nnn` / `AC-nnn` / `RJ-nnn`, canonical naming, the model, the registry,
    the scope ruling, the milestone plan.
-3. The authored planning documents in `docs/`, **`docs/00` through `docs/14`**. Fourteen when this
-   Part was written; `docs/12-milestone-board.md`, `docs/13-macos-debt-register.md` and
-   `docs/14-deployment.md` have been added since, and the range is written as a range so the next
-   addition does not make this sentence wrong. `docs/12` is a **status** document, not a scope
-   document: it records what has been demonstrated and what has not, and it changes nothing.
+3. The authored planning documents in `docs/`, **the numbered files `docs/NN-*.md`**. The set
+   was smaller when this Part was written; `docs/12-milestone-board.md`,
+   `docs/13-macos-debt-register.md` and `docs/14-deployment.md` were added since, and more have
+   been added after those, so the directory is the list and no range is written here. *(This
+   sentence read "`docs/00` through `docs/14`", a range chosen so the next addition would not
+   make it wrong, until 2026-10-17, when later additions had made the range wrong too.)*
+   `docs/12` is a **status** document, not a scope document: it records what has been
+   demonstrated and what has not, and it changes nothing.
 4. `docs/research/`, non-normative rationale.
 
 Where Part 4 and Parts 1–3 disagree, **Part 4 wins and Parts 1–3 are historical**. Parts 1–3
@@ -5658,13 +5679,16 @@ you need if the decision is ever revisited. §12 is the index of every such supe
 ruling is not listed in §12, it stands exactly as written.
 
 The decisions are numbered `DR-nnn` (**D**ecided by the user, **R**uling) and are cited by that id
-everywhere, in the same way `CR-nnn` is. **There are seventeen, `DR-001` through `DR-017`.** All
-but one have their own §11 subsection; `DR-016` alone is ruled inside §10.12(c), because that is
-where the scope addition it makes was argued. **`DR-017` is the first that is about process rather
-than product**, and it exists because §8.2 requires a citable id and a board item had none. *(This sentence read "the seven decisions are numbered DR-001 …
+everywhere, in the same way `CR-nnn` is. **§11 is the list, and it grows with the record.** Of the
+first seventeen, `DR-001` through `DR-017`, all but one have their own §11 subsection; `DR-016`
+alone is ruled inside §10.12(c), because that is where the scope addition it makes was argued.
+**`DR-017` is the first that is about process rather than product**, and it exists because §8.2
+requires a citable id and a board item had none. *(This sentence read "the seven decisions are numbered DR-001 …
 DR-007" until 2026-08-03, and had been wrong since DR-008. A count in a preamble is exactly the
 kind of sentence nobody re-reads, so it is now written as a range that has to be maintained
-alongside the section list rather than as a word.)*
+alongside the section list rather than as a word. It then read "There are seventeen, DR-001
+through DR-017" until 2026-10-17, which was the same mistake again: the range stopped growing
+while the record did, so the sentence now points at §11 and states no total.)*
 
 ---
 
@@ -6122,6 +6146,9 @@ the publisher trusted rather than merely known.
    the software. What goes is the commercial EULA and any licence-enforcement machinery. (Note in
    passing that the shipped font is now Jost, not CR-080's IBM Plex, and that CR-080 carries no
    amendment; that drift is recorded in `docs/12-milestone-board.md` §4.6 and is **not** ruled here.)
+
+   > **Amended by DR-249 (§11.248, §12.57).** The drift is ruled: the faces that ship are Jost and
+   > Space Mono, and CR-080 now carries its amendment.
 10. **RJ-014 is reaffirmed and made cheaper.** No in-app auto-update in v1; a "Check for updates"
     item and a version string. Internally that item can point at the same share the installer came
     from, which is a link, not infrastructure.
@@ -25424,13 +25451,6 @@ label onto two drops.
 | **CR-061**, the integer only | "v1 ships 48 templates: 30 rack-side and 18 field-side." | **49 templates: 30 rack-side and 19 field-side.** `F19`, the load-controlling keypad, is the addition (DR-120 §11.119.6). CR-061's REASONING is untouched: it chose 48 because that *"sits mid-band in the confirmed 40-55"*, and 49 is still mid-band, so the ruling decided a band and this moves within it. **The rest of CR-061 stands**, including AC-052's gate that every numeric field on a shipped template cites a source, which is why `F19` states no wattage. |
 | **CR-061**, the single-source claim | "The count is stated in exactly one place, `docs/catalog.md`, and no prose in any document states a number." | **Was already false and is recorded as such.** The count is written at thirteen sites across eleven files, including `lib/` comments, test assertions and canon itself. DR-120 §11.119.7 has the census. Consolidating it is its own work and is not done here. |
 
-### 12.31 Superseded by DR-128 (the catalogue grows by one strip)
-
-| Ruling | What it said | What now governs |
-|---|---|---|
-| **CR-061**, the count, as already amended by §12.28 | "49 templates: 30 rack-side and 19 field-side." | **50 templates: 31 rack-side and 19 field-side.** `P04`, a 6-outlet shelf-mounted passive power strip, is the addition (DR-128 §11.127.8). CR-061's REASONING is untouched for the second time: it chose its figure because that *"sits mid-band in the confirmed 40-55"*, and 50 is still mid-band. **AC-052 is satisfied in the form the rule wants**, a number with a source rather than a rationale: the user gives 6 as standard on the basic WattBox strip their company most often installs. |
-| **`seed-devices.md` §3.10**, the single place the count is allowed to live | P3: "the count is stated in **exactly one place, the summary table in §3.10**, and no prose in any document, including this one, states a template count." | **The rule stands and the table was stale.** It read 48 with 18 field devices until 2026-09-05, against a catalogue that had shipped 49 since DR-120 added `F19` the day before, **while thirteen sites in code and tests carried 49 correctly**. So the one place the number was permitted to live was the one place it was wrong. Corrected to 50 here. `seed_catalog_test.dart` asserts that table's category counts row by row, so the gate existed; nobody had read the table against it. **A single source of truth that nothing gates is a single source of staleness.** |
-
 ### 12.29 Superseded by DR-121 (a second variant axis)
 
 | Ruling | What it said | What now governs |
@@ -25444,6 +25464,17 @@ label onto two drops.
 | **RJ-012**, the signal-family limb | "Not shipping in v1: a signal-family editor, a colour-scheme editor, and a rule editor." | **A signal-family editor ships in v1, restricted to CLONE-FROM-EXISTING** (DR-122 §11.121.2). **The colour-scheme editor and the rule editor are still refused**, and so is a connector-type editor. RJ-012's REASONING is not overruled but satisfied: it objected that a hand-rolled family *"produces silently wrong validation"*, and a clone inherits every field a rule reads, so there is no blank form to hand-roll from. |
 | **RJ-012**, the extensibility claim | "media types and colours are user-extensible; signal families and connector types are catalog-updated" | **"Media types and colours are user-extensible, signal families are user-extensible BY CLONE, and connector types remain catalog-updated."** The old sentence is written at **eight sites in six documents**: `docs/01` §256, `docs/02` §826, `docs/07` §70 and §300, `docs/10`'s DR-025 row, canon §4119 and §7781, and `docs/catalog/seed-devices.md` §1461. All are edited rather than pointered, per the corpus table. |
 | **DR-025 §11.24.3** | `@signal=` refuses an unknown value *"since §3 keeps signal families catalog-updated"* | **Unchanged in effect, and its reason is restated rather than removed** (DR-122 §11.121.5). A clone needs a parent a person chose, so no typed token can mint a family and the modifier still refuses. |
+
+### 12.31 Superseded by DR-128 (the catalogue grows by one strip)
+
+*(This block sat between §12.28 and §12.29 until 2026-10-17, ahead of its number; it was moved
+into order and not renumbered, since other documents cite §12.31.)*
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **CR-061**, the count, as already amended by §12.28 | "49 templates: 30 rack-side and 19 field-side." | **50 templates: 31 rack-side and 19 field-side.** `P04`, a 6-outlet shelf-mounted passive power strip, is the addition (DR-128 §11.127.8). CR-061's REASONING is untouched for the second time: it chose its figure because that *"sits mid-band in the confirmed 40-55"*, and 50 is still mid-band. **AC-052 is satisfied in the form the rule wants**, a number with a source rather than a rationale: the user gives 6 as standard on the basic WattBox strip their company most often installs. |
+| **`seed-devices.md` §3.10**, the single place the count is allowed to live | P3: "the count is stated in **exactly one place, the summary table in §3.10**, and no prose in any document, including this one, states a template count." | **The rule stands and the table was stale.** It read 48 with 18 field devices until 2026-09-05, against a catalogue that had shipped 49 since DR-120 added `F19` the day before, **while thirteen sites in code and tests carried 49 correctly**. So the one place the number was permitted to live was the one place it was wrong. Corrected to 50 here. `seed_catalog_test.dart` asserts that table's category counts row by row, so the gate existed; nobody had read the table against it. **A single source of truth that nothing gates is a single source of staleness.** |
+
 ### 12.32 Superseded by DR-134 (`carriedProtocols` is deleted and DR-081's cell is built)
 
 | Ruling | What it said | What now governs |
@@ -25658,7 +25689,7 @@ watches is a date nobody wrote down.)*
 |---|---|---|---|
 | **10.1** | Draw every wire, or net labels by default, the fork | **ANSWERED, DR-001** | **(B) Net labels by default.** Drawn wires on domain filter, `Alt`-hover or focus. Reverses the record's recommendation. §11.1. |
 | **10.2** | Residential CI or commercial AV, the primary customer | **ANSWERED, DR-002** | **(a) Residential-primary, commercial-capable.** Commercial capability present, never fronted. Confirms the recommendation. §11.2. |
-| **10.3** | Pricing and licensing model | **REOPENED, then ANSWERED 2026-08-10: DR-036** | **Nothing is priced.** No perpetual licence, no subscription, no free tier with a paid ceiling. **The row's own warning came true**: DR-036 reversed DR-006, §10.3 reopened exactly as written, and the watermark hazard it preserved is answered by never building one, since DR-005 makes the whole sheet set a client deliverable and an integrator cannot send a stamped drawing to a homeowner. The licensing half is answered too: **GPLv3-or-later** for the code, **CC0** for the community catalog, with an output exception putting every document RackPal produces outside both. §11.35. |
+| **10.3** | Pricing and licensing model | **REOPENED, then ANSWERED 2026-08-10: DR-036** | **Nothing is priced.** No perpetual licence, no subscription, no free tier with a paid ceiling. **The row's own warning came true**: DR-036 reversed DR-006, §10.3 reopened exactly as written, and the watermark hazard it preserved is answered by never building one, since DR-005 makes the whole sheet set a client deliverable and an integrator cannot send a stamped drawing to a homeowner. The licensing half is answered too: **GPLv3-or-later** for the code, **CC0** for the community catalog, with an output exception putting every document RackPal produces outside both. §11.35. **The code's licence is now AGPLv3-or-later**: DR-189 amended that clause (§11.188.1, §12.40), and this row was not updated with it until 2026-10-17. |
 | **10.4** | Does the device builder have to be in v1 | **ANSWERED: DR-003** | **(a) Yes. M4 stays where it is.** Confirms the recommendation. §11.3. |
 | **10.5** | Metric or imperial default | **ANSWERED 2026-08-03** | **Imperial default, one obvious toggle.** Confirms the recommendation. The default is already in the code; the toggle is owed (#562). §10.5. |
 | **10.6** | Is the schematic a client deliverable or an internal tool | **ANSWERED, DR-005** | **(a) Client deliverable, invest in drafting polish.** Reverses the record's recommendation. Orthogonal to 10.1. §11.5. |
@@ -25674,7 +25705,7 @@ watches is a date nobody wrote down.)*
 
 | Remaining question | Effect |
 |---|---|
-| **10.3, pricing** | **Moot under DR-006, no longer a remaining question.** The row is kept because the reasoning survives its own mooting: DR-005 makes the client-facing set larger and more valuable, which would strengthen option (c)'s logic (price the deliverable, not the software) *and* raise the stakes on the watermark split, client-facing sheets only, never the Pull Sheet or Termination Schedule. That is the state §10.3 reopens in if DR-006 is ever reversed. It no longer needs deciding before M6, or at all. |
+| **10.3, pricing** | **Moot under DR-006 until DR-036 reversed it; ANSWERED by DR-036 on 2026-08-10, no longer a remaining question.** The row is kept because the reasoning survives its own mooting: DR-005 makes the client-facing set larger and more valuable, which would strengthen option (c)'s logic (price the deliverable, not the software) *and* raise the stakes on the watermark split, client-facing sheets only, never the Pull Sheet or Termination Schedule. That was the state §10.3 reopened in when DR-006 was reversed, as this row said it would, and the table above has the answer: nothing is priced. *(This row said "Moot under DR-006, no longer a remaining question" and "It no longer needs deciding before M6, or at all" until 2026-10-17, directly beneath a table row recording the reopening and the answer.)* |
 | **10.5: metric or imperial** | **Unchanged and still cheap.** DR-002 tilts it toward (a) imperial default, since North American residential is the stated primary market. One settings row either way. |
 | **10.8, cloud-ready investment** | **ANSWERED 2026-08-03, no longer a remaining question.** The row is kept because the reasoning is what produced the answer: DR-004 removed multi-sheet, the largest remaining source of entity-graph churn, which made the conflict unit stable enough that (a) became the clear answer rather than the cautious one. The second half of that recommendation, *write the conflict-unit page down*, turned out to be already paid: `docs/02` §8 existed and was ratified rather than written. |
 | **10.9: real-SKU catalog** | **Better instrumented.** DR-003 keeps the builder, so the long tail has a first-class answer in v1 and the real-SKU question stops being urgent. Measure 7's miss rate now feeds this question instead of 10.4. |

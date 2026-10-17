@@ -59,6 +59,6 @@ or *summarise*. Those all take an argument. Something has to make it.
 
 # Citations
 
-[1] `packages/rackmate_ui/lib/src/builder/port_grid.dart`
+[1] `packages/rackpal_ui/lib/src/builder/port_grid.dart`
 [2] [check a decomposition for holes](check-a-decomposition-for-holes.md)
 [3] [a modelled field is not a reachable one](a-modelled-field-is-not-a-reachable-one.md)

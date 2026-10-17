@@ -13,7 +13,7 @@ tags: [ruling, plan-view, pdf-export, schedules, derived, cr-107, g4, dr-152, dr
 timestamp: 2026-09-09T00:00:00Z
 ruling_id: DR-152
 canon_section: "11.151"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-09 at `PLAN-H/5`'s census, and amended the same

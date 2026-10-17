@@ -7,7 +7,7 @@ timestamp: 2026-08-10T00:00:00Z
 status: proven
 ---
 
-RackMate tests **absences** on purpose. `shell_tabs_test.dart` asserts no tab
+RackPal tests **absences** on purpose. `shell_tabs_test.dart` asserts no tab
 fabricates a control that does nothing; `unbuilt_copy_accuracy_test.dart` asserts
 no copy names a capability the build lacks; the Structure editor asserts its
 button bar does not draw `[Group into pathway]`.

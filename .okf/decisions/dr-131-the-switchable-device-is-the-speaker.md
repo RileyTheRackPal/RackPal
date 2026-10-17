@@ -12,7 +12,7 @@ tags: [ruling, validation, drc, ele-006, sig-002, speakers, constant-voltage, pr
 timestamp: 2026-09-06T00:00:00Z
 ruling_id: DR-131
 canon_section: "11.130"
-status: ruled
+status: built
 ---
 
 # DR-131 · Two rules disagreeing with one physical switch

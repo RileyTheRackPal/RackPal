@@ -4,6 +4,8 @@ title: DR-076 — The schematic rebuilds what changed, and the epochs already sa
 description: The prescribed remedy was the smaller half; the invalidation model was already in the tree, unread, in every command's touches mask.
 tags: [m6, perf, schematic, epochs, determinism, ac-008, dr-011]
 timestamp: 2026-08-19T00:00:00Z
+ruling_id: DR-076
+canon_section: "11.75"
 status: built
 ---
 

@@ -10,7 +10,7 @@ tags: [ruling, signal-family, clone, connector, sfe, dr-244, dr-122, rj-012]
 timestamp: 2026-10-07T00:00:00Z
 ruling_id: DR-244
 canon_section: "11.243"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-07 for SFE-B1 (board `#825`), found while building SFE-A.

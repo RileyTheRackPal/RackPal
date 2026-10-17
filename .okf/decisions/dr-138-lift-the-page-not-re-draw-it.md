@@ -6,7 +6,7 @@ tags: [ruling, plan-view, pdf, pdfium, cr-100, dr-138, dr-137, dr-029, plan-d]
 timestamp: 2026-09-07T00:00:00Z
 ruling_id: DR-138
 canon_section: "11.137"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-07, after `PLAN-D/1`'s two recorded unknowns were

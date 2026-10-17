@@ -13,14 +13,32 @@ gate's blind spot is as worth knowing as its coverage.
 * [Release signature](release-signature.md) - signed, timestamped, and still valid after the certificate expires; canon's recipe for the last one has an unstated precondition.
 * [The pipeline itself](the-pipeline-itself.md) - it runs, it passed first try, and every suite sits exactly at its floor; what it cannot tell you is whether it could report a failure, because nothing has ever gone red on the service.
 
-* [Callbacks have callers](callbacks-have-callers.md) - every function-typed `*Actions` member in `rackmate_ui` must be invoked somewhere; 18 callbacks, one hole on its first run, and two false positives it must not report.
+* [Callbacks have callers](callbacks-have-callers.md) - every function-typed `*Actions` member in `rackpal_ui` must be invoked somewhere; 18 callbacks, one hole on its first run, and two false positives it must not report.
 * [Dependency table parity](dependency-table-parity.md) - docs/03 §10.1 and the five pubspecs must agree in BOTH directions; a documented package nobody installed hid for five milestones, and an installed one nobody documented cited the table it was missing from.
 * [Commands have callers](commands-have-callers.md) - a source-level reachability graph over every `*/lib/**.dart`: a Command must be built by some declaration reachable from a UI package. The shape shipped FIVE times and three greps got the answer wrong before the graph got it right. Twelve are exempt today, each against the board item that retires it, and an exemption that becomes reachable fails too. Its blind spot is that every UI declaration is a root, so a command behind a callback no mount supplies reads as reachable.
 * [Callbacks have suppliers](callbacks-have-suppliers.md) - the THIRD reachability question, and none of the three subsumes another: `#674`'s asks whether a declared callback is INVOKED, `#872`'s whether a Command is CONSTRUCTED on a path from a UI package, and this one whether any mount ever HANDS ONE OVER. `ValidationDrawer` had three callbacks and exactly one mount that passed none, so two commands, three dialogs and PWR-003's whole remedy chain were unreachable while every suite stayed green. A supplier is a construction OF THAT WIDGET, because `onRemedy:` IS supplied elsewhere and a name grep would have missed the defect it is for. Its exemption list is EMPTY.
+* [Rule review pack](rule-review-pack.md) - every catalogue rule has a group in the domain-review pack, in the right band; it was dead for three rulings before it was a gate. It does not compare the pack on disk, so wording can still be stale.
+* [AC-051 pair coverage](ac-051-pair-coverage.md) - every rule in both bands has a known-bad that fires exactly that rule and a near-miss that does not; the subject is the catalogue, because three enum-driven coverage tests could all pass over a rule with no pair.
+* [The formatter gate](formatter.md) - `dart format` finds nothing to change (DR-017); it has one correct answer, which is why it is absolute where the analyzer is a ratchet. Dart only, and only as right as the configuration it can resolve.
+* [The Windows release build](windows-release-build.md) - the one step that compiles the application the way it ships, on the pinned SDK; it does not run the result, and it builds Windows only.
+* [The Windows release output](windows-release-output.md) - the folder the build produced holds a real executable, exactly the expected native libraries and the packaged starters; written after an Android bridge DLL shipped inside a green build.
+
+# Steps that have no concept of their own
+
+Each `Invoke-Gate` call in `tools/ci/run_local.ps1` either has a concept above or
+is named here with its reason.
+
+* `flutter pub get (workspace root)` is setup, not a check: it resolves the
+  workspace so the steps after it can run, and fails only if the packages cannot
+  be resolved. The pipeline's variant, `--enforce-lockfile`, is described in
+  `azure-pipelines.yml`.
+* `suite: <name>`, one per package suite and the timed suite, is the test run. Its
+  floors live in `tools/ci/run_suite.ps1` and nowhere else; the pipeline concept
+  above covers what they prove on the service.
 
 # Not yet written up
 
 `flutter pin`, `tracked sources (would a clone compile?)`,
-`palette parity`, `JUnit converter self-test`, `glyph coverage`, and the five
-package suites individually. The pipeline concept above covers what they prove
-COLLECTIVELY on the service; it does not replace a per-gate write-up.
+`palette parity`, `JUnit converter self-test` and `glyph coverage`. The pipeline
+concept above covers what they prove COLLECTIVELY on the service; it does not
+replace a per-gate write-up.
