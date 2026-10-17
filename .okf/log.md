@@ -1,5 +1,20 @@
 # Update Log
 
+## 2026-10-17
+
+Entry 141.
+
+* **Added**: [DR-252](decisions/dr-252-the-pdf-embeds-space-mono.md) (the PDF embeds Space Mono for identifier
+  columns, built as `MONO-A`, `#1104`), [DR-253](decisions/dr-253-a-golden-is-a-committed-fixture.md) (a golden
+  is a committed fixture compared exactly) and [DR-254](decisions/dr-254-the-store-is-parked-anonymity-is-a-constraint.md)
+  (the Store alpha parked on M8, anonymity a constraint, the route verified by `DIST-0`, `#1105`).
+* **Note**: **A DIRECTION GIVEN IN PASSING IS NOT A RULING.** Asked whether a Partner Center account existed, the
+  user named a whole distribution route and said it may not be the one taken. DR-254 rules only the Store's parking
+  and records the route with the facts that cut against it, rather than writing a hope down as a spec.
+* **Removed**: `docs/md_renderer.html`, a Markdown-to-PDF reader the user kept for quick review renders. It rode
+  into the tree inside an unrelated M2 commit (`f9e3d347`).
+* **First entry under the ISO heading convention** `getting-started.md` set out in OKF-1i (`#1086`).
+
 ## 2026-10-17 (hundred-and-fortieth entry)
 
 * **Progress**: `#1060`, landed on 2026-10-16 in `9b62626c` and `c0748532`, which this log had not recorded.
