@@ -1,5 +1,33 @@
 # Update Log
 
+## 2026-10-17 (hundred-and-fortieth entry)
+
+* **Progress**: `#1060`, landed on 2026-10-16 in `9b62626c` and `c0748532`, which this log had not recorded.
+  [DR-117](decisions/dr-117-the-lockup-ships-arranging-supplied-art-is-not-generating.md) rules the manual a games
+  manual and [DR-118](decisions/dr-118-the-visor-is-a-display-which-buys-the-manual.md) gives it a wordless narrator;
+  this is the work that builds on both.
+* **Added**: `docs/21-user-guide.md` gains five chapters, checked against the code rather than the design documents:
+  21.10 controls and screens, 21.11 the Bestiary of every check (the software's own Why? text, the safety sentences
+  quoted as the code prints them, and LEN-001 described from its real messages including the plan-floor case, not from
+  the catalogue's summary), 21.12 field notes, 21.13 troubleshooting and 21.14 a glossary. The rack chapter, the key
+  table and the not-built list now describe the Staging Bin that
+  [DR-205](decisions/dr-205-the-staging-bin-ships.md) shipped; the guide had said there was none.
+* **Added**: illustration slots in the guide, written as `PLATE` and `SCREEN` blockquotes. They are art briefs for the
+  vintage-manual register and are not printed copy; Riley says nothing in words.
+* **Added**: `docs/22-riley-plate-plan.md`, which extends `docs/19-riley.md` with the scenes from 31 onward, slot sizes,
+  the visor budget per chapter class, the Bestiary's specimen cards, the rules a plate must pass and a games-manual
+  parts map. It is **proposed, not ruled**; `docs/19` and the rulings win where they differ.
+* **Added**: `tools/plate_index.py`, which lists the slots in `docs/21` and checks the mechanical rules (the scene
+  exists; no face, grawlix or bluescreen in the reference chapters or the Bestiary; bluescreen only in 21.13, and that
+  section free of domain glyphs). It is deliberately **not** a `run_local.ps1` gate, because nothing in the build
+  depends on the art. `tools/user_guide_pdf.py` renders each slot as a dashed frame so layout can be judged before the
+  art exists. The plate list is not copied into the docs: ask the tool.
+* **Note**: **A TOOL THAT LISTS THE SLOTS IS THE ONLY COPY OF THE LIST THAT STAYS TRUE.** `docs/22` names no plate
+  count for that reason; the count lives in what `tools/plate_index.py` prints.
+* **Note**: `#1085` asked whether
+  [DR-230](decisions/dr-230-export-previews-the-real-pdf.md) repeats `#1058`'s false finding. It does not: its
+  2000-sheet line says the set is refused past that count, which is what the code does (entry 138).
+
 ## 2026-10-17 (hundred-and-thirty-ninth entry)
 
 * **Added**: [DR-249](decisions/dr-249-the-faces-that-ship.md), [DR-250](decisions/dr-250-the-beta-gate-is-judgement-over-a-floor.md)
