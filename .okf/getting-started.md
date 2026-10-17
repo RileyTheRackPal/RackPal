@@ -56,6 +56,24 @@ per-clause record: who performed a check, when, under what conditions, and what
 remains unproven. It is deliberately not duplicated, not into this bundle, not
 into the tracker. One authority, linked from everywhere else.
 
+# Writing a log entry
+
+`log.md` is newest first. OKF section 7 wants each entry headed by an ISO date,
+`## YYYY-MM-DD`. The log grew up with a different form, an ordinal beside the
+date (`## 2026-10-12 (hundred-and-thirty-eighth entry)`), and a heading in that
+form is not a date as far as the validator is concerned, so it warns. The warnings
+never block, and they are the only ones the validator raises on this bundle.
+
+The choice (DR-097): **leave every existing heading as written, and use the ISO
+form for new entries.** The log is record (DR-251), and rewriting its headings
+would edit history to quiet a warning. New entries are headed `## YYYY-MM-DD` and
+nothing else, so the number of warnings stops growing. The ordinal is still worth
+having, so a new entry carries it in its first line of body, as `Entry N.`, where
+N follows the highest ordinal already in the log. A second entry on a day that
+already has a heading goes under that heading rather than under a new
+parenthesised one, which is what the `(later)` and `(later still)` headings were
+working around.
+
 # Start with
 
 * [DR-008](/decisions/dr-008-wiring-model.md) - the wiring model, and the class-reading rule every consumer needs.
