@@ -24689,6 +24689,68 @@ machine, which is theirs to switch.
 
 ---
 
+### 11.248 DR-249 · CR-080 is amended to the faces that ship: Jost for text, Space Mono for `RackMono`, and `RackCond` is retired
+
+**Settled by the user on 2026-10-17, for `#1061`**, a finding of that day's sync audit of the
+documents, the OKF bundle and the board.
+
+**11.248.1 THE FACT, AND WHY A COMMENT WAS NOT ENOUGH.** CR-080 (§1.8) rules `RackBody` = IBM Plex
+Sans, `RackCond` = IBM Plex Sans Condensed, `RackMono` = IBM Plex Mono, fallback Noto Sans Symbols 2.
+`apps/rackpal/assets/fonts/` holds **Jost** Regular and Medium and **Space Mono** Regular and Bold,
+and no Plex and no Noto. The swap landed at `0545090`; M8-H3 to M8-H5 (`#771`, `#772`, `#773`,
+`#1029`) extended it. `apps/rackpal/pubspec.yaml` says *"This supersedes CR-080's font pick"*, and
+§11.6 consequence 9 noted the drift and declined to rule on it. A pubspec comment is not an
+amendment (roadmap §8.3), so CR-080 stayed binding over a bundle that contradicted it, and every
+derived document that names the face followed the ruling rather than the tree.
+
+**11.248.2 RULED BY THE USER: THE FACES ARE THE BUNDLE AS BUILT.** The text face (`RackBody`'s role)
+is **Jost**, Regular 400 and Medium 500, in the modified build `tools/build_jost_glyphs.py` produces
+and `tools/glyph_coverage_check.py` holds. `RackMono` is **Space Mono**, Regular and Bold. **CR-080's
+other rulings stand**: each face is bundled twice (fonts and assets), only SIL OFL 1.1 faces ship, and
+no system font is ever reached for. Not taken: reverting to Plex, offered with its cost (undoing
+M8-H3 to H5, rebuilding the added glyphs for another face, retargeting every `FontRef('Jost')`
+fixture and the coverage gate, and re-baselining PDF metrics).
+
+**CR-080's three arguments, re-checked against the files rather than carried over.** Measured on
+2026-10-17 by reading each TTF's `glyf` contours:
+
+- **Disambiguation holds in the mono face only.** Space Mono's `0` has three contours against `O`'s
+  two, a marked zero. Jost's `0` and `O` both have two and differ only in width. So the argument CR-080
+  made for identifiers transcribed onto physical labels is met **where an identifier prints in
+  `RackMono`**, which docs/08 §10.1 already does for `CABLE ID`, and is **not** met in Jost text. An
+  identifier set in the text face is a choice somebody makes with that cost.
+- **The condensed cut** is §11.248.3.
+- **Greek coverage holds, by different codepoints.** Jost carries `U+03A9` and `U+00B5`; Space Mono
+  carries `U+2126` (the ohm sign) and `U+00B5`, and not `U+03A9`. A string that names one ohm
+  codepoint in a mono column and the other in text finds a gap in one of them. The coverage gate sees
+  string literals only, so this is recorded rather than assumed covered.
+
+**11.248.3 RULED BY THE USER: `RackCond` IS RETIRED.** Jost has no condensed cut and none ships;
+schedules are set in Jost, as they print today, and the role leaves docs/08 §10.1. **The option as
+offered overstated its evidence, and the correction belongs here**: it said M6's sheets already pass
+their legibility checks without a condensed face. M6's machine clauses (1, 2 and 4) are
+`DEMONSTRATED` without one; **the physical print clauses (AC-054, `#48`, `#49`) are unperformed**, and
+a schedule column too tight for Jost at its printed size is exactly what they would show. If they do,
+that is new evidence and a new ruling, not a reading of this one. Not taken: keeping the role as owed
+debt with a second family chosen later.
+
+**11.248.4 CARRIED IN THE CHOSEN OPTION: NO FALLBACK FACE SHIPS.** The Noto Sans Symbols 2 fallback
+was never bundled. The option the user chose named the glyph-coverage gate as what stands in for it,
+so that is the ruling: the face's own build carries the codepoints the product emits, and
+`tools/glyph_coverage_check.py` reads the binary to hold them. Its blind spot is in its own header and
+is restated here: runtime-composed strings and user data are not literals, and a codepoint neither
+face carries draws as nothing.
+
+**Scope.** No product scope moves; this ratifies what ships. §12.57. The derived-document edits are
+owed and listed on `#1073`.
+
+**What this does not rule.** `RackMono` Italic, which docs/08 §10.1 wants for a derived `LEN` and
+`FontRef` cannot express (no slant field); it stays where docs/12 §4.6 left it. The wordmark, which is
+DR-089's and is outlines rather than text. Whether a future face change needs this much ceremony: it
+does, for the same reason this one did.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -25489,6 +25551,14 @@ close and a reopen.
 | Ruling | What it said | What now governs |
 |---|---|---|
 | **DR-246 §11.245.7** | *"NO RANGE CHECK"*: a distance verdict would be an estimate printed as a fact | **An advisory straight-line check**, each threshold editable per protocol and naming its source and grade, with a device on another plan sheet counted as unchecked (§11.246.1). Its reasoning stands where a protocol publishes no distance rule and nobody has given one. |
+
+### 12.57 Amended by DR-249 (the faces that ship)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **CR-080** | *"Ruling: IBM Plex."* `RackBody` = Plex Sans, `RackCond` = Plex Sans Condensed, `RackMono` = Plex Mono, fallback Noto Sans Symbols 2 | **Jost** for text and **Space Mono** for `RackMono` (§11.248.2); **`RackCond` is retired** (§11.248.3); **no fallback face**, the glyph-coverage gate holding the codepoints instead (§11.248.4). Bundled twice, SIL OFL only and no system font all stand. |
+| **§4**, the naming table's *Fonts* row | The three Plex aliases and the Noto fallback | As CR-080's row above. |
+| **§11.6 consequence 9**, its parenthesis | The Jost drift *"is **not** ruled here"* | **Ruled by DR-249.** |
 
 ## 13. Resolved §10 questions
 
