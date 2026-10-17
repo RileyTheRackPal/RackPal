@@ -4,6 +4,8 @@ title: DR-074 — A drop punched into the wrong port can be moved, and the label
 description: Two commands, because a move and an unland are two acts with two consequences; the rack label follows the position unless a person typed it; the termination survives both.
 tags: [m3, structure, schematic, undo, g4, cr-113, cr-117, ux]
 timestamp: 2026-08-19T00:00:00Z
+ruling_id: DR-074
+canon_section: "11.73"
 status: built
 ---
 

@@ -4,6 +4,8 @@ title: DR-077 — A template authored in this project reaches the rack, and the 
 description: The builder saved into a map nothing read. The shelf was already the document; the palette was reading a constant beside it.
 tags: [m4, device-builder, palette, templates, cr-050, provenance, exit-criterion]
 timestamp: 2026-08-19T00:00:00Z
+ruling_id: DR-077
+canon_section: "11.76"
 status: built
 ---
 
