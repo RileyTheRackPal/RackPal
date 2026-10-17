@@ -2384,7 +2384,7 @@
   did not exist in the tree under either reading, so its absence is what both
   predict. New practice:
   [a brief expires](/practices/a-brief-expires.md).
-* **Update**: [DR-050](/decisions/dr-050-geometry-fills-the-room-estimate.md) is
+* **Update**: [DR-050](/decisions/dr-050-plan-geometry-fills-the-room-estimate.md) is
   **scoped rather than overturned**, and the clarification is written where a reader
   MEETS the collision, in canon §11.49.2 itself, not only where it was resolved. Its
   own §11.49.4 preserves `planLowerBound` by name, its table lists the value as *"not
@@ -5075,7 +5075,7 @@
 
 * **Creation**: four rulings closing a feature triage,
   [DR-049](/decisions/dr-049-tabular-exports-and-a-label-that-is-not-a-sheet.md)
-  (tabular exports), [DR-050](/decisions/dr-050-geometry-fills-the-room-estimate.md)
+  (tabular exports), [DR-050](/decisions/dr-050-plan-geometry-fills-the-room-estimate.md)
   (geometry fills the room estimate),
   [DR-051](/decisions/dr-051-documentation-is-referenced-never-embedded.md)
   (documentation is referenced) and

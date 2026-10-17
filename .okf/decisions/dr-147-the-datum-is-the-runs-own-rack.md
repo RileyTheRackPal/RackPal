@@ -113,7 +113,7 @@ known, and by a `planLowerBound` when that alone already exceeds the limit"*; th
 
 # And a later ruling that appeared to abolish the tier
 
-[DR-050](dr-050-geometry-fills-the-room-estimate.md) §11.49.2, dated **two days after**
+[DR-050](dr-050-plan-geometry-fills-the-room-estimate.md) §11.49.2, dated **two days after**
 DR-037 ruled the rank and two days after `PLAN-G` was decomposed, says in terms:
 *"THEREFORE NO NEW TIER, AND THIS IS THE RULING. `ScheduleLengthSource` gains
 nothing."* Neither ruling lists the other in canon §12.

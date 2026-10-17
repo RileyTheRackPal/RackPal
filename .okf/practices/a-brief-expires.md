@@ -35,7 +35,7 @@ Three of its four briefs had expired, in three different ways:
 | `#639` | *"M5 owns the rules; do not build the rules here"* | M5 built them at M5-E. The chapter is a change to shipped rules |
 | `#639` | *"`LEN-001` reads the bound whichever tier printed"* | Those rules read `terminatedLength ?? cutLength` and have never touched the ladder |
 | `#638` | *"the footage rollup"*, singular | Two rollups. The exhaustive-switch trap guards one of them |
-| `#603` | *"`planLowerBound`, the fifth tier"* | [DR-050](/decisions/dr-050-geometry-fills-the-room-estimate.md), **two days after the decomposition**, says *"`ScheduleLengthSource` gains nothing"* |
+| `#603` | *"`planLowerBound`, the fifth tier"* | [DR-050](/decisions/dr-050-plan-geometry-fills-the-room-estimate.md), **two days after the decomposition**, says *"`ScheduleLengthSource` gains nothing"* |
 
 The first three were found by a census against the tree. **The fourth was not, and
 could not have been**, because the tier did not exist in the tree either way: an
