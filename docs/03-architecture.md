@@ -780,7 +780,7 @@ Defining every connector symbol once as an SVG path `d` string eliminates the re
 
 ## 9. Persistence
 
-Full field-level detail is in [the file format](02-data-model.md#6-the-rackpal-file-format); this section covers the machinery.
+Full field-level detail is in [the file format](02-data-model.md#6-the-rppj-file-format); this section covers the machinery.
 
 ### 9.1 Container and envelope
 
@@ -798,12 +798,14 @@ The envelope puts format metadata at the root and all entity maps under a `"docu
 ```json
 {
   "generator": "RackPal",
-  "schemaVersion": 2,
-  "minReaderVersion": 2,
+  "schemaVersion": <kSchemaVersion>,
+  "minReaderVersion": <kMinReaderVersion>,
   "appVersion": "1.0.0",
   "document": { "racks": {}, "devices": {}, "links": {}, "nets": {} }
 }
 ```
+
+The two integers are written as the constants they come from because their values move with the format: `packages/rackpal_core/lib/src/units/constants.dart` owns `kSchemaVersion`, `kMinReaderVersion` and the plan-data stamp `kPlanMinReaderVersion`, and [docs/02 §7](02-data-model.md#7-schema-versioning-and-the-migration-chain) lists the chain.
 
 Two codec rules: **enums are strings, never ordinals** (`"hdmi"`, not `3`), with unknown values falling back to a round-tripping `unknown(raw)` variant; and **every persisted object preserves unknown fields** in a `Map<String, Object?> unknown` and re-emits them, so a v1.0 app opening a v1.4 file round-trips without destroying newer data.
 
@@ -814,13 +816,15 @@ Two codec rules: **enums are strings, never ordinals** (`"hdmi"`, not `3`), with
 ### 9.2 Migration
 
 ```dart
-const kSchemaVersion = 2;
+// kSchemaVersion: constants.dart owns the number.
 typedef JsonMap = Map<String, Object?>;
 typedef Migration = JsonMap Function(JsonMap);
 
 /// APPEND-ONLY. A shipped migration is a historical record — editing one
-/// corrupts users' files. Never delete, never modify.
-const migrations = <int, Migration>{0: _v0ToV1, 1: _v1ToV2};
+/// corrupts users' files. Never delete, never modify. One entry per version
+/// step, keyed by the version it leaves: migrations.dart owns the list, and
+/// docs/02 §7 tabulates it.
+const migrations = <int, Migration>{0: migrateV0ToV1, 1: migrateV1ToV2, /* … */};
 
 Outcome<MigratedDoc> migrateToCurrent(JsonMap raw) { … }
 ```
