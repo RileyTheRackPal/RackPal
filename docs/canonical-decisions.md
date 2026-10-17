@@ -5219,9 +5219,10 @@ rather than by drift:
 
 ## 10. Open questions
 
-**Nothing in this section is open. See §13 for the index.** Ten of the thirteen are **ANSWERED and
-binding**, 10.3 is **moot** under DR-006, 10.13 is **retired**, and 10.11 alone is **deferred**,
-with a trigger that fires before the M6-J5 recruiting ask. Everything in Parts 1–2 and §§7–9 is
+**Nothing in this section is open. See §13 for the index**, which is where the status of each entry
+lives: every entry is answered and binding except 10.13, which is retired. *(This sentence counted
+them until 2026-10-17, read 10.3 as moot under DR-006 after DR-036 had reversed DR-006, and held 10.11
+deferred after its trigger had fired. DR-250 answers 10.11.)* Everything in Parts 1–2 and §§7–9 is
 binding; these entries were deliberately the opposite, the calls requiring a human judgement about
 what this product is for and who is going to use it, which no amount of internal consistency can
 supply. That judgement has now been given. Every entry is **retained in full as the record of the
@@ -5584,6 +5585,10 @@ customer waiting. If there is, (b) or (c) is going to happen whether or not it i
 **Recommendation (not a ruling).** **(a), with (b) as a floor**: the judgement gate governs, and
 the metric exists only to prevent shipping something that passes the judgement gate for three
 friendly users and falls over on the fourth.
+
+> **ANSWERED 2026-10-17 by DR-250 (§11.249): (a), with (b) as a floor.** Confirms the recommendation.
+> M9's criterion governs as written; the floor is the five real projects run end to end and no open
+> bug that loses data or prints a wrong fact, both read at the moment of the gate.
 
 ---
 
@@ -24751,6 +24756,41 @@ does, for the same reason this one did.
 
 ---
 
+### 11.249 DR-250 · The beta gate is M9's judgement, over a floor of five projects and no open bug that loses data or prints a wrong fact
+
+**Settled by the user on 2026-10-17, for `#1062`.** It answers §10.11, which was **deferred on
+2026-08-03 with a trigger**: held until M5 landed, and owed before the M6-J5 recruiting ask (`#362`),
+because three people cannot be asked to commit real jobs without being told what will be judged. M5
+closed on 2026-09-07 (DR-135); the trigger had fired five weeks before anybody noticed, which the
+2026-10-17 sync audit found.
+
+**11.249.1 RULED BY THE USER: THE JUDGEMENT GOVERNS, AND A FLOOR STOPS IT PASSING ON FRIENDLY USERS.**
+§10.11's own recommendation, option (a) with (b) as a floor. **M9's exit criterion governs exactly as
+roadmap §4 writes it**: three integrators have each produced a sheet set they were willing to send to
+a client or a job site, and none of the three needed to leave the app to fix something. **The floor**,
+both limbs read at the moment the gate is read, never averaged over the beta:
+
+1. **The five real projects** of M9's checklist have each been run end to end.
+2. **No open bug loses data or prints a wrong fact.** A wrong fact is a printed value that disagrees
+   with the document it came from; an unknown printed as `—` is not one (G4, CR-114).
+
+The floor cannot pass the beta on its own; it can only stop it. Not taken: the judgement alone, which
+§10.11 calls gameable by three people who like the author; and a metric alone (N projects, N cables,
+no P1 for N weeks), which measures whatever is easiest to count. **A date, §10.11's option (c), was not
+offered**, because nothing in the record supplies the external pressure §10.11 names as the only
+thing that would make one happen regardless.
+
+**11.249.2 WHAT THIS LEAVES TO M9'S DECOMPOSITION, STATED SO IT IS NOT READ AS RULED.** How a bug is
+marked as losing data or printing a wrong fact on the board (a tag, at M9-D's decomposition, `#442`).
+**Who the three integrators are**: DR-006 made them three internal users, and DR-036 then made the
+project public without saying whether that changed RISK-08's population back. That is the question
+`#362` exists to start, and it is the user's.
+
+**Scope.** No scope moves. §10.11 is answered; §13's row says so. `#362` is no longer waiting on a
+definition.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -25562,14 +25602,15 @@ close and a reopen.
 
 ## 13. Resolved §10 questions
 
-**§10 has no open entries left.** Of its thirteen: **eleven are ANSWERED**, one (§10.11) is
-**DEFERRED with a trigger** that fires before M6-J5, and one (§10.13) is **retired** because the
-three questions it prioritised are all answered. The text of §10 stays in place as the record of the
-argument; this section is the index of what was decided.
+**§10 has no open entries left.** Every entry is **ANSWERED** except §10.13, which is **retired**
+because the three questions it prioritised are all answered. The text of §10 stays in place as the
+record of the argument; this section is the index of what was decided.
 
 Closed as of 2026-08-03, except **§10.3, which reopened and was answered on 2026-08-10** when DR-036
-reversed DR-006 and made it a live question again, exactly as its own row had warned it would.
-§10.11 is the only entry still owing an answer, and it owes it to M5, not to now.
+reversed DR-006 and made it a live question again, exactly as its own row had warned it would, and
+**§10.11, deferred with a trigger and answered on 2026-10-17 by DR-250**. *(This paragraph said
+§10.11 "owes it to M5, not to now" until then, five weeks after M5 had closed. A trigger nobody
+watches is a date nobody wrote down.)*
 
 | § | Question | Status | Answer |
 |---|---|---|---|
@@ -25583,7 +25624,7 @@ reversed DR-006 and made it a live question again, exactly as its own row had wa
 | **10.8** | Cloud-ready investment | **ANSWERED 2026-08-03** | **(a). Spend nothing further; RackPal is a local application.** Confirms the recommendation. The six cloud-ready properties are **retained in full** and option (c) is not taken. `docs/02` §8 is **ratified** as the conflict-unit and merge-story page the recommendation asked for, rather than commissioned. An update check and API-key publishing to project-management services are the only contemplated network uses and are **not v1 scope** (§8.3 applies to either). §10.8. **Amended by DR-033 and DR-034**: there is a third contemplated network use, the community catalog, in a write direction (submission) and a read direction (library fetch and update check). Both are likewise not v1 (§12.14, §12.15). |
 | **10.9** | Generic archetypes forever, or a real-SKU catalog | **ANSWERED 2026-08-03** | **Shipped catalog stays generic; user templates may carry real SKUs.** Archetypes must be editable (docs/06 §7.3's `Duplicate & edit`), and DR-015's `.rmda` is the sharing mechanism. AC-052/DR-002 bind the SEED only. `T6.30` stays an equipment list, not a BOM (AC-055). §10.9. **Its recommendation is discharged by DR-033**, which builds the curated community library as a second repository the app submits to. §10.9's stated tipping condition was whether users start swapping device files unprompted; the user settled it by deciding to support the swap rather than waiting to observe it. §11.32. |
 | **10.10** | macOS in v1 | **ANSWERED: DR-009** | **(b) Windows and macOS from v1.** Reverses the record's recommendation, which was explicitly *"not a ruling"* and rested on a desk survey that was never run. The register §10.10 demanded and never received is `docs/13-macos-debt-register.md`. §11.9. |
-| 10.11 | What the beta gate actually is | **DEFERRED 2026-08-03, with a trigger** | Held until M5 (Validation) lands and the UI is largely frozen, on the ground that the bar is easier to state against a product than against a plan. **It must be answered before the M6 recruiting ask (M6-J5)**, not before M9; you cannot ask three people to commit real jobs without saying what you will judge. |
+| **10.11** | What the beta gate actually is | **DEFERRED 2026-08-03 with a trigger, then ANSWERED 2026-10-17: DR-250** | **M9's judgement governs, over a floor**: the five real projects run end to end, and no open bug that loses data or prints a wrong fact (§11.249). The deferral held it until M5 landed and required an answer before the M6-J5 recruiting ask; M5 closed on 2026-09-07 and the answer came at the sync audit that noticed. Confirms the recommendation. |
 | 10.12 | Small calls needing an owner | **ALL SEVEN SETTLED 2026-08-03** | (d) three residential + one commercial starter, by DR-002. **(a)** keep 200, make it a setting (#560), built as DR-172 (§11.171). **(b)** autosave while working, never while idle, and it exposed a live defect, now fixed. **(c)** editable rack presets, **DR-016**, a scope addition under §8.3 (#561). |
 | 10.13 | The three to answer first | **retired** | All three (10.1, 10.2, 10.4) are answered. The section has served its purpose. |
 
