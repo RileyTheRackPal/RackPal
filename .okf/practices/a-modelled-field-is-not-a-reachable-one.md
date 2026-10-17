@@ -36,7 +36,7 @@ the four signature bytes: zero throws, every time.
 So the `catch` arm was unreachable, and the consequence was not cosmetic. Every
 truncated project would have fallen through to the *foreign archive* state,
 been told "this is not a RackPal project", and been **refused the backup that
-would have rescued it** — a user-facing failure caused entirely by a state
+would have rescued it**, a user-facing failure caused entirely by a state
 nothing could reach. The fix was to make *zero entries* the damage signature and
 to write down that the exception arm is the belt-and-braces one.
 
