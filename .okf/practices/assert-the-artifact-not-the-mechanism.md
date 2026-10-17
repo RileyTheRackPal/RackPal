@@ -76,7 +76,7 @@ Roadmap §8.1 is what makes this a defect rather than a tidiness question: the
 exit criterion is the unit of truth, and a milestone whose evidence is a set of
 component tests has not met a compound criterion. The fix is one fixture that
 every part reads:
-`packages/rackmate_core/test/derived/pull_sheet_clause_test.dart`.
+`packages/rackpal_core/test/derived/pull_sheet_clause_test.dart`.
 
 Two details make that file carry its weight rather than merely exist. **It is
 built to falsify**: rooms and pathways are created in an order that is not their
@@ -144,12 +144,14 @@ mechanisms on principle.
 
 # Citations
 
-[1] `packages/rackpal_core/test/scene/wire_trace_layering_test.dart` (in `rackmate_ui/test/canvas/schematic/` when this was written; it followed `wire_trace.dart` into core at `#948`)
+[1] `packages/rackpal_core/test/scene/wire_trace_layering_test.dart` (in `rackmate_ui/test/canvas/schematic/` when this was
+    written, a package now named `rackpal_ui`; it followed `wire_trace.dart`
+    into core at `#948`)
     (group 1, and its own header recording both wrong versions)
 [2] `docs/12-milestone-board.md` §5.1, the six field reports this came out of
 [3] Commits `b48e96c` (the mirrored comb), `5d53512` (the measurement that
     replaced the count)
-[4] `packages/rackmate_core/test/derived/pull_sheet_clause_test.dart`, and
+[4] `packages/rackpal_core/test/derived/pull_sheet_clause_test.dart`, and
     `docs/12-milestone-board.md` §5.2's M3-D/4 close
 [5] `packages/rackpal_ui/test/canvas/plan/plan_canvas_screen_test.dart`, the
     group headed *"the mark is a constant size on screen"*, and commit

@@ -1,12 +1,12 @@
 ---
 type: Orientation
-title: How RackMate makes decisions
+title: How RackPal makes decisions
 description: The ruling to spec to implementation to test chain that structures this codebase, and how to use it.
 tags: [orientation, process]
 timestamp: 2026-07-28T00:00:00Z
 ---
 
-RackMate is unusual in one way that matters more than its domain: **every
+RackPal is unusual in one way that matters more than its domain: **every
 non-obvious decision is a numbered ruling**, and each ruling traces to a spec
 section, an implementing file, and a test that proves it.
 

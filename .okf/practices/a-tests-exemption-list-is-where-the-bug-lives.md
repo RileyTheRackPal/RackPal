@@ -98,12 +98,12 @@ that exposes it. A round-trip property enumerates its own cases.
 
 # Citations
 
-[1] `packages/rackmate_core/test/builder/label_pattern_test.dart`: the widened
+[1] `packages/rackpal_core/test/builder/label_pattern_test.dart`: the widened
     loop, and the two cases it found
-[2] `packages/rackmate_core/lib/src/builder/label_pattern.dart`: the
+[2] `packages/rackpal_core/lib/src/builder/label_pattern.dart`: the
     one-value-set repair, and the reachability comment on the composition check
-[3] `packages/rackmate_core/test/builder/quick_add_test.dart`: the bank count
-[4] `packages/rackmate_core/test/builder/quick_add_test.dart`: the
+[3] `packages/rackpal_core/test/builder/quick_add_test.dart`: the bank count
+[4] `packages/rackpal_core/test/builder/quick_add_test.dart`: the
     render/parse round trip
 [5] Commits `70d4fc5`, `c57c6b1`, `2a8180c`
 [6] [Assert the artifact, not the

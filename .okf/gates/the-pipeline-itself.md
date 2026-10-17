@@ -14,7 +14,8 @@ status: live
 # The pipeline, and what a green run does not prove
 
 Board `#567`. `azure-pipelines.yml` is registered as **definition 1, `RackPal CI
-(Windows)`**, on `https://{org}.visualstudio.com`, project `RackMate`.
+(Windows)`**, on `https://{org}.visualstudio.com`, project `RackMate` (the
+Azure DevOps project keeps that name by ruling: DR-096 §11.95.9).
 
 ## It ran, and the first run is the interesting one
 

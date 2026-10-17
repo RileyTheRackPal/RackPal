@@ -66,7 +66,7 @@ about citations.
 
 # Citations
 
-[1] `packages/rackmate_core/lib/src/builder/port_table.dart`
+[1] `packages/rackpal_core/lib/src/builder/port_table.dart`
 [2] [census before building](census-before-building.md)
 [3] [two documents agreeing is not verification](two-documents-agreeing-is-not-verification.md)
 [4] [a modelled field is not a reachable one](a-modelled-field-is-not-a-reachable-one.md)

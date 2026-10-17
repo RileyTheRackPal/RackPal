@@ -104,4 +104,4 @@ The tell for the output form is a task list whose verbs are *save*, *record*,
 [1] Canon §11.24.7 (DR-025), the #587 precedent
 [2] Roadmap §8.3, §2
 [3] Board #88, tasks #159 through #162, #651 through #653
-[4] `packages/rackmate_core/lib/src/structure/csv_header_map.dart`
+[4] `packages/rackpal_core/lib/src/structure/csv_header_map.dart`

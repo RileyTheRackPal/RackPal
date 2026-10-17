@@ -97,5 +97,5 @@ than one that never does.
 
 [1] `docs/canonical-decisions.md` CR-106
 [2] `docs/03-architecture.md` §5.1, §5.4, §5.6
-[3] `packages/rackmate_core/lib/src/builder/`, `commands/undo_stack.dart`
+[3] `packages/rackpal_core/lib/src/builder/`, `commands/undo_stack.dart`
 [4] `docs/12-milestone-board.md` §5.3.1

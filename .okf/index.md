@@ -2,7 +2,7 @@
 okf_version: '0.1'
 ---
 
-# RackMate: knowledge bundle
+# RackPal: knowledge bundle
 
 A Flutter desktop tool for designing A/V racks: elevations, a wiring schematic,
 and the schedules an installer works from. This bundle captures the *reasoning*

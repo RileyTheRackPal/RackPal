@@ -76,7 +76,7 @@ unknown, measure it in a harness you throw away. A screenshot or a printed
 
 [1] [DR-025](/decisions/dr-025-signal-and-service-are-two-words.md), the ruling
     whose picker this is
-[2] `packages/rackmate_core/lib/src/derived/structure_table.dart`,
+[2] `packages/rackpal_core/lib/src/derived/structure_table.dart`,
     `signalFamilyCellGroups` and `structureColumnChoicesAreRegistryBacked`
-[3] `packages/rackmate_ui/lib/src/structure/structure_editor_screen.dart`,
+[3] `packages/rackpal_ui/lib/src/structure/structure_editor_screen.dart`,
     `_FamilyPicker`
