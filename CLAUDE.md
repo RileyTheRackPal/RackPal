@@ -166,6 +166,19 @@ warm-cache path at 18m28s.
 | `docs/10-decisions.md` | Short-form ADR summary. Where it and a ruling differ, **the ruling wins and docs/10 is wrong**. |
 | `docs/12-milestone-board.md` | Evidence and reasoning. Milestone marks, what is actually built, why a number is what it is. |
 | `docs/00`–`docs/09`, `docs/11`, `docs/13`, `docs/14` | Derived, priority-3. Edited to match rulings rather than pointered. |
+| `docs/15-plan-view.md` | Derived spec, priority-3, like `docs/00`–`docs/09`: it cross-references the data model and cites a ruling for every decision. |
+| `docs/16-m3g-drill.md`, `docs/17-m4q2-drill.md` | **Drill records**, not specs: the script, conditions form and verdict form for an exit clause that only a person can perform, plus the verdict once given. The mark the verdict earns is docs/12's to state; where a record and docs/12 differ, docs/12 and the ruling win. |
+| `docs/18-m4r-mark-legibility.md` | A **paper check** of the same kind as the drills: the half of M4-R that no assertion can perform, kept with its verdict form. Same precedence. |
+| `docs/19-riley.md` | A **character reference** written to be handed to an artist. Its own header declares the fixed half normative, by canon §10.12(f), DR-096, DR-117 and DR-118, and the rest open; read it as derived from those rulings, not as a second source of authority. |
+| `docs/20-rule-review.md` | **Generated** by `tools/rule_review.py` from the rule catalogue, for an integrator to mark up. Do not edit by hand; `--check` is a gate. The review's outcome is recorded in docs/12, not here. |
+| `docs/21-user-guide.md` | A **guide**, and the one document that describes what the application DOES rather than what it should be. It is not a spec: where it and the running application differ, the application is right and the guide is stale. |
+| `docs/22-riley-plate-plan.md` | A **plan**, proposed and not ruled, by its own header. Where it and docs/19 or DR-117 / DR-118 disagree, they win. |
+| `docs/m1-implementation-log.md` | A **build record** of M1's stages, not a spec: it tracks build status against the specs and redefines no scope. M1 is closed, so it is history; the evidence for M1's marks lives in docs/12 §3. |
+| `docs/catalog/seed-devices.md` | **Spec and shipping content at once**: the seeded archetypes and the registries reproduced from canon §6. Gated by `tools/registry_parity.py` and `tools/palette_parity.py`; where it and canon §6 differ, canon wins. The only place a template count is stated (CR-061). |
+| `docs/research/` | **Working papers**, non-normative rationale, kept for audit. Its README states the status; the plan documents win wherever they disagree. |
+| `docs/reference/keymap-windows.md` | **Generated** from `kKeymap` and held by a golden test (`keymap_reference_golden_test.dart`). Do not edit by hand. |
+| `docs/reference/keystone/` | **Reference material**: photographs and technical drawings of the real strap and plate parts, supplied for DR-007 §11.7. Its README says what belongs there. Not prose and not subject to the prose rules. |
+| `docs/md_renderer.html` | **Role unclear.** A standalone "Portable Markdown Reader" page that nothing tracked references and that carries no header saying what it is for. It is a tool, not a document, and no ruling governs it. |
 
 **Canon §12 lists derived-document edits that are owed but unmade.** Read the
 ruling, not only the derived sentence. A stale sentence in `docs/09` once produced
@@ -377,13 +390,15 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 
 - **Bump the version when an issue closes.** `0.EPIC.TASK` (docs/14 §14.0): the
   minor is the milestone epic, the patch is the count of **Done board Tasks**
-  under that epic's issues. Not semver, and not per commit. It lives in **six
-  files** and `version_parity_test.dart` gates them against each other, which is
-  structurally blind to all six being stale together: that is how `v0.2.0` sat
-  through thirty M3 tasks (`bdbbdb4`) and `v0.3.30` through forty-six M4 ones.
-  **Derive the number in the commit message**, counted two ways that agree, so
-  the next person can re-derive it rather than trust it. `M4-0`-style
-  decomposition items are Issues and are not counted.
+  under that epic's issues. Not semver, and not per commit. **The list of files
+  it lives in is `apps/rackpal/test/version_parity_test.dart`**, which gates them
+  against each other and is structurally blind to all of them being stale together
+  (no count is written here: this bullet gave one until `rackpal_pdfium` joined
+  and made it wrong, which is the rule on second copies of a moving number). That
+  is how `v0.2.0` sat through thirty M3 tasks (`bdbbdb4`) and `v0.3.30` through
+  forty-six M4 ones. **Derive the number in the commit message**, counted two
+  ways that agree, so the next person can re-derive it rather than trust it.
+  `M4-0`-style decomposition items are Issues and are not counted.
 - **The version tracks the CURRENT milestone, not the one an issue is filed
   under.** Work landed early against a later milestone (M5-0a during M4, say)
   does not move the number: the minor would have to jump forward while the
@@ -446,3 +461,12 @@ lands, and when a parenthesis opens at a line end it belongs on the next line
 **inside that line's indent**, since the corpus indents continuations. Run
 `git diff --check` and `git diff --stat`: **insertions must equal deletions**, which
 is the line-count post-condition stated in a form that reads at a glance.
+
+And one the sweep needed and did not have: **every link target still resolves, anchors
+included.** A heading slug keeps its dash, so `## 5. Rules — three tiers` is
+`#5-rules--three-tiers`, and the sweep's colon replacement turned it into
+`#5-rules-three-tiers` while every link written against the old slug stayed put. That
+moved 16 heading anchors, and none of the post-conditions above could see it, because
+brackets, backticks, emphasis and line count all came out identical (DOCS-2c `#1067`,
+2d and 2g repair the links). The check is to resolve each `[text](file#anchor)` against
+the target's headings after the sweep, and to run it over any heading a sweep edits.
