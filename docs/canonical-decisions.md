@@ -24791,6 +24791,36 @@ definition.
 
 ---
 
+### 11.250 DR-251 · DR-096's record exclusion covers the bundle's decisions and its log, and not its live reference pages
+
+**Settled by the user on 2026-10-17, for `#1063`**, a finding of that day's sync audit.
+
+**11.250.1 THE FACT.** DR-096 §11.95.2 ruled *"rename the PRODUCT, never the RECORD"* and listed *"the
+`.okf` decision bundle (191, of which 95 are the decision files)"* as record, so the sweep left the
+whole bundle alone. About 150 old package paths remain (`rackmate_core`, `rackmate_ui`,
+`apps/rackmate` and their kin): roughly half in `decisions/`, and the rest in `practices/`,
+`invariants/`, `gates/` and `log.md`. **The pages that are not history are the problem.** A gate or
+invariant page tells a reader where the test that enforces it lives, and
+`gates/byte-exactness-sweep.md` carries `resource: apps/rackmate/test/gitattributes_byte_exactness_test.dart`,
+a file that no longer exists. An agent following a gate page to its test lands nowhere.
+
+**11.250.2 RULED BY THE USER: THE BUNDLE SPLITS INTO RECORD AND LIVE REFERENCE.**
+
+- **Record**, kept in the words of their day: `.okf/decisions/` and `.okf/log.md`. A decision page
+  says what was ruled under the name and paths of its time, as a canon blockquote does.
+- **Live**, taking current paths and the RackPal name: `.okf/gates/`, `.okf/invariants/`,
+  `.okf/practices/`, `.okf/getting-started.md` and `.okf/index.md`. A path inside a quotation on a
+  live page stays quoted, with the current path in live prose beside it (§11.95.2's own practice).
+
+Not taken: the whole bundle staying record, which keeps a dead `resource:` pointer and every gate page
+pointing at paths that do not exist; and the whole bundle going live, which rewrites decision pages
+and the log, the thing §11.95.2 exists to forbid.
+
+**Scope.** No product scope moves. It narrows §11.95.2's reach (§12.58). The substitution is owed on
+`#1087`, and the orientation pages' name on `#1081`.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -25599,6 +25629,12 @@ close and a reopen.
 | **CR-080** | *"Ruling: IBM Plex."* `RackBody` = Plex Sans, `RackCond` = Plex Sans Condensed, `RackMono` = Plex Mono, fallback Noto Sans Symbols 2 | **Jost** for text and **Space Mono** for `RackMono` (§11.248.2); **`RackCond` is retired** (§11.248.3); **no fallback face**, the glyph-coverage gate holding the codepoints instead (§11.248.4). Bundled twice, SIL OFL only and no system font all stand. |
 | **§4**, the naming table's *Fonts* row | The three Plex aliases and the Noto fallback | As CR-080's row above. |
 | **§11.6 consequence 9**, its parenthesis | The Jost drift *"is **not** ruled here"* | **Ruled by DR-249.** |
+
+### 12.58 Narrowed by DR-251 (the bundle's live pages take current names)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-096 §11.95.2**, its list of record | *"the `.okf` decision bundle (191, of which 95 are the decision files) are history"* | **`.okf/decisions/` and `.okf/log.md` are record.** `.okf/gates/`, `.okf/invariants/`, `.okf/practices/`, `getting-started.md` and `index.md` are live reference and take current paths and the current name, a quoted path staying quoted (§11.250.2). |
 
 ## 13. Resolved §10 questions
 

@@ -1,5 +1,19 @@
 # Update Log
 
+## 2026-10-17 (hundred-and-thirty-ninth entry)
+
+* **Added**: [DR-249](decisions/dr-249-the-faces-that-ship.md), [DR-250](decisions/dr-250-the-beta-gate-is-judgement-over-a-floor.md)
+  and [DR-251](decisions/dr-251-the-bundle-splits-record-from-live.md), the three rulings the 2026-10-17 sync audit
+  found owed (`#1061` to `#1063`). The audit itself filed `#1064` to `#1098` and wrote no documentation.
+* **Note**: **A COMMENT THAT SAYS IT SUPERSEDES A RULING IS A REQUEST FOR ONE.** `apps/rackpal/pubspec.yaml` said Jost
+  *"supersedes CR-080's font pick"*, and canon noticed and declined to rule. CR-080 stayed binding over the tree for
+  months, and every derived page describing the fonts followed the ruling rather than the bundle.
+* **Note**: **A DEFERRAL KEYED TO AN EVENT NEEDS SOMEBODY WATCHING THE EVENT.** Canon 10.11 waited for M5; M5 closed on
+  2026-09-07 and canon 13 kept saying the question was not yet due. Read a deferral against the milestone marks, not
+  against itself.
+* **Correction, to the audit rather than the bundle**: chapter `#1085` said this log never recorded `#1058`. Entry 138
+  does. Only `#1060` is unrecorded.
+
 ## 2026-10-12 (hundred-and-thirty-eighth entry)
 
 * **Correction**: entry 137 says the `VERIFY:` pass *"found a ruled refusal that was never built (`#1058`)"*. **It was
