@@ -5,7 +5,8 @@ okf_version: '0.1'
 # RackPal: knowledge bundle
 
 A Flutter desktop tool for designing A/V racks: elevations, a wiring schematic,
-and the schedules an installer works from. This bundle captures the *reasoning*
+a Plan view that pins field devices on a floorplan (DR-029), the schedules an
+installer works from, and the printed PDF sheet set that carries them. This bundle captures the *reasoning*
 behind the code, the rulings, invariants and gates that are load-bearing and
 would otherwise live only in a long document, or in whoever last touched the area.
 

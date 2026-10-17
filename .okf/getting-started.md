@@ -18,14 +18,16 @@ That chain is what this bundle indexes.
 |---|---|---|
 | `DR-nnn` | Design Ruling: settles a question the corpus could not answer. Requires a user decision. | `docs/canonical-decisions.md` §11 |
 | `CR-nnn` | Corpus Ruling: reconciles two sources that disagree. | `docs/canonical-decisions.md` |
-| `AC-nnn` | Acceptance Criterion. | the roadmap and specs |
+| `AC-nnn` | Accepted Critique: a review finding that was adopted, with the change it made. | `docs/canonical-decisions.md` |
 | `G-n` | A global principle, e.g. [G4](/invariants/g4-unknowns-are-counted.md). | throughout |
 | `RJ-nnn` | Rejected critique: kept so the argument is not re-run. | `docs/canonical-decisions.md` §3 |
 
 # The rule that generates the rest
 
-**Moving scope between v1 / v1.1 / v1.2 / v2 is an amendment, not a doc edit
-(§8.3).** It needs a new ruling ID. That is why
+**Moving scope between release bands is an amendment, not a doc edit
+(§8.3).** The roadmap's §2 lists the bands and what each holds; read them there,
+since the list has grown by ruling more than once (DR-188, DR-246). A move needs a
+new ruling ID. That is why
 [DR-009](/decisions/dr-009-macos-in-v1.md) and
 [DR-010](/decisions/dr-010-seeded-registries.md) exist rather than someone quietly
 editing a sentence.
@@ -39,8 +41,10 @@ The corpus contains real disagreements, sources written at different times
 against a model that did not yet exist. The convention is to **flag them in code,
 in place**, never resolve them silently:
 
-- `seed_registries.dart`'s header records six such disagreements
-- `schedule.dart` records four fields `docs/08` §3 names that the model lacks
+- `seed_registries.dart` marks, beside the tag prefixes, where `docs/02`'s worked
+  JSON and `docs/08` §3.5 disagree, and which one it took
+- `schedule.dart` records the fields `docs/08` §3 names that the model lacks (the
+  `Panel` entity, for one)
 
 A comment saying "these two sources disagree, I took this one, because" is worth
 more than a clean-looking file that picked one at random.
@@ -55,6 +59,6 @@ into the tracker. One authority, linked from everywhere else.
 # Start with
 
 * [DR-008](/decisions/dr-008-wiring-model.md) - the wiring model, and the class-reading rule every consumer needs.
-* [CR-117](/invariants/cr-117-byte-exactness.md) - the byte property that has decided four separate design questions.
+* [CR-117](/invariants/cr-117-byte-exactness.md) - the byte property that keeps deciding design questions.
 * [G4](/invariants/g4-unknowns-are-counted.md) - unknowns are counted, never guessed.
 * [Package layering](/invariants/package-layering.md) - what may import what, and why it keeps deciding things.
