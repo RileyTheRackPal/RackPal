@@ -24883,6 +24883,34 @@ sets bold is in scope. Jost Medium in print, which was offered and not taken.
 
 ---
 
+### 11.252 DR-253 · "Goldens pass" means the byte and text goldens: a committed fixture compared exactly
+
+**Settled by the user on 2026-10-17, for `#1102`**, a gap docs/12 §4.3 recorded on the same day.
+
+**11.252.1 THE FACT.** Roadmap §4's per-milestone rule reads *"CI passes, goldens pass, the app opens
+the four starter projects"*, and nothing in the corpus says what a golden is. The tree has **no pixel
+golden** (no `matchesGoldenFile`, no `flutter_test_config.dart`) and **four byte and text goldens**
+regenerated under `UPDATE_GOLDENS`: `byte_roundtrip_test.dart`, `schematic_fixture.dart`,
+`schematic_perf_test.dart` and `keymap_reference_golden_test.dart`. docs/11 §2 budgets about 150 pixel
+and 400 display-list goldens that were never built. So the limb was read as vacuous for every
+milestone, which made a rule nobody could satisfy and nobody could fail.
+
+**11.252.2 RULED BY THE USER: A GOLDEN IS A COMMITTED FIXTURE COMPARED EXACTLY.** Exported bytes,
+display-list text and generated reference text, each held against a file in the tree and failing on
+any difference, are what the rule means. The limb is **satisfied today** by the four that exist, and
+**every milestone's "goldens pass" is now checkable** by running the suites that hold them. Not taken:
+pixel or display-list goldens per docs/11 §2's budget, which would leave the limb unmet for every
+milestone until weeks of harness and fixtures were built; and dropping the limb, which loses the one
+limb that says outputs did not drift.
+
+**What this does not rule.** Whether pixel goldens are ever built: they stay docs/11's aspiration and
+carry no gate. Which outputs deserve a golden next; a new one is ordinary work under this definition.
+
+**Scope.** No scope moves. A definition of a word in roadmap §4 (§12.59). docs/09 §4 and docs/12 §4.3
+point here.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -25701,6 +25729,12 @@ close and a reopen.
 | Ruling | What it said | What now governs |
 |---|---|---|
 | **DR-096 §11.95.2**, its list of record | *"the `.okf` decision bundle (191, of which 95 are the decision files) are history"* | **`.okf/decisions/` and `.okf/log.md` are record.** `.okf/gates/`, `.okf/invariants/`, `.okf/practices/`, `getting-started.md` and `index.md` are live reference and take current paths and the current name, a quoted path staying quoted (§11.250.2). |
+
+### 12.59 Defined by DR-253 (what "goldens pass" means)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **§9 / roadmap §4**, the per-milestone green rule | *"Every milestone ends green: CI passes, goldens pass, the app opens the four starter projects."* No definition of a golden | **A golden is a committed fixture compared exactly**: exported bytes, display-list text, generated reference text (§11.252.2). The limb is checkable and satisfied by the goldens that exist; pixel goldens are not required. |
 
 ## 13. Resolved §10 questions
 

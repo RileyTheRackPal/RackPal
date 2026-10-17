@@ -3,7 +3,7 @@
 **This file is not the normative record.** The normative record is
 [docs/canonical-decisions.md](canonical-decisions.md), 121 `CR-nnn`, 59 `AC-nnn`, 17 `RJ-nnn`,
 canonical naming, the model, the registry, the scope ruling, the milestone plan, and Part 4's
-binding user decisions, now `DR-001` to `DR-252`. This file is a sixteen-ADR summary of it. Where
+binding user decisions, now `DR-001` to `DR-253`. This file is a sixteen-ADR summary of it. Where
 an ADR and a ruling appear to differ, the ruling wins and this file is wrong.
 
 **THE COUNTS IN THIS PARAGRAPH ARE THE KIND THAT GO STALE**, and two of them had. It read
@@ -335,6 +335,7 @@ fuller treatment; nothing here replaces them.
 | DR-250 | **The beta gate is M9's judgement, over a floor of five projects and no open bug that loses data or prints a wrong fact.** From `#1062`. Answers §10.11, deferred until M5 landed and owed before the M6-J5 recruiting ask; M5 had closed five weeks earlier. §10.11's recommendation, (a) with (b) as a floor: three integrators each produce a sheet set they were willing to send without leaving the app, and the floor (both limbs read at the gate) can stop the beta but never pass it. A date was not offered. Left to M9: how such a bug is marked, and who the three integrators are now that DR-036 made the project public | canon §11.249, §13 |
 | DR-251 | **DR-096's record exclusion covers the OKF bundle's decisions and its log, and not its live reference pages.** From `#1063`. DR-096 kept the whole `.okf` bundle as record, so about 150 old `rackmate_*` paths survived, including a gate page whose `resource:` names a test file that no longer exists. Split: `decisions/` and `log.md` stay in the words of their day; `gates/`, `invariants/`, `practices/`, `getting-started.md` and `index.md` take current paths and the RackPal name, a quoted path staying quoted | canon §11.250, §12.58 |
 | DR-252 | **The PDF embeds Space Mono, and identifier columns print in it.** From `#1099`, the question DR-249 left open: the export embedded Jost Regular only, so no printed cable ID, designator or port label carried Space Mono's marked zero and CR-080's label-transcription argument was met on no sheet. The `pdf` package subsets fonts, so the cost is the glyphs used, measured at build; about 63 font-choice sites across 24 sheet builders, with width-dependent tests re-baselined. Not taken: one face with the risk recorded; Jost Medium as well. Built as `MONO-A` (`#1104`) | canon §11.251 |
+| DR-253 | **"Goldens pass" means the byte and text goldens: a committed fixture compared exactly.** From `#1102`. Roadmap §4's green rule never defined a golden; the tree has no pixel golden and four byte and text goldens under `UPDATE_GOLDENS`, so the limb read as vacuous for every milestone. Exported bytes, display-list text and generated reference text held against a file in the tree are what it means: the limb is checkable and met today. Not taken: pixel or display-list goldens per docs/11 §2's budget (weeks, unmet until built); dropping the limb | canon §11.252, §12.59 |
 
 See also [Canonical decisions](canonical-decisions.md), normative, plus
 [Overview](00-overview.md), [Data model](02-data-model.md),
