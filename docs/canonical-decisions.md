@@ -24911,6 +24911,60 @@ point here.
 
 ---
 
+### 11.253 DR-254 · The Microsoft Store alpha is parked on M8, anonymity is a distribution constraint, and the route is ruled after it is verified
+
+**Settled by the user on 2026-10-17**, answering board `#482` (*create the Partner Center account*),
+whose parent `#101` had been closed as *"DECIDED: Individual, sole copyright"* with the account itself
+never made.
+
+**11.253.1 THE FACT.** The Microsoft Store alpha (Epic `#100`, MSIX-0 to MSIX-7) is board-born: no
+ruling created it, and it is sized in roadmap §6.1's table. Its path runs through a Partner Center
+account, which Microsoft verifies against the publisher's identity; the Store signs what it
+distributes, and a package flighted outside the Store needs a signature of the publisher's own. Its
+MSIX-7 (`#171`) is also where DR-179 §11.178 put file-type registration, under a deadline *"earlier
+than M8"*.
+
+**11.253.2 THE USER'S DIRECTION, IN THEIR WORDS, AND WHAT IT IS NOT.** *"This may not actually be the
+direction taken; I believe the WinGet method for Windows & a Brew cask for macOS, plus GitHub's native
+Ephemeral Signing should at least help adoption initially. I'm hoping to remain anonymous at least
+initially, and having any form of code signing beyond ephemeral makes that hard."* The direction is
+recorded and **not ruled**: the user said in terms it may change, and the question that offered it
+carried facts that cut against parts of it, gathered from secondary sources and not yet verified:
+
+- Homebrew ended support for casks that fail Gatekeeper on 2026-09-01 and removed `--no-quarantine`,
+  so an un-notarized app cannot ship in the main cask repository; a personal tap is unconfirmed.
+- GitHub artifact attestations (Sigstore keyless signing) are a provenance record. They are not an
+  Authenticode or Apple signature and do nothing for SmartScreen or Gatekeeper. Their certificate names
+  the repository's workflow rather than a person, and a public repository's goes into a public log.
+- WinGet accepts an unsigned `.exe`, with SmartScreen reputation attached to each file's hash, so each
+  release starts as an unknown publisher.
+- Apple notarization needs a Developer ID enrolled under a legal name, which is the anonymity conflict
+  in its sharpest form.
+
+**11.253.3 RULED BY THE USER: THE STORE IS PARKED, AND ONLY THAT MOVES NOW.** The user chose this over
+ruling the new route now and over keeping the Store path.
+
+1. **Epic `#100` is parked on M8** under DR-095's definition: reassigned by this ruling to a named later
+   milestone, for the structural reason that the distribution route it presumes is not chosen.
+   `#482` closes as not pursued.
+2. **File-type registration (`#171`) moves to M8 with it**, because it belongs to whichever installer
+   M8 rules. DR-179 §11.178's *"earlier than M8"* deadline was the Store alpha's and lapses with it.
+3. **Anonymity, at least initially, is a stated constraint on distribution.** A route that publishes
+   the author's legal identity is not taken without a ruling that says so.
+4. **The route is ruled at M8's decomposition**, after `DIST-0` (`#1105`) verifies the facts in
+   §11.253.2 from primary sources.
+
+**What this does not rule.** The route itself. **DR-006 stands until then** (Windows self-signed with a
+timestamp, §11.6.2's split M8 criterion); whether its self-signed certificate is compatible with the
+anonymity constraint is one of `#1105`'s questions. macOS notarization, which DR-009 puts in v1 and
+which §11.253.2 shows is where anonymity costs most. Moving the repository to GitHub (`#1028`) and its
+anonymity scrub (`#783`), which this direction makes more likely and which stay as filed.
+
+**Scope.** An amendment under §8.3, in its own commit: the Store alpha leaves v1's pre-M8 work and waits
+on M8 (§12.60).
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -25735,6 +25789,13 @@ close and a reopen.
 | Ruling | What it said | What now governs |
 |---|---|---|
 | **§9 / roadmap §4**, the per-milestone green rule | *"Every milestone ends green: CI passes, goldens pass, the app opens the four starter projects."* No definition of a golden | **A golden is a committed fixture compared exactly**: exported bytes, display-list text, generated reference text (§11.252.2). The limb is checkable and satisfied by the goldens that exist; pixel goldens are not required. |
+
+### 12.60 Parked by DR-254 (the Microsoft Store alpha waits on M8)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **Roadmap §6.1**, the *Microsoft Store alpha* row | The Store alpha, MSIX-0 to MSIX-7, sized as pre-M8 work | **Parked on M8** (§11.253.3). Its route is ruled at M8's decomposition, after `#1105`. |
+| **DR-179 §11.178**, its deadline bullet | *"The deadline is earlier than M8."* MSIX-7 (`#171`) registers the extensions in the package manifest | **The deadline lapses with the Store alpha**; file-type registration moves to M8 and belongs to whichever installer M8 rules. The extensions themselves stand. |
 
 ## 13. Resolved §10 questions
 
