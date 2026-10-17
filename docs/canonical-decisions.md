@@ -5219,9 +5219,10 @@ rather than by drift:
 
 ## 10. Open questions
 
-**Nothing in this section is open. See §13 for the index.** Ten of the thirteen are **ANSWERED and
-binding**, 10.3 is **moot** under DR-006, 10.13 is **retired**, and 10.11 alone is **deferred**,
-with a trigger that fires before the M6-J5 recruiting ask. Everything in Parts 1–2 and §§7–9 is
+**Nothing in this section is open. See §13 for the index**, which is where the status of each entry
+lives: every entry is answered and binding except 10.13, which is retired. *(This sentence counted
+them until 2026-10-17, read 10.3 as moot under DR-006 after DR-036 had reversed DR-006, and held 10.11
+deferred after its trigger had fired. DR-250 answers 10.11.)* Everything in Parts 1–2 and §§7–9 is
 binding; these entries were deliberately the opposite, the calls requiring a human judgement about
 what this product is for and who is going to use it, which no amount of internal consistency can
 supply. That judgement has now been given. Every entry is **retained in full as the record of the
@@ -5584,6 +5585,10 @@ customer waiting. If there is, (b) or (c) is going to happen whether or not it i
 **Recommendation (not a ruling).** **(a), with (b) as a floor**: the judgement gate governs, and
 the metric exists only to prevent shipping something that passes the judgement gate for three
 friendly users and falls over on the fourth.
+
+> **ANSWERED 2026-10-17 by DR-250 (§11.249): (a), with (b) as a floor.** Confirms the recommendation.
+> M9's criterion governs as written; the floor is the five real projects run end to end and no open
+> bug that loses data or prints a wrong fact, both read at the moment of the gate.
 
 ---
 
@@ -24689,6 +24694,139 @@ machine, which is theirs to switch.
 
 ---
 
+### 11.248 DR-249 · CR-080 is amended to the faces that ship: Jost for text, Space Mono for `RackMono`, and `RackCond` is retired
+
+**Settled by the user on 2026-10-17, for `#1061`**, a finding of that day's sync audit of the
+documents, the OKF bundle and the board.
+
+**11.248.1 THE FACT, AND WHY A COMMENT WAS NOT ENOUGH.** CR-080 (§1.8) rules `RackBody` = IBM Plex
+Sans, `RackCond` = IBM Plex Sans Condensed, `RackMono` = IBM Plex Mono, fallback Noto Sans Symbols 2.
+`apps/rackpal/assets/fonts/` holds **Jost** Regular and Medium and **Space Mono** Regular and Bold,
+and no Plex and no Noto. The swap landed at `0545090`; M8-H3 to M8-H5 (`#771`, `#772`, `#773`,
+`#1029`) extended it. `apps/rackpal/pubspec.yaml` says *"This supersedes CR-080's font pick"*, and
+§11.6 consequence 9 noted the drift and declined to rule on it. A pubspec comment is not an
+amendment (roadmap §8.3), so CR-080 stayed binding over a bundle that contradicted it, and every
+derived document that names the face followed the ruling rather than the tree.
+
+**11.248.2 RULED BY THE USER: THE FACES ARE THE BUNDLE AS BUILT.** The text face (`RackBody`'s role)
+is **Jost**, Regular 400 and Medium 500, in the modified build `tools/build_jost_glyphs.py` produces
+and `tools/glyph_coverage_check.py` holds. `RackMono` is **Space Mono**, Regular and Bold. **CR-080's
+other rulings stand**: each face is bundled twice (fonts and assets), only SIL OFL 1.1 faces ship, and
+no system font is ever reached for. Not taken: reverting to Plex, offered with its cost (undoing
+M8-H3 to H5, rebuilding the added glyphs for another face, retargeting every `FontRef('Jost')`
+fixture and the coverage gate, and re-baselining PDF metrics).
+
+**CR-080's three arguments, re-checked against the files rather than carried over.** Measured on
+2026-10-17 by reading each TTF's `glyf` contours:
+
+- **Disambiguation holds in the mono face only, and the mono face is not printed.** Space Mono's `0`
+  has three contours against `O`'s two, a marked zero. Jost's `0` and `O` both have two and differ
+  only in width. So the argument CR-080 made for identifiers transcribed onto physical labels would be
+  met where an identifier is set in `RackMono`, and is **not** met in Jost. **The PDF embeds one face,
+  Jost Regular** (`kExportFont` in `apps/rackpal/lib/src/session/export_controller.dart`; Medium and
+  `RackMono` serve the Flutter widgets only), so **every printed identifier, `CABLE ID` included, is in
+  Jost and carries no marked zero.** Space Mono's zero reaches the screen, not the paper. *(This bullet
+  said on its first commit that docs/08 §10.1's `RackMono` `CABLE ID` column met the argument on paper.
+  docs/08 states the design, not the exporter; the DOCS-2i pass found the gap the same day, before the
+  ruling merged.)* Whether the PDF should embed Space Mono for identifier columns is a product question
+  this ruling does not answer; it is `#1099`.
+- **The condensed cut** is §11.248.3.
+- **Greek coverage holds, by different codepoints.** Jost carries `U+03A9` and `U+00B5`; Space Mono
+  carries `U+2126` (the ohm sign) and `U+00B5`, and not `U+03A9`. A string that names one ohm
+  codepoint in a mono column and the other in text finds a gap in one of them. The coverage gate sees
+  string literals only, so this is recorded rather than assumed covered.
+
+**11.248.3 RULED BY THE USER: `RackCond` IS RETIRED.** Jost has no condensed cut and none ships;
+schedules are set in Jost, as they print today, and the role leaves docs/08 §10.1. **The option as
+offered overstated its evidence, and the correction belongs here**: it said M6's sheets already pass
+their legibility checks without a condensed face. M6's machine clauses (1, 2 and 4) are
+`DEMONSTRATED` without one; **the physical print clauses (AC-054, `#48`, `#49`) are unperformed**, and
+a schedule column too tight for Jost at its printed size is exactly what they would show. If they do,
+that is new evidence and a new ruling, not a reading of this one. Not taken: keeping the role as owed
+debt with a second family chosen later.
+
+**11.248.4 CARRIED IN THE CHOSEN OPTION: NO FALLBACK FACE SHIPS.** The Noto Sans Symbols 2 fallback
+was never bundled. The option the user chose named the glyph-coverage gate as what stands in for it,
+so that is the ruling: the face's own build carries the codepoints the product emits, and
+`tools/glyph_coverage_check.py` reads the binary to hold them. Its blind spot is in its own header and
+is restated here: runtime-composed strings and user data are not literals, and a codepoint neither
+face carries draws as nothing.
+
+**Scope.** No product scope moves; this ratifies what ships. §12.57. The derived-document edits are
+owed and listed on `#1073`.
+
+**What this does not rule.** `RackMono` Italic, which docs/08 §10.1 wants for a derived `LEN` and
+`FontRef` cannot express (no slant field); it stays where docs/12 §4.6 left it. The wordmark, which is
+DR-089's and is outlines rather than text. Whether a future face change needs this much ceremony: it
+does, for the same reason this one did.
+
+---
+
+### 11.249 DR-250 · The beta gate is M9's judgement, over a floor of five projects and no open bug that loses data or prints a wrong fact
+
+**Settled by the user on 2026-10-17, for `#1062`.** It answers §10.11, which was **deferred on
+2026-08-03 with a trigger**: held until M5 landed, and owed before the M6-J5 recruiting ask (`#362`),
+because three people cannot be asked to commit real jobs without being told what will be judged. M5
+closed on 2026-09-07 (DR-135); the trigger had fired five weeks before anybody noticed, which the
+2026-10-17 sync audit found.
+
+**11.249.1 RULED BY THE USER: THE JUDGEMENT GOVERNS, AND A FLOOR STOPS IT PASSING ON FRIENDLY USERS.**
+§10.11's own recommendation, option (a) with (b) as a floor. **M9's exit criterion governs exactly as
+roadmap §4 writes it**: three integrators have each produced a sheet set they were willing to send to
+a client or a job site, and none of the three needed to leave the app to fix something. **The floor**,
+both limbs read at the moment the gate is read, never averaged over the beta:
+
+1. **The five real projects** of M9's checklist have each been run end to end.
+2. **No open bug loses data or prints a wrong fact.** A wrong fact is a printed value that disagrees
+   with the document it came from; an unknown printed as `—` is not one (G4, CR-114).
+
+The floor cannot pass the beta on its own; it can only stop it. Not taken: the judgement alone, which
+§10.11 calls gameable by three people who like the author; and a metric alone (N projects, N cables,
+no P1 for N weeks), which measures whatever is easiest to count. **A date, §10.11's option (c), was not
+offered**, because nothing in the record supplies the external pressure §10.11 names as the only
+thing that would make one happen regardless.
+
+**11.249.2 WHAT THIS LEAVES TO M9'S DECOMPOSITION, STATED SO IT IS NOT READ AS RULED.** How a bug is
+marked as losing data or printing a wrong fact on the board (a tag, at M9-D's decomposition, `#442`).
+**Who the three integrators are**: DR-006 made them three internal users, and DR-036 then made the
+project public without saying whether that changed RISK-08's population back. That is the question
+`#362` exists to start, and it is the user's.
+
+**Scope.** No scope moves. §10.11 is answered; §13's row says so. `#362` is no longer waiting on a
+definition.
+
+---
+
+### 11.250 DR-251 · DR-096's record exclusion covers the bundle's decisions and its log, and not its live reference pages
+
+**Settled by the user on 2026-10-17, for `#1063`**, a finding of that day's sync audit.
+
+**11.250.1 THE FACT.** DR-096 §11.95.2 ruled *"rename the PRODUCT, never the RECORD"* and listed *"the
+`.okf` decision bundle (191, of which 95 are the decision files)"* as record, so the sweep left the
+whole bundle alone. About 150 old package paths remain (`rackmate_core`, `rackmate_ui`,
+`apps/rackmate` and their kin): roughly half in `decisions/`, and the rest in `practices/`,
+`invariants/`, `gates/` and `log.md`. **The pages that are not history are the problem.** A gate or
+invariant page tells a reader where the test that enforces it lives, and
+`gates/byte-exactness-sweep.md` carries `resource: apps/rackmate/test/gitattributes_byte_exactness_test.dart`,
+a file that no longer exists. An agent following a gate page to its test lands nowhere.
+
+**11.250.2 RULED BY THE USER: THE BUNDLE SPLITS INTO RECORD AND LIVE REFERENCE.**
+
+- **Record**, kept in the words of their day: `.okf/decisions/` and `.okf/log.md`. A decision page
+  says what was ruled under the name and paths of its time, as a canon blockquote does.
+- **Live**, taking current paths and the RackPal name: `.okf/gates/`, `.okf/invariants/`,
+  `.okf/practices/`, `.okf/getting-started.md` and `.okf/index.md`. A path inside a quotation on a
+  live page stays quoted, with the current path in live prose beside it (§11.95.2's own practice).
+
+Not taken: the whole bundle staying record, which keeps a dead `resource:` pointer and every gate page
+pointing at paths that do not exist; and the whole bundle going live, which rewrites decision pages
+and the log, the thing §11.95.2 exists to forbid.
+
+**Scope.** No product scope moves. It narrows §11.95.2's reach (§12.58). The substitution is owed on
+`#1087`, and the orientation pages' name on `#1081`.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -25490,16 +25628,31 @@ close and a reopen.
 |---|---|---|
 | **DR-246 §11.245.7** | *"NO RANGE CHECK"*: a distance verdict would be an estimate printed as a fact | **An advisory straight-line check**, each threshold editable per protocol and naming its source and grade, with a device on another plan sheet counted as unchecked (§11.246.1). Its reasoning stands where a protocol publishes no distance rule and nobody has given one. |
 
+### 12.57 Amended by DR-249 (the faces that ship)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **CR-080** | *"Ruling: IBM Plex."* `RackBody` = Plex Sans, `RackCond` = Plex Sans Condensed, `RackMono` = Plex Mono, fallback Noto Sans Symbols 2 | **Jost** for text and **Space Mono** for `RackMono` (§11.248.2); **`RackCond` is retired** (§11.248.3); **no fallback face**, the glyph-coverage gate holding the codepoints instead (§11.248.4). Bundled twice, SIL OFL only and no system font all stand. |
+| **§4**, the naming table's *Fonts* row | The three Plex aliases and the Noto fallback | As CR-080's row above. |
+| **§11.6 consequence 9**, its parenthesis | The Jost drift *"is **not** ruled here"* | **Ruled by DR-249.** |
+
+### 12.58 Narrowed by DR-251 (the bundle's live pages take current names)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-096 §11.95.2**, its list of record | *"the `.okf` decision bundle (191, of which 95 are the decision files) are history"* | **`.okf/decisions/` and `.okf/log.md` are record.** `.okf/gates/`, `.okf/invariants/`, `.okf/practices/`, `getting-started.md` and `index.md` are live reference and take current paths and the current name, a quoted path staying quoted (§11.250.2). |
+
 ## 13. Resolved §10 questions
 
-**§10 has no open entries left.** Of its thirteen: **eleven are ANSWERED**, one (§10.11) is
-**DEFERRED with a trigger** that fires before M6-J5, and one (§10.13) is **retired** because the
-three questions it prioritised are all answered. The text of §10 stays in place as the record of the
-argument; this section is the index of what was decided.
+**§10 has no open entries left.** Every entry is **ANSWERED** except §10.13, which is **retired**
+because the three questions it prioritised are all answered. The text of §10 stays in place as the
+record of the argument; this section is the index of what was decided.
 
 Closed as of 2026-08-03, except **§10.3, which reopened and was answered on 2026-08-10** when DR-036
-reversed DR-006 and made it a live question again, exactly as its own row had warned it would.
-§10.11 is the only entry still owing an answer, and it owes it to M5, not to now.
+reversed DR-006 and made it a live question again, exactly as its own row had warned it would, and
+**§10.11, deferred with a trigger and answered on 2026-10-17 by DR-250**. *(This paragraph said
+§10.11 "owes it to M5, not to now" until then, five weeks after M5 had closed. A trigger nobody
+watches is a date nobody wrote down.)*
 
 | § | Question | Status | Answer |
 |---|---|---|---|
@@ -25513,7 +25666,7 @@ reversed DR-006 and made it a live question again, exactly as its own row had wa
 | **10.8** | Cloud-ready investment | **ANSWERED 2026-08-03** | **(a). Spend nothing further; RackPal is a local application.** Confirms the recommendation. The six cloud-ready properties are **retained in full** and option (c) is not taken. `docs/02` §8 is **ratified** as the conflict-unit and merge-story page the recommendation asked for, rather than commissioned. An update check and API-key publishing to project-management services are the only contemplated network uses and are **not v1 scope** (§8.3 applies to either). §10.8. **Amended by DR-033 and DR-034**: there is a third contemplated network use, the community catalog, in a write direction (submission) and a read direction (library fetch and update check). Both are likewise not v1 (§12.14, §12.15). |
 | **10.9** | Generic archetypes forever, or a real-SKU catalog | **ANSWERED 2026-08-03** | **Shipped catalog stays generic; user templates may carry real SKUs.** Archetypes must be editable (docs/06 §7.3's `Duplicate & edit`), and DR-015's `.rmda` is the sharing mechanism. AC-052/DR-002 bind the SEED only. `T6.30` stays an equipment list, not a BOM (AC-055). §10.9. **Its recommendation is discharged by DR-033**, which builds the curated community library as a second repository the app submits to. §10.9's stated tipping condition was whether users start swapping device files unprompted; the user settled it by deciding to support the swap rather than waiting to observe it. §11.32. |
 | **10.10** | macOS in v1 | **ANSWERED: DR-009** | **(b) Windows and macOS from v1.** Reverses the record's recommendation, which was explicitly *"not a ruling"* and rested on a desk survey that was never run. The register §10.10 demanded and never received is `docs/13-macos-debt-register.md`. §11.9. |
-| 10.11 | What the beta gate actually is | **DEFERRED 2026-08-03, with a trigger** | Held until M5 (Validation) lands and the UI is largely frozen, on the ground that the bar is easier to state against a product than against a plan. **It must be answered before the M6 recruiting ask (M6-J5)**, not before M9; you cannot ask three people to commit real jobs without saying what you will judge. |
+| **10.11** | What the beta gate actually is | **DEFERRED 2026-08-03 with a trigger, then ANSWERED 2026-10-17: DR-250** | **M9's judgement governs, over a floor**: the five real projects run end to end, and no open bug that loses data or prints a wrong fact (§11.249). The deferral held it until M5 landed and required an answer before the M6-J5 recruiting ask; M5 closed on 2026-09-07 and the answer came at the sync audit that noticed. Confirms the recommendation. |
 | 10.12 | Small calls needing an owner | **ALL SEVEN SETTLED 2026-08-03** | (d) three residential + one commercial starter, by DR-002. **(a)** keep 200, make it a setting (#560), built as DR-172 (§11.171). **(b)** autosave while working, never while idle, and it exposed a live defect, now fixed. **(c)** editable rack presets, **DR-016**, a scope addition under §8.3 (#561). |
 | 10.13 | The three to answer first | **retired** | All three (10.1, 10.2, 10.4) are answered. The section has served its purpose. |
 
