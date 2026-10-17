@@ -117,11 +117,21 @@ whatever drift the intervening milestones introduced; a row this file has not re
 does not vouch for, and saying so is cheaper than a footnote per row that would go stale the same
 way. Board item #92 is the scheduled full sweep.
 
+**Both paragraphs above are historical, as of 2026-10-17.** Their suite counts, analyzer figure and
+build result are what those two sessions measured at `0fa532d` (M1's closing commit, §3.2) and at
+M2-F/M2-G, and they are kept because they date the audit, not because they are current. They are
+not the present figures. The present figures live in the gates, which are the only copy that cannot
+go stale: the suite floors in `$SuiteFloors` in `tools/ci/run_suite.ps1`, the analyzer pin in
+`tools/ci/analyze_info_baseline.txt`, and the build step in `tools/ci/run_local.ps1`. **The sentence
+"Every other row is still as of `0fa532d`" stopped being true as the rows were re-marked**; each row
+in the table below says in its own text when it was last re-marked, and where it says nothing the
+row is the original audit's.
+
 | # | Milestone | Size | Exit clauses demonstrated | Status: weakest mark | The short reason |
 |---|---|---|---|---|---|
 | **M0** | Foundations | `S` | **8 of 8** | **CRITERION MET**: `DEMONSTRATED` | **The last two clauses closed on 2026-08-27, and both had been `VACUOUS` for reasons that expired without anyone noticing** (§0: *"true today, and true for a reason that will stop being true"*). Clause 4a needed a command that touches `doc.templates`; M4-S landed one, and `command_roundtrip_test.dart` now draws `SaveTemplateToProjectCommand` **717 times across its 1000 sequences** (`8af36ed`, `#513`). Clause 5 needed a derived pipeline to snapshot; three exist, and `epoch_mask_test.dart` now folds them into the same changed-key set, moving on **9 of 35 command cases** and guarded by a source-reading field count so the projection cannot fall behind (`38167ec`, `#507`). Both figures are measured rather than asserted, because §5.1's `#587` records an arm offered thousands of times that fired zero |
 | **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET**: `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28 at **under three minutes** against a four-minute criterion. The drill's re-run **failed first**, the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5), then passed against `616a301`. The three-minute figure is a 140+ wpm operator who knew the keymap; §3.2 records that condition because M7's accessibility criterion rests on this clause. The goal line's *"ships to real users"* is **not** met |
-| **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET**: `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate, **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met; the roadmap's global *"ends green"* rule is **not**, for the same reason it is not for any milestone, no CI service has ever run (§4.1) |
+| **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET**: `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate, **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met. **This row read, until 2026-10-17, that the roadmap's global *"ends green"* rule was not met "because no CI service has ever run".** That reason expired on 2026-08-27, when the pipeline first ran and passed (§4.1, `DISCHARGED`); the rule's other limb, *"goldens pass"*, is §4.3's question |
 | **M3** | Structure + field | `M` | **4 of 5**, the fifth parked | **CRITERION MET**: `CONFIRMED` | **The header of §5.2 read `NOT STARTED` until 2026-08-27, and DR-095 §11.94.8 exists because a ruling was written on that staleness.** DR-040 (§11.39) and M3-K (`#661`, four tasks Done, 2026-08-11) built clauses 2b and 4: `BindEndpoint`, `@panel=` landing forty-six drops on a panel's rear port, and the rack label allocated through the one format engine. Clause 3's derivation ships and its **sheet is M6's** by DR-027, which is the parked one, `#574`. **Clause 1 is `CONFIRMED`**: the 60-drop drill, closed on the operator's confirmation 2026-08-27 (`#89`, `#163`–`#165`). Run 1 on 2026-08-13 is kept at §4.1 of docs/16 as `UNVERIFIABLE` because the app was closed without saving, and the procedure, not the operator, is what failed |
 | **M4** | Device builder | **`L`** *(was `M`)* | **2 of 2** | **CRITERION MET**: `CONFIRMED` | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **CLAUSE 2 IS NOW CONFIRMED, performed on 2026-09-01** (§5.3.30), and it was performable only from §5.3.13: it could not be, for four days, because a template authored in the builder saved into the project and **no surface offered it for placement** (§5.3.8). M4-S (`#701`, DR-077) makes the palette list the DOCUMENT's own shelf, forks a version on a second `Save`, and resolves the newest version at placement; the equipment-list half is read through `File ▸ Export PDF…`, which is the criterion's own reading rather than a missing view. `#251` demonstrated it: every unknown column printed `—` and said so, which is G4/CR-114 read off a printed sheet for the first time. **The archetype path ran the same day at 46 SECONDS against the DSL path's 93** (`#250`), which is what settled whether the generators earned their place. **EVERY M4 STORY IS NOW CLOSED** (§5.3.1–§5.3.30), the last being the drill itself (`#188`), and **95 chapters are Done under this epic with none left open or re-parented**, which is where `v0.4.95` comes from. **M4-P shipped RJ-012's two extensibility surfaces and found each chapter to be something else underneath**: the builder could not save a field device at all, the media-type editor's real gap was MERGE rather than create, and connector aliases were already resolved and only lacked a writer (§5.3.28, DR-107, `v0.4.93`). **RJ-012 stays two-thirds met**: its third surface, a per-family colour override row in settings, has nowhere to go because `ProjectSettings` has no editor and none is assigned to any milestone (`#805`). **M4-K made the rear panel a derived drawing and gave the builder its right dock**, three previews all coming from the scene builders that print rather than from preview widgets (§5.3.26, DR-105, CR-086, `v0.4.89`); **its parked nudge canvas was then un-parked by DR-106 and built** as a sixth `Panel` section, with its align/distribute arithmetic in core (§5.3.27, `v0.4.90`). **M4-O made the Device Manager tab a real browser** and found, while doing it, that the `Project ▸ New device template…` menu item DR-104 assumed existed does not (§5.3.25, DR-104, `v0.4.86`). **M4-L gave three modelled-since-M0 fields their first producer** (`DeviceOverrides`, `derivedFrom`, `PortOverrides`, §5.3.22), **M4-M made `.rmdx` a real format with both file verbs, a real `contentHash` and a size cap on every import path** (§5.3.23, DR-100, DR-101, `v0.4.78`), and **M4-N built the whole library subsystem: the writable shelf, the `.rmda` archive, both file verbs, provenance as a sealed class and a palette that lists several libraries at once and can place from them** (§5.3.24, DR-102, DR-103, `v0.4.83`). **None of the three moved this criterion**, and that was the point of the row for a fortnight: story after story closed while clause 2 remained a person with a document to read. **It was read on 2026-09-01** (§5.3.30), which is the only thing that could ever have closed it. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **3 of 3** | **CRITERION MET**: `CONFIRMED` | **CLOSED 2026-09-07 (DR-135 §11.134).** All three clauses discharged. Clause 1 is `DEMONSTRATED` at **29 of 29** by `drc_corpus_test.dart`, which `run_local.ps1` runs as a step of its own and whose subject is `kRuleCatalogue` rather than any evaluator enum, so a registered rule without a pair fails the build; that is also why it moved from 28 to 29 when DR-132 restored `ELE-005` and no gate had to change (§5.4.7). Clause 3 was `VACUOUS` *because no rule existed* and that reason expired; it is `DEMONSTRATED` in a stronger form than `#310` asked for, since `ExportError` is **sealed with three arms and none of them is about a rule** (§5.4.8, DR-119). **Clause 2 was the whole gap for a fortnight and is `CONFIRMED` on 2026-09-06** (§5.4.11), signed by the reviewing integrator against a pack generated from the live catalogue: **twelve findings, four rulings, six fields the model has and no producer writes**, and the catalog half signed PROVISIONAL on the reviewer's own hedge. **All twenty Stories under epic 23 are `Done` and 61 Chapters beneath them**, which is where `v0.5.61` comes from and why the close itself owes no bump. The successor is **the Plan view, not M6** (DR-029 §11.28.4) |
@@ -153,13 +163,20 @@ starting rather than trusting them; that is what the `Mn-0` rows now say.
 - **macOS debt `D14` had no board item at all**, and it is the one row in docs/13 that **is not
   about macOS**: docs/08:509 requires a non-US platform locale to substitute A4/A3, `SheetSize`
   has exactly two values and neither is A4, so **a Windows machine in a metric locale has the
-  problem today**. Now `#453`, and sequenced with M6 where page setup is actually built, rather
+  problem today**. Now `#477` (with chapters `#478` to `#480`; this line said `#453` until 2026-10-17,
+and `#453` is `D1/1`, the macOS platform directory), and sequenced with M6 where page setup is actually built, rather
   than with the macOS work where it would be found late because it is filed under the wrong heading.
 - **`D13`'s register text is stale in one detail**: it says the dialog filter is hard-coded to
   `.rackpal`; DR-015 made that `*.rmpj;*.rackpal` at `dc22ddc`. The hard-coding is unchanged, only
-  the strings moved. The work itself is M4's (`#234`), so `#453`'s sibling row just points there.
+  the strings moved. The work itself is M4's (`#234`), so `D13`'s own row (`#475`, a Story that reads Done on the board) just points there. This line
+said `#453`'s sibling row until 2026-10-17, the same mis-citation as `D14` above.
 - **`D7` is closed on the board**, matching docs/13 §2.2, the debt cleared and its owed gate was
   paid at `#94` on 2026-08-02. The board had still read `To Do`.
+
+**CLOSED, as of 2026-10-17: this drift no longer exists.** M0's and M1's exit-clause rows are `Done`
+on the board: `#28` to `#34` and `#65` for M0, `#35` to `#42` for M1 (read from the board on that
+date). The paragraph below read *"still read `To Do`"* until then, and it is kept as the record of
+what the board said and why it was left alone.
 
 **One drift this file should not paper over:** M0's and M1's exit-clause rows still read `To Do` on
 the board while §3 of this file records **M1 as `CRITERION MET`, all eight clauses discharged**. The
@@ -182,6 +199,15 @@ unsatisfiable: a pipeline *definition* now exists and no service has ever execut
 **Goldens pass** is vacuous: there are no goldens (§4.3). So the roadmap's
 own per-milestone green rule **has never been satisfiable for any milestone, including M0**. That
 is the single most consequential finding on this board and it is the subject of §4.
+
+**That paragraph is historical, and two of its sentences have expired (2026-10-17).** *"Exactly one
+is satisfiable today"* and *"CI passes is still unsatisfiable"* were true until 2026-08-27, when
+the pipeline first ran on the service and passed (§4.1, `DISCHARGED`), so the CI limb is
+satisfiable now and the rule's "never satisfiable" verdict holds only for the milestones that
+closed before that date. *"48 templates"* was the catalogue's size when the paragraph was written;
+a template count is stated in exactly one place, `docs/catalog/seed-devices.md` §3.10 (read the
+number there), and what the starter test asserts is in the test. *"There are no goldens"* is §4.3's to
+answer, and §4.3 now says in which sense of the word the claim holds and in which it does not.
 
 ---
 
@@ -575,6 +601,31 @@ edited, so the next reader meets the same contradiction the salvage already sett
 
 ### 4.3 There are no goldens
 
+**RE-MEASURED 2026-10-17, and the heading holds in one sense of the word and not in another.** The
+paragraphs below are the original measurement and are kept as it was. By grep over `*.dart`:
+`matchesGoldenFile` and `goldenFileComparator` still occur **nowhere**, no `flutter_test_config.dart`
+exists, and no test carries `@Tags(['golden'])` (the tag is still declared in the root
+`dart_test.yaml` and in `packages/rackpal_core/dart_test.yaml`). **Zero pixel goldens is therefore
+still true**, and docs/11 §3's pixel limb is still unbuilt. But four tests now read
+`UPDATE_GOLDENS` and compare committed bytes or text against a freshly generated copy, each
+regenerated deliberately with `UPDATE_GOLDENS=1`:
+`packages/rackpal_core/test/byte_roundtrip_test.dart` (the `.rmpj.json` corpus under
+`test/fixtures/`, byte for byte), `packages/rackpal_core/test/scene/schematic_fixture.dart` and
+`schematic_perf_test.dart` (the committed 300-link schematic fixture, re-encoded and compared), and
+`packages/rackpal_ui/test/keymap/keymap_reference_golden_test.dart` (the generated
+`docs/reference/keymap-windows.md`). Those are **byte and text goldens**. A lossless display-list digest exists
+(`packages/rackpal_core/test/scene/op_digest.dart`), but the tests that use it compare scenes built
+in the same run; none of the five files that import it reads a committed digest file, which is the
+sense docs/11 §3 means by a display-list golden. So that limb is not shown to exist either.
+
+**Which sense does the roadmap's per-milestone *"goldens pass"* mean? It does not say.** Roadmap §4's
+rule (quoted at §1 above) names the word and defines neither sense, and docs/11 uses it for at
+least three (pixel, display-list, and the §2.5 corpus of fixtures). So the limb is **undefined, not
+vacuous**: under the byte-and-text sense it is satisfiable now, and `tools/ci/run_suite.ps1`
+deliberately excludes no tag for the reason in its own header. Choosing the sense is a decision and
+no ruling makes it yet (roadmap §8.2 wants a ruling ID); this section records the gap and does not
+make the ruling.
+
 Zero occurrences of `matchesGoldenFile` or `goldenFileComparator` anywhere. No `goldens/`
 directory. No `@Tags(['golden'])` on any test. **No `flutter_test_config.dart`**, so rule 1 of the
 four rules docs/11 §3.1 gives for removing the system-font variable, *"register the bundled TTFs in
@@ -718,7 +769,22 @@ from the face's own material and checked by measurement.
 set no `fontFamily`, so the application drew its **diagram in Jost and its chrome in Segoe UI**
 from M1 until `875db98`. Both faces render, so no gate could see it.
 
-### 4.7 CLOSED 2026-08-25: `kSchemaVersion` is 2 and the documents now print 2
+### 4.7 RE-OPENED 2026-10-17 (it read CLOSED 2026-08-25): the documents print a `kSchemaVersion` the code has moved past
+
+**This section was closed on a number that has since moved, and it is open again, as a pointer.**
+`packages/rackpal_core/lib/src/units/constants.dart` declares a `kSchemaVersion` several bumps past
+2 (read the number there, and its doc comments for each bump's reason) and a `kMinReaderVersion`
+that is no longer 2 either. Its heading below said `kSchemaVersion` was 2 and that the documents
+printed 2; that was true on 2026-08-25 and has not been since the first bump past it. As of this
+date docs/02 and docs/03 still print `const kSchemaVersion = 2` (docs/02 near its constants block,
+docs/03 near its codec snippet), so the drift this section closed has re-formed against the new
+number. **The owner is board item `#1070` (DOCS-2f)**, which edits docs/02 and docs/03; this file
+does not and states the number only by pointing at `constants.dart`. The record below is kept
+unchanged, because it is how the first closure was reasoned, and the line numbers inside it were
+already stale when it closed.
+
+**CLOSED 2026-08-25 at the time, and now superseded by the paragraph above:** `kSchemaVersion` is 2
+and the documents now print 2.
 
 **Ten sites corrected in docs/02 and docs/03**, and the semantic change below is written down in docs/02's reader-behaviour table where it belongs. **docs/06's `.rmdev` example was left alone**, exactly as the warning at the foot of this section says: `.rmdev` has its own parallel migration chain (CR-063) and no codec exists to decide its version, so bumping it would have been inventing a fact. The warning was worth its space.
 
@@ -2468,7 +2534,13 @@ so a later census reads them as recorded.
 
 ---
 
-## 5. M2 → M9: the unstarted, and where real work sits inside them
+## 5. M2 → M9, and the Plan view: where the work sits
+
+**This heading read *"M2 → M9: the unstarted, and where real work sits inside them"* until
+2026-10-17.** It was written when every milestone after M1 was unstarted, and it kept that word
+after M2 to M5 closed. Read the per-milestone headings for the present state: M2 (§5.1), M3 (§5.2, one
+clause parked on M6), M4 (§5.3) and M5 (§5.4) are closed, M6 (§5.5) is `PARTIAL`, M7 to M9 (§5.6 to §5.8) are `NOT STARTED`,
+and §5.9 is the Plan view, an epic with no milestone number. The sections themselves are unchanged.
 
 ### 5.1 M2, Wiring and the live schedule · `M` · CRITERION MET, weakest mark `CONFIRMED`
 
@@ -10894,7 +10966,7 @@ integers and every raster has those.
 
 Fixed here rather than filed, because it is one line in the method this chapter had to edit anyway,
 and a test fails when it is reverted. Recorded in OKF as
-[a field added beside a documented one inherits nothing](/practices/a-field-beside-a-documented-one-inherits-nothing.md).
+[a field added beside a documented one inherits nothing](../.okf/practices/a-field-beside-a-documented-one-inherits-nothing.md).
 
 ##### 5.9.27.4 Eleven mutations, eleven kills
 
@@ -11044,7 +11116,7 @@ the stack, this case fails and whoever fixed it inverts it to the assertion it w
 as."* It was **the one case in the repository that failed** when the drop landed.
 
 That is the cleanest instance
-[a test that asserts an absence names its due date](/practices/a-test-that-asserts-an-absence-names-its-due-date.md)
+[a test that asserts an absence names its due date](../.okf/practices/a-test-that-asserts-an-absence-names-its-due-date.md)
 has: the due date was a ruling ID, and the test failed on the commit that made it wrong rather than
 being found by a person reading old comments.
 
@@ -11065,7 +11137,7 @@ stacks a library copy under an add and is named after the add. The case now stac
 the mutation dies.
 
 Recorded against
-[a property proven by a fixture's default is not proven](/practices/a-fixture-default-is-not-a-proof.md),
+[a property proven by a fixture's default is not proven](../.okf/practices/a-fixture-default-is-not-a-proof.md),
 whose scope this widens: it was about a fixture's default VALUE, and this is a fixture's SHAPE.
 
 ##### 5.9.29.6 What the tests read, and why it matters
@@ -11735,6 +11807,17 @@ M1 slice (§5.5).
 ---
 
 ## 7. The decision the user has to make
+
+**THIS SECTION IS HISTORICAL, as of 2026-10-17; read it as the argument that was made, not as an
+open decision.** It argues from two premises that have since been withdrawn, and its text is left
+as written so the argument can still be audited. **First, DR-006's internal-tool posture:** DR-036
+(canon §11.35, 2026-08-10) reversed DR-006's first clause, *"no commercial release is planned"*,
+as a statement about distribution, and made RackPal a public GPLv3 project; the effects §7.2
+attributes to DR-006 were not re-derived against that reversal. **Second, the total of
+44 to 67 weeks:** DR-182 (canon §11.181) retired the roadmap's week total after M0 to M5 took about
+7.3 weeks against 29 to 44 priced (canon §11.181.1), and docs/09 §6 now keeps its sizes without the
+weeks. The question of which milestones move to v1.1 is a scope question, so roadmap §2 and §8.3
+are where it is answered, with a new ruling ID, and not this section.
 
 Roadmap §6 states the cost deliberately, **44–67 weeks of implementation, 11–18 months to a shipped
 v1** (42–65 / 11–17 before M4's decomposition moved it, §5.3), on AC-017's ground that *"a detailed design set with no cost attached reliably stalls at
