@@ -183,7 +183,7 @@ The RJ45 tail is the one piece of the design that generates scenes rather than d
     RJ45-carrying-HDBaseT and RJ45-carrying-Ethernet are *"the two most dangerous ports in the
     taxonomy"* and 100 W of PoH goes down one of them. **Pairs with the `SIG-001` warning page**,
     and is the one place the running gag and the safety content are the same picture. It must not
-    replace the warning's own sentence (DR-117 §11.116.3) — it sits beside it, and per §7.1 the
+    replace the warning's own sentence (DR-117 §11.116.3); it sits beside it, and per §7.1 the
     glyph alone may never carry a safety statement.
 
 ### The screwdriver
