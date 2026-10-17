@@ -34,9 +34,12 @@ followed the ruling. A sentence in code that claims to supersede a ruling is a r
 
 CR-080's case for Plex had three legs, and each was measured against the shipped TTFs:
 
-* **Telling `0` from `O`** holds only in the mono face. Space Mono's zero has three contours, a
-  marked zero; Jost's `0` and `O` both have two and differ by width alone. Identifiers belong in
-  `RackMono`, which is where docs/08 §10.1 already puts `CABLE ID`.
+* **Telling `0` from `O`** holds only in the mono face, and the mono face never reaches paper.
+  Space Mono's zero has three contours, a marked zero; Jost's `0` and `O` both have two and differ by
+  width alone. The PDF embeds Jost Regular only (`kExportFont`), so every printed identifier is in
+  the face that does not disambiguate. The ruling's first draft said docs/08's `RackMono` `CABLE ID`
+  column met the argument on paper; docs/08 states the design, not the exporter, and the gap is now
+  `#1099`. **A spec table is not evidence of what prints**: read the exporter.
 * **A condensed cut** is gone, and the option offering its retirement overstated the evidence: M6's
   machine clauses pass without one, while the physical prints (AC-054) have not been run. The print is
   where a too-tight column would show, and that would be new evidence for a new ruling.
