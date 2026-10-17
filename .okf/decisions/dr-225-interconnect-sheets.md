@@ -9,6 +9,7 @@ timestamp: 2026-10-03T00:00:00Z
 ruling_id: DR-225
 canon_section: "11.224"
 status: built
+amended_by: [DR-232]
 ---
 
 Settled by the user on 2026-10-03, opening M6-D (`#326`), on the recommended option four times.

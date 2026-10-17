@@ -7,7 +7,7 @@ tags: [ruling, dr-064, canon-11-63]
 timestamp: 2026-08-16T00:00:00Z
 ruling_id: DR-064
 canon_section: "11.63"
-status: ruled
+status: built
 ---
 
 **Generated from canon §11.63 on 2026-10-12** (board `#1055`), because the bundle had no

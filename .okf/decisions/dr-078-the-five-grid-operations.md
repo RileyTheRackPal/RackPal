@@ -4,7 +4,9 @@ title: DR-078 — The five grid operations, and what a bulk write shows before i
 description: One chord collides with a Flutter macOS default and is taken anyway; a move offers only the banks that exist; and both bulk-write dialogs show a per-row impact list, because undo cannot reach a published key.
 tags: [m4, m4-f, device-builder, keymap, macos, bulk-edit, cr-051, dr-009, dr-060, dr-063]
 timestamp: 2026-08-19T00:00:00Z
-status: ruled
+ruling_id: DR-078
+canon_section: "11.77"
+status: built
 ---
 
 Three questions raised by censusing M4-F's six remaining tasks before writing

@@ -10,7 +10,7 @@ tags: [ruling, device-builder, import, csv, m4-i, dr-094, ac-012, m3-f, rj-004]
 timestamp: 2026-08-26T00:00:00Z
 ruling_id: DR-094
 canon_section: "11.93"
-status: ruled
+status: built
 ---
 
 # DR-094 · The sheet declares its separator, and drops what a closed model cannot hold

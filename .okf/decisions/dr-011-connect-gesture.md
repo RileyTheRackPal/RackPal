@@ -6,7 +6,8 @@ tags: [ruling, m2, wiring, gesture, keyboard, accessibility, dr-011]
 timestamp: 2026-07-29T00:00:00Z
 ruling_id: DR-011
 canon_section: "11.11"
-status: built
+status: superseded-in-part
+superseded_by: [DR-187]
 ---
 
 Settled by the user on 2026-07-29, at the point M2-F was scoped and the connect

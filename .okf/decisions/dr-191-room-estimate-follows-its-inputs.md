@@ -7,7 +7,7 @@ tags: [ruling, plan, length, g4, consequence, dr-191, dr-050, dr-187]
 timestamp: 2026-09-23T00:00:00Z
 ruling_id: DR-191
 canon_section: "11.190"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-23, choosing the recommended option of three, each put with a price.

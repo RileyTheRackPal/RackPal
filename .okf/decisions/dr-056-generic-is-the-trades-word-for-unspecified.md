@@ -10,7 +10,7 @@ tags: [ruling, m4, builder, g4, cr-114, ac-049, dr-056, trade-knowledge]
 timestamp: 2026-08-14T00:00:00Z
 ruling_id: DR-056
 canon_section: "11.55"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-14, ratifying `docs/06-device-builder.md` §3.1's

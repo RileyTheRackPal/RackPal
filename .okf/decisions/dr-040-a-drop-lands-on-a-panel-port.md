@@ -10,7 +10,8 @@ tags: [ruling, structure, m3, ac-018, labels, endpoints, census, dr-039]
 timestamp: 2026-08-11T12:00:00Z
 ruling_id: DR-040
 canon_section: "11.39"
-status: ruled
+status: built
+amended_by: [DR-074]
 ---
 
 Settled by the user on 2026-08-11, from a census taken before M3-G's stopwatch.

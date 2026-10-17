@@ -9,7 +9,7 @@ tags: [ruling, legend, t0-01, m6-b, dr-208]
 timestamp: 2026-09-30T00:00:00Z
 ruling_id: DR-208
 canon_section: "11.207"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-30, building M6-B3 and M6-B4, both on the recommended option.

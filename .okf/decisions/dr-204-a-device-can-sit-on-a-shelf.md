@@ -11,7 +11,7 @@ tags: [ruling, rack-editor, shelves, ac-043, cr-029, g4, dr-204]
 timestamp: 2026-09-30T00:00:00Z
 ruling_id: DR-204
 canon_section: "11.203"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-30 across two rounds of questions. Where the user overruled or went

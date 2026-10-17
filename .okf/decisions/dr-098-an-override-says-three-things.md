@@ -12,7 +12,7 @@ tags: [ruling, model, overrides, g4, cr-114, cr-053, device-builder, dr-098, dr-
 timestamp: 2026-08-28T00:00:00Z
 ruling_id: DR-098
 canon_section: "11.97"
-status: ruled
+status: built
 ---
 
 # DR-098 · An override says three things, and two of its six fields were saying somebody else's

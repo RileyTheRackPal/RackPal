@@ -9,7 +9,7 @@ tags: [ruling, m4, m4-c, g4, cr-062, cr-114, templates, provenance, dr-058]
 timestamp: 2026-08-14T00:00:00Z
 ruling_id: DR-058
 canon_section: "11.57"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-14 during M4-C (board `#198`). It supersedes

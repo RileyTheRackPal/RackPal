@@ -11,6 +11,7 @@ timestamp: 2026-10-07T00:00:00Z
 ruling_id: DR-090
 canon_section: "11.89"
 status: built
+amended_by: [DR-222]
 ---
 
 # DR-090 · Hue is never the only cue

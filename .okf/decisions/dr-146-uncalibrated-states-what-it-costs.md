@@ -11,7 +11,7 @@ tags: [ruling, plan-view, calibration, g4, copy, testing, dr-146, dr-144, plan-f
 timestamp: 2026-09-08T00:00:00Z
 ruling_id: DR-146
 canon_section: "11.145"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-08 at `PLAN-F/3`'s census, before a line of the

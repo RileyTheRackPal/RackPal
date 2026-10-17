@@ -6,7 +6,7 @@ tags: [ruling, m3, labels, idformat, dsl, dr-023]
 timestamp: 2026-08-07T00:00:00Z
 ruling_id: DR-023
 canon_section: "11.22"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-07, answering the question

@@ -8,7 +8,7 @@ tags: [ruling, sheet-furniture, logo, import, m6-g, dr-217]
 timestamp: 2026-10-01T00:00:00Z
 ruling_id: DR-217
 canon_section: "11.216"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-01, building M6-G6 (`#590`).

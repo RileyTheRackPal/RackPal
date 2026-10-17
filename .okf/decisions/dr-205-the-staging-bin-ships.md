@@ -9,7 +9,7 @@ tags: [ruling, rack-editor, staging-bin, cr-032, cr-031, dr-205]
 timestamp: 2026-09-30T00:00:00Z
 ruling_id: DR-205
 canon_section: "11.204"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-30. Not a scope amendment: CR-032 already rules the bin into v1

@@ -11,7 +11,7 @@ tags: [ruling, amendment, model, persistence, migration, device-builder, reachab
 timestamp: 2026-09-07T00:00:00Z
 ruling_id: DR-134
 canon_section: "11.133"
-status: ruled
+status: built
 ---
 
 # DR-134 · The field was a second copy, and the case for deleting it was wrong

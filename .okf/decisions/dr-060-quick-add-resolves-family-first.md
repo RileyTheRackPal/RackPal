@@ -4,7 +4,10 @@ title: DR-060 — Quick Add resolves family-first, and the two registries answer
 description: The Quick Add DSL's alias table was empty on all 55 signal families. Aliases join the existing resolver's chain at its head, and a named connector beats a family's default.
 tags: [m4-g, registries, dsl, catalog, g4, cr-058]
 timestamp: 2026-08-15T00:00:00Z
+ruling_id: DR-060
+canon_section: "11.59"
 status: built
+amended_by: [DR-221]
 ---
 
 A Quick Add token yields a **pair**, and each half is resolved by its own

@@ -6,7 +6,7 @@ tags: [ruling, selection, gesture, canvas, plan-view, dr-139, cr-102, plan-e]
 timestamp: 2026-09-07T00:00:00Z
 ruling_id: DR-139
 canon_section: "11.138"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-07, on a finding from `PLAN-E/1`'s

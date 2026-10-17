@@ -8,7 +8,7 @@ tags: [ruling, pull-sheet, termination-schedule, numbering, m6-k, dr-222]
 timestamp: 2026-10-02T00:00:00Z
 ruling_id: DR-222
 canon_section: "11.221"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-02, opening M6-K (`#977`).

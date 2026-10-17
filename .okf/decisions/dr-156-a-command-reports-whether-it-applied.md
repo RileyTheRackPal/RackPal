@@ -11,7 +11,7 @@ tags: [ruling, commands, undo, architecture, dr-156, dr-027, cr-106, len-a]
 timestamp: 2026-09-12T00:00:00Z
 ruling_id: DR-156
 canon_section: "11.155"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-12, closing `#863` and `#866`.

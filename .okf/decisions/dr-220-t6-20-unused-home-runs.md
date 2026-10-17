@@ -8,7 +8,7 @@ tags: [ruling, unused-home-runs, t6-20, auto-sheet, m6-e, dr-220]
 timestamp: 2026-10-02T00:00:00Z
 ruling_id: DR-220
 canon_section: "11.219"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-02, building M6-E1 (`#332`).

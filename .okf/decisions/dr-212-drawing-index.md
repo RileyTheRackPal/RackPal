@@ -9,7 +9,7 @@ tags: [ruling, cover, t0-00, index, m6-a, dr-212]
 timestamp: 2026-10-01T00:00:00Z
 ruling_id: DR-212
 canon_section: "11.211"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-01, building M6-A3 (`#314`), on the recommended option four times.

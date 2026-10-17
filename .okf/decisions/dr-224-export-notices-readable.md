@@ -8,7 +8,7 @@ tags: [ruling, export, notices, status-line, m6-m, dr-224]
 timestamp: 2026-10-03T00:00:00Z
 ruling_id: DR-224
 canon_section: "11.223"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-03, opening M6-M (`#983`), on the recommended option.

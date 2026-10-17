@@ -13,7 +13,7 @@ tags: [ruling, plan-view, length, schedule, rollup, validation, gates, dr-147, d
 timestamp: 2026-09-08T00:00:00Z
 ruling_id: DR-147
 canon_section: "11.146"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-08 at `PLAN-G`'s census, before a line of the chapter
@@ -113,7 +113,7 @@ known, and by a `planLowerBound` when that alone already exceeds the limit"*; th
 
 # And a later ruling that appeared to abolish the tier
 
-[DR-050](dr-050-geometry-fills-the-room-estimate.md) §11.49.2, dated **two days after**
+[DR-050](dr-050-plan-geometry-fills-the-room-estimate.md) §11.49.2, dated **two days after**
 DR-037 ruled the rank and two days after `PLAN-G` was decomposed, says in terms:
 *"THEREFORE NO NEW TIER, AND THIS IS THE RULING. `ScheduleLengthSource` gains
 nothing."* Neither ruling lists the other in canon §12.

@@ -9,7 +9,7 @@ tags: [ruling, storage, file-errors, open, windows, dr-200]
 timestamp: 2026-09-26T00:00:00Z
 ruling_id: DR-200
 canon_section: "11.199"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-26, choosing the recommended option of three, each put with a price.

@@ -12,7 +12,7 @@ tags: [ruling, validation, drc, remedy, con-001, sig-002, pwr-003, cr-015, ac-04
 timestamp: 2026-09-06T00:00:00Z
 ruling_id: DR-128
 canon_section: "11.127"
-status: ruled
+status: built
 ---
 
 # DR-128 · Offering the remedy is what separates a rule engine from a nag

@@ -13,7 +13,7 @@ tags: [ruling, undo, keymap, menus, dr-159, cr-106, dr-091, plan-j]
 timestamp: 2026-09-12T00:00:00Z
 ruling_id: DR-159
 canon_section: "11.158"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-12, closing `#874`. Reported while running the

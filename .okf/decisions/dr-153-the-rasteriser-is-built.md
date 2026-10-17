@@ -13,7 +13,7 @@ tags: [ruling, plan-view, import, pdf, pdfium, vendoring, cr-100, g4, dr-153, dr
 timestamp: 2026-09-10T00:00:00Z
 ruling_id: DR-153
 canon_section: "11.152"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-09, immediately after `PLAN-H` closed, and built

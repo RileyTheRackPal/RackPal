@@ -7,6 +7,7 @@ timestamp: 2026-07-28T00:00:00Z
 ruling_id: DR-010
 canon_section: "11.10"
 status: built
+amended_by: [DR-181]
 ---
 
 Settled by the user on 2026-07-28, at the point M2-B became the first code in the

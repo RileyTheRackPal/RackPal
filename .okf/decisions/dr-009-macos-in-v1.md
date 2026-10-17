@@ -6,7 +6,7 @@ tags: [ruling, platform, macos, dr-009]
 timestamp: 2026-07-28T00:00:00Z
 ruling_id: DR-009
 canon_section: "11.9"
-status: scheduled
+status: ruled
 ---
 
 Settled by the user on 2026-07-28. Recorded as an amendment with its own ID

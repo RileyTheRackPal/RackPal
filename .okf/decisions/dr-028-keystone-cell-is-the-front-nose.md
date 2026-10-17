@@ -6,7 +6,7 @@ tags: [ruling, m3, keystone, geometry, units, provenance, dr-028]
 timestamp: 2026-08-09T00:00:00Z
 ruling_id: DR-028
 canon_section: "11.27"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-08-09, and **corrected by the user the same day**.

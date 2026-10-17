@@ -6,7 +6,9 @@ tags: [ruling, distribution, signing, m8, portable, dr-006]
 timestamp: 2026-08-02T00:00:00Z
 ruling_id: DR-006
 canon_section: "11.6"
-status: partially-built
+status: superseded-in-part
+superseded_by: [DR-036]
+amended_by: [DR-249]
 ---
 
 RackMate is distributed inside the organisation that builds it. Signing is

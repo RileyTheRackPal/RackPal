@@ -10,7 +10,8 @@ tags: [ruling, m3, structure, termination, g4, dr-007, dr-044, dr-045]
 timestamp: 2026-08-12T00:00:00Z
 ruling_id: DR-045
 canon_section: "11.44"
-status: ruled
+status: built
+amended_by: [DR-047]
 ---
 
 Settled by the user on 2026-08-12, from two installation facts rather than from

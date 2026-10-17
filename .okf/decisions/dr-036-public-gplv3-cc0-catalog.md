@@ -6,7 +6,8 @@ tags: [ruling, licence, gplv3, cc0, distribution, dco, scope, dr-036]
 timestamp: 2026-08-10T00:00:00Z
 ruling_id: DR-036
 canon_section: "11.35"
-status: ruled
+status: superseded-in-part
+superseded_by: [DR-189]
 ---
 
 Settled by the user on 2026-08-10. This is the ruling

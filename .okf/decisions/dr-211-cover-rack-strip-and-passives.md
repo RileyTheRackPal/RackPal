@@ -9,7 +9,7 @@ tags: [ruling, cover, t0-00, t6-30, catalog, m6-a, m6-f, dr-211]
 timestamp: 2026-10-01T00:00:00Z
 ruling_id: DR-211
 canon_section: "11.210"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-01, building M6-A2 (`#313`).

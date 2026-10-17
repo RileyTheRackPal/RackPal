@@ -6,7 +6,8 @@ tags: [ruling, scope, plan-view, v1, sequencing, dr-029]
 timestamp: 2026-08-09T00:00:00Z
 ruling_id: DR-029
 canon_section: "11.28"
-status: ruled
+status: superseded-in-part
+superseded_by: [DR-037]
 ---
 
 Settled by the user on 2026-08-09. A scope amendment under roadmap §8.3, and

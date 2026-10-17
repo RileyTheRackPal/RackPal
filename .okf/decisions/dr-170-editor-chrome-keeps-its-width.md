@@ -11,7 +11,7 @@ tags: [ruling, rack, schematic, chrome, cr-082, stroke-width, dr-170]
 timestamp: 2026-09-14T00:00:00Z
 ruling_id: DR-170
 canon_section: "11.169"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-14, found while building `#905` and built as

@@ -8,7 +8,7 @@ tags: [ruling, t6-30, materials, m6-f, dr-213]
 timestamp: 2026-10-01T00:00:00Z
 ruling_id: DR-213
 canon_section: "11.212"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-01, building M6-F6 (`#970`), on the recommended option both times.

@@ -9,7 +9,7 @@ tags: [ruling, storage, file-errors, open, dr-198]
 timestamp: 2026-09-25T00:00:00Z
 ruling_id: DR-198
 canon_section: "11.197"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-25, choosing the recommended option of four, each put with a price.

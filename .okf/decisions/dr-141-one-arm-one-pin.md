@@ -6,7 +6,7 @@ tags: [ruling, plan-view, pins, mode, ux, dr-141, dr-140, plan-e, cr-105]
 timestamp: 2026-09-08T00:00:00Z
 ruling_id: DR-141
 canon_section: "11.140"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-08, on a question `PLAN-E/3`'s brief leaves open

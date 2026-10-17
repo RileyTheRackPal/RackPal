@@ -9,7 +9,7 @@ tags: [ruling, pal-1, signal-family, clone, palette, sfe, dr-243, dr-122]
 timestamp: 2026-10-07T00:00:00Z
 ruling_id: DR-243
 canon_section: "11.242"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-07 for SFE-A3 (board `#824`), the headroom query that tells a person

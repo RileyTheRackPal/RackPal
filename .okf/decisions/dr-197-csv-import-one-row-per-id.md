@@ -7,7 +7,7 @@ tags: [ruling, csv-import, media-types, rj-012, dr-197]
 timestamp: 2026-09-23T00:00:00Z
 ruling_id: DR-197
 canon_section: "11.196"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-09-23, choosing the recommended option of three, each put with a price.

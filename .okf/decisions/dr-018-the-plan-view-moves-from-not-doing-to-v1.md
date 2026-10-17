@@ -7,7 +7,8 @@ tags: [ruling, dr-018, canon-11-17]
 timestamp: 2026-08-04T00:00:00Z
 ruling_id: DR-018
 canon_section: "11.17"
-status: ruled
+status: superseded
+superseded_by: [DR-019, DR-029]
 ---
 
 **Generated from canon §11.17 on 2026-10-12** (board `#1055`), because the bundle had no

@@ -4,7 +4,10 @@ title: DR-015 — the rm extension family, and a device archive that is not a zi
 description: .rmpj / .rmdx / .rmda replace .rackmate / .rmdev / .rmlib; the archive is one JSON file, and .rackmate still opens.
 tags: [decision, file-format, persistence, back-compat]
 timestamp: 2026-08-03T18:00:00Z
-status: accepted
+ruling_id: DR-015
+canon_section: "11.15"
+status: superseded-in-part
+superseded_by: [DR-179]
 ---
 
 Three user-visible file kinds were named in three idioms (`.rackmate`,

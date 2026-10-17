@@ -10,7 +10,7 @@ tags: [ruling, device-builder, archetype, matrix, m4-i, dr-092, ac-052, census]
 timestamp: 2026-08-26T00:00:00Z
 ruling_id: DR-092
 canon_section: "11.91"
-status: ruled
+status: built
 ---
 
 # DR-092 · The archetype emits the port §4.3 could not
