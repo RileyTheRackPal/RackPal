@@ -24725,11 +24725,17 @@ fixture and the coverage gate, and re-baselining PDF metrics).
 **CR-080's three arguments, re-checked against the files rather than carried over.** Measured on
 2026-10-17 by reading each TTF's `glyf` contours:
 
-- **Disambiguation holds in the mono face only.** Space Mono's `0` has three contours against `O`'s
-  two, a marked zero. Jost's `0` and `O` both have two and differ only in width. So the argument CR-080
-  made for identifiers transcribed onto physical labels is met **where an identifier prints in
-  `RackMono`**, which docs/08 §10.1 already does for `CABLE ID`, and is **not** met in Jost text. An
-  identifier set in the text face is a choice somebody makes with that cost.
+- **Disambiguation holds in the mono face only, and the mono face is not printed.** Space Mono's `0`
+  has three contours against `O`'s two, a marked zero. Jost's `0` and `O` both have two and differ
+  only in width. So the argument CR-080 made for identifiers transcribed onto physical labels would be
+  met where an identifier is set in `RackMono`, and is **not** met in Jost. **The PDF embeds one face,
+  Jost Regular** (`kExportFont` in `apps/rackpal/lib/src/session/export_controller.dart`; Medium and
+  `RackMono` serve the Flutter widgets only), so **every printed identifier, `CABLE ID` included, is in
+  Jost and carries no marked zero.** Space Mono's zero reaches the screen, not the paper. *(This bullet
+  said on its first commit that docs/08 §10.1's `RackMono` `CABLE ID` column met the argument on paper.
+  docs/08 states the design, not the exporter; the DOCS-2i pass found the gap the same day, before the
+  ruling merged.)* Whether the PDF should embed Space Mono for identifier columns is a product question
+  this ruling does not answer; it is `#1099`.
 - **The condensed cut** is §11.248.3.
 - **Greek coverage holds, by different codepoints.** Jost carries `U+03A9` and `U+00B5`; Space Mono
   carries `U+2126` (the ohm sign) and `U+00B5`, and not `U+03A9`. A string that names one ohm
