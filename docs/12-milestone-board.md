@@ -718,7 +718,25 @@ and `#933`. **Only `#933` was a mask defect**: a command declaring `style`. `#93
 did not SUBSCRIBE to `wires`, which is the consumer side, and no test of declared masks can see it.
 `#932`'s own regression test is the guard for that class.
 
-### 4.6 Font: Jost supersedes CR-080's IBM Plex; the docs have not caught up
+### 4.6 CLOSED 2026-10-17 by DR-249: Font: Jost supersedes CR-080's IBM Plex; the docs have not caught up
+
+**CLOSED 2026-10-17 BY `DR-249` (canon §11.248, §12.57), PROPAGATED BY `#1073` (DOCS-2i).** The
+entry below asked for two things: a ruling, because *"CR-080 itself carries no amendment, which
+roadmap §8.3 requires"*, and the documents brought to match it. DR-249 is the ruling: the faces that
+ship are **Jost** (Regular 400 and Medium 500, the modified build `tools/build_jost_glyphs.py`
+produces) for text and **Space Mono** (Regular and Bold) for `RackMono`; **`RackCond` is retired**
+and schedules are set in Jost; **no fallback face ships**, and `tools/glyph_coverage_check.py` holds
+the codepoints instead. Bundled twice, SIL OFL only and no system font stand from CR-080. The
+sites listed as *Not propagated to* are now stated in the ruling's terms: docs/08 §10.1 and §10.2
+(and the column tables' font cells), docs/11 §3.1 and the glyph-coverage row, docs/03's asset tree,
+docs/05's glyph-resolution sentence, and canon's CR-080 ruling, §4 naming table, glyph-coverage
+sentence, §6.7 criterion 6 and §11.6 consequence 9, each of which carries an *Amended by DR-249*
+pointer rather than a rewrite. **Two statements below are corrected by the ruling and stand as the
+record of the drift**: *"SemiBold and Condensed still do not exist"* is now the ruled state and not a
+debt (a condensed cut is not owed, §11.248.3), and *"the Noto Sans Symbols 2 fallback still does not
+exist"* is now the ruled state too (§11.248.4). **Still open, and not this entry's**: `RackMono`
+Italic (`FontRef` has no slant field), and the physical print clauses (AC-054) that would show
+whether Jost is too wide for a schedule column.
 
 The code is unambiguous. `apps/rackpal/pubspec.yaml` bundles **Jost Regular AND Jost Medium**,
 each twice (under `fonts:` at `:146-151` and under `assets:` at `:153-154`), with the reasoning

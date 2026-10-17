@@ -53,7 +53,7 @@ A symbol is a body rectangle with a header band and pins on its four edges. It i
 
 ```
  ┌ header band, height 6 gu ──────────────────────────┐
- │  DESIGNATOR  (3.5 mm cap, RackBody SemiBold, left) │
+ │  DESIGNATOR  (3.5 mm cap, Jost Medium, left)       │
  │  instance name (2.5 mm, regular)   badges, right   │
  ├ hairline rule ─────────────────────────────────────┤
  │  pin field, height = (max(leftPins,rightPins)+1)×2gu│
@@ -168,7 +168,7 @@ A pin is three composed elements, outward from the body: **[body edge], stub, [d
 
 **Gender** is encoded as glyph fill (**filled = female, hollow = male**) and **only where `ConnectorTypeDef.genderApplies` is true** (CR-059). The five-value enum containing two synonym pairs is deleted: `jack` and `plug` are gone, values are `male | female | genderless`, a jack is a female panel connector, and this fixes a concrete bug in `CON-002`, which never fired for `jack`+`jack`. Overloading fill on every connector costs more legibility than it buys.
 
-**Pin labels.** Inside the body, 1.8 mm, 1 gu inboard of the edge, two columns per side: `J01  HDMI IN 1` left-aligned on the left edge, `OUT 3  J09` right-aligned on the right. Truncate with `…` at 40% of body width; full text in the tooltip and the inspector. A CI test asserts every `ConnectorTypeDef` referenced by a shipped template has a footprint entry (AC-050/A2.2) and that every registry glyph resolves in `RackBody` (IBM Plex Sans) or `Noto Sans Symbols 2` (CR-080), a tofu box in an exported drawing is a defect this test exists to prevent.
+**Pin labels.** Inside the body, 1.8 mm, 1 gu inboard of the edge, two columns per side: `J01  HDMI IN 1` left-aligned on the left edge, `OUT 3  J09` right-aligned on the right. Truncate with `…` at 40% of body width; full text in the tooltip and the inspector. A CI test asserts every `ConnectorTypeDef` referenced by a shipped template has a footprint entry (AC-050/A2.2) and that every glyph the product emits is present in the bundled face. No fallback face ships (DR-249 §11.248.4): `tools/glyph_coverage_check.py` reads the Jost binaries and holds the codepoints, and the signal-domain and device glyphs that are registry data are drawn as geometry. Its blind spot is stated in its own header (runtime-composed strings and user data are not literals). A missing glyph draws as nothing, and the gate exists to prevent that in an exported drawing.
 
 ---
 
@@ -203,7 +203,7 @@ A drawn `Link` is an orthogonal polyline emitted by the router (§10), stroked w
  ┤W042│HDMI│25'├
 ```
 
-Rounded 1 gu capsule, 1.6 mm `RackCond`, wire colour as a 0.5 px outline, paper-coloured fill so it knocks out the grid. Content: `{tag} · {type} · {length}` by default, `{tag}` only in dense mode, `{tag} · {SRC_REFDES}:{SRC_PORT} → {DST_REFDES}:{DST_PORT}` verbose. **The tag pill is mandatory, not decorative** (canon §6.2.1): it is the one encoding channel that survives CVD, greyscale, a third-generation photocopy, and a bad phone photo taken in an attic. A length rendered from an estimate rather than a measurement is rendered distinctly (AC-024, G4), the pill never presents a guess as a fact.
+Rounded 1 gu capsule, 1.6 mm Jost (`RackCond` is retired, DR-249), wire colour as a 0.5 px outline, paper-coloured fill so it knocks out the grid. Content: `{tag} · {type} · {length}` by default, `{tag}` only in dense mode, `{tag} · {SRC_REFDES}:{SRC_PORT} → {DST_REFDES}:{DST_PORT}` verbose. **The tag pill is mandatory, not decorative** (canon §6.2.1): it is the one encoding channel that survives CVD, greyscale, a third-generation photocopy, and a bad phone photo taken in an attic. A length rendered from an estimate rather than a measurement is rendered distinctly (AC-024, G4), the pill never presents a guess as a fact.
 
 **Domain glyph at the run midpoint.** ▲ digital video, ▽ RF, ● analog audio, ◆ digital audio, ■ network, ✚ control, ⬢ power, ★ structure. This is the fourth encoding channel (canon §6.2.4). Shape encodes domain; **fill encodes tier**: filled = the domain's native carrier, hollow = the transported, extended or networked variant. It is deliberately not a per-family discriminator; there is no set of 50 shapes legible at 6 pt, and that job belongs to the tag pill.
 

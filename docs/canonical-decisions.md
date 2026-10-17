@@ -1215,6 +1215,12 @@ is a real failure mode on a physical label), a true condensed cut worth 12% of s
 width, and Greek coverage for `Ω`/`µ`. `design-architecture.md`'s font list is asserted, not
 argued. The golden-test assertion is updated to the three families.
 
+> **Amended by DR-249 (§11.248, §12.57).** The ruling above is history. The faces that ship are
+> **Jost** (Regular and Medium) for text and **Space Mono** (Regular and Bold) for `RackMono`;
+> `RackCond` is retired and schedules are set in Jost; no fallback face ships, and
+> `tools/glyph_coverage_check.py` holds the codepoints instead. Bundled twice, SIL OFL only and no
+> system font all stand.
+
 ### CR-081 · Text-metric source of truth
 
 - **design-pdf-export.md §12 decision 11:** "**`PdfFont.stringMetrics` is the single source of
@@ -3435,6 +3441,10 @@ never touches a locked ID (CR-034).
 | `assets/catalog/sources.md` | A cited source for every numeric field in every shipped template. AC-052. |
 | Fonts | `RackBody` = IBM Plex Sans (Regular + SemiBold) · `RackCond` = IBM Plex Sans Condensed · `RackMono` = IBM Plex Mono (Regular + Bold) · fallback Noto Sans Symbols 2. SIL OFL 1.1. CR-080. |
 
+> **Amended by DR-249 (§11.248, §12.57).** The *Fonts* row above is history: the faces that ship are
+> Jost for text and Space Mono for `RackMono`, `RackCond` is retired and no fallback face ships.
+> SIL OFL 1.1 stands.
+
 ---
 
 ### 4.7 Banned names
@@ -4229,6 +4239,10 @@ All glyphs are drawn from Geometric Shapes, Dingbats, or Miscellaneous Technical
 that every glyph in the registry resolves in one of those two faces**: a tofu box in an exported
 drawing is a defect this test exists to prevent.
 
+> **Amended by DR-249 (§11.248, §12.57).** The text face is **Jost**, not Plex Sans, and no
+> `Noto Sans Symbols 2` fallback ships. The glyphs are held by the face's own modified build, and
+> `tools/glyph_coverage_check.py` reads the binary to hold them (§11.248.4).
+
 #### 6.2.5 `SignalDomainDef`: the eight shipped entries
 
 `SignalDomainDef{id, displayName, tagPrefix, color, colorDark, dashPattern, lineWeightPermille,
@@ -4640,6 +4654,10 @@ These are named milestone exit criteria, not aspirations.
    1.4992 mm and is *below* the 1.5 mm physical floor the rule derives from (§14.4).
 6. **Glyph coverage is a unit test.** Assert every glyph in the registry resolves in `RackBody` or
    `Noto Sans Symbols 2`.
+
+   > **Amended by DR-249 (§11.248, §12.57).** `RackBody` is Jost and no Noto fallback ships; the
+   > glyph-coverage gate `tools/glyph_coverage_check.py` holds the codepoints (§11.248.4).
+
 7. **Referential integrity is a unit test.** Every `defaultConnector` resolves; every
    `typicalMedia` entry resolves; every `MediaTypeDef.supports` entry resolves; every
    `SignalFamilyDef.domain` resolves to one of the eight; every connector referenced by a shipped
@@ -6128,6 +6146,9 @@ the publisher trusted rather than merely known.
    the software. What goes is the commercial EULA and any licence-enforcement machinery. (Note in
    passing that the shipped font is now Jost, not CR-080's IBM Plex, and that CR-080 carries no
    amendment; that drift is recorded in `docs/12-milestone-board.md` §4.6 and is **not** ruled here.)
+
+   > **Amended by DR-249 (§11.248, §12.57).** The drift is ruled: the faces that ship are Jost and
+   > Space Mono, and CR-080 now carries its amendment.
 10. **RJ-014 is reaffirmed and made cheaper.** No in-app auto-update in v1; a "Check for updates"
     item and a version string. Internally that item can point at the same share the installer came
     from, which is a link, not infrastructure.
