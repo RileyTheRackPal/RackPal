@@ -24756,7 +24756,8 @@ fixture and the coverage gate, and re-baselining PDF metrics).
   said on its first commit that docs/08 §10.1's `RackMono` `CABLE ID` column met the argument on paper.
   docs/08 states the design, not the exporter; the DOCS-2i pass found the gap the same day, before the
   ruling merged.)* Whether the PDF should embed Space Mono for identifier columns is a product question
-  this ruling does not answer; it is `#1099`.
+  this ruling does not answer; it is `#1099`, answered by DR-252 (§11.251): the PDF embeds Space Mono for
+  identifier columns.
 - **The condensed cut** is §11.248.3.
 - **Greek coverage holds, by different codepoints.** Jost carries `U+03A9` and `U+00B5`; Space Mono
   carries `U+2126` (the ohm sign) and `U+00B5`, and not `U+03A9`. A string that names one ohm
@@ -24851,6 +24852,34 @@ and the log, the thing §11.95.2 exists to forbid.
 
 **Scope.** No product scope moves. It narrows §11.95.2's reach (§12.58). The substitution is owed on
 `#1087`, and the orientation pages' name on `#1081`.
+
+---
+
+### 11.251 DR-252 · The PDF embeds Space Mono, and identifier columns print in it
+
+**Settled by the user on 2026-10-17, for `#1099`**, the question DR-249 §11.248.2 left open.
+
+**11.251.1 THE FACT.** The PDF embeds one face, Jost Regular: `kExportFont` in
+`apps/rackpal/lib/src/session/export_controller.dart` registers `FontRef('Jost')` alone, and
+`sheet_frame.dart`'s `kSheetFont` resolves to it. Space Mono, whose zero is marked (three contours
+against `O`'s two), reaches the screen and never the paper, so every printed cable ID, designator and
+port label is in the face where `0` and `O` differ only by width. CR-080's first argument for a mono
+face, that identifiers are transcribed onto physical labels, is not met on any sheet the product prints.
+
+**11.251.2 RULED BY THE USER: THE EXPORT EMBEDS SPACE MONO, AND THE IDENTIFIER COLUMNS USE IT.** Where
+docs/08 §10.1 sets a column in `RackMono`, the printed sheet sets it in Space Mono. The question carried
+its price: the `pdf` package subsets each embedded font (`TtfWriter`), so the file grows by the glyphs
+used and not by the 99 KB face, an amount measured at build rather than assumed; `ExportRequest`'s font
+map already takes several faces; about 63 font-choice sites across 24 sheet builders read `kSheetFont`
+today, and measured widths change, so truncation, fit and dry-run tests re-baseline. Not taken: keeping
+one face and recording the risk; and embedding Jost Medium as well.
+
+**Scope.** Not new scope: it builds what docs/08 §10.1 already specifies and DR-249 ratified as the mono
+face. Built as `MONO-A`, `#1104`, under M6. AC-054's print clauses read the result.
+
+**What this does not rule.** Which columns are identifiers beyond docs/08 §10.1's table, which `MONO-A`'s
+decomposition reads. Whether Space Mono Bold is embedded, which follows from whether a column docs/08
+sets bold is in scope. Jost Medium in print, which was offered and not taken.
 
 ---
 
