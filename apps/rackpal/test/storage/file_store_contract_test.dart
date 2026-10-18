@@ -48,11 +48,18 @@ Uint8List _b(List<int> v) => Uint8List.fromList(v);
 /// `dart:io` throws `FileSystemException`, the fake throws
 /// `StorageOsException`, and the two-level `.osError.errorCode` shape is
 /// the contract between them.
+///
+/// `windowsErrnos` says which OS's error codes the STORE speaks, which is
+/// not always the host's: the fake has Windows semantics wherever it runs,
+/// and the real store has the host's. Asking `Platform.isWindows` instead
+/// passed for months because the two always agreed on Windows, and failed
+/// on the first macOS run (build 481, DR-255).
 void runFileStoreContract(
   String name, {
   required Future<({FileStore fs, String root})> Function() setUpStore,
   required Future<void> Function() tearDownStore,
   required bool realFilesystem,
+  required bool windowsErrnos,
 }) {
   group('FileStore contract — $name', () {
     late FileStore fs;
@@ -232,7 +239,7 @@ void runFileStoreContract(
       }
       expect(thrown, isNotNull);
       // Measured on Windows: ERROR_PATH_NOT_FOUND. POSIX: ENOENT.
-      expect(errnoOf(thrown!), Platform.isWindows ? 3 : 2);
+      expect(errnoOf(thrown!), windowsErrnos ? 3 : 2);
     });
 
     test('deleting a missing file throws — so "delete if present" must '
@@ -496,6 +503,9 @@ void main() {
     },
     tearDownStore: () async {},
     realFilesystem: false,
+    // FakeFileStore's `windowsSemantics` defaults to true and is not
+    // overridden above.
+    windowsErrnos: true,
   );
 
   // --- THE REAL ONE, in a real temp directory ------------------------
@@ -518,6 +528,7 @@ void main() {
       }
     },
     realFilesystem: true,
+    windowsErrnos: Platform.isWindows,
   );
 
   group('errnoOf', () {
