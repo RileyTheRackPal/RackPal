@@ -2,6 +2,24 @@
 
 ## 2026-10-17
 
+Entry 143.
+
+* **Added**: [the macOS pipeline](gates/the-macos-pipeline.md), definition 2. Its first run, build 481, measured
+  27.2 minutes and failed exactly the 23 cases six read-only sub-agents had predicted from the tree.
+* **Changed**: [the pipeline itself](gates/the-pipeline-itself.md). Its headline blind spot, a failing test never
+  seen on the service, closed on the macOS definition; the old paragraphs stay, marked as history.
+* **Note**: **A CHECK THAT IS RED FOR A KNOWN REASON DETECTS NOTHING.** The pdfium debt would have kept the macOS
+  check red until Story #61 lands, hiding any new failure behind it. The cases skip on macOS instead, and its
+  floors say by exactly how many.
+
+Entry 142.
+
+* **Added**: [DR-255](decisions/dr-255-macos-ci-is-an-optional-pr-check.md) (macOS CI is a second pipeline on a
+  hosted image, run as an optional PR check that may never block), opening D4 (`#459`) of the macOS debt register.
+* **Note**: **A BUDGET IS A NUMBER, SO READ IT BEFORE ASKING.** The hosted allowance and the build count were each
+  one API call. Together they removed every-build as an option before the question was asked, and put a minute
+  figure on each option that was left.
+
 Entry 141.
 
 * **Added**: [DR-252](decisions/dr-252-the-pdf-embeds-space-mono.md) (the PDF embeds Space Mono for identifier

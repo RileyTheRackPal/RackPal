@@ -2388,12 +2388,45 @@ $SuiteFloors = @{
     'rackpal_app'    = 1205
 }
 
+# MACOS FLOORS (DR-255, D4 #459), MEASURED ON BUILD 481. ONLY THE ROWS THAT
+# DIFFER; a suite absent here is held to its row above on both platforms,
+# and core, text, export and ui each measured exactly their Windows row on
+# macOS. rackpal_core_timed is not run there (DR-255 section 11.254.3).
+# A row here may only be LOWER, and only by
+# cases macOS cannot run, each named, so the arithmetic below is the
+# whole justification. A lower number with no named cause is a deleted
+# test wearing a platform's clothes.
+#
+# WHEN #468 (Story #61) VENDORS A macOS PDFIUM, it deletes the `skip:`
+# reasons named below AND these rows, in one change. If it removed only
+# the skips, the count would come in above the floor and pass with a "+N"
+# that nobody reads, which is how a floor stops being exact.
+$SuiteFloorsMacOS = @{
+    # 22 - 13. The 13 render cases in pdfium_render_test.dart skip on
+    # macOS (`noMacOSPdfium`): the loader finds the win-x64 DLL and dlopen
+    # refuses it. 'an empty file is refused' never reaches the binary, and
+    # the 8 vendoring cases read files, so all 9 run.
+    'rackpal_pdfium' = 9
+    # 1205 - 4 - 9. The 4 are file_store_contract_test.dart's
+    # `testOn: 'windows'` cases (share modes, MAX_PATH), which macOS never
+    # registers. The 9 skip on macOS (`noMacOSPdfium`,
+    # test/session/macos_pdfium_debt.dart): 3 in plan_import_pdfium_test,
+    # 1 in export_preview_pdfium_test, 5 in logo_import_test.
+    'rackpal_app'    = 1192
+}
+
 # Test names in this repository contain em dashes. Without this the stream is
 # decoded with the console code page and the Tests tab shows mojibake.
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 
 if (-not $PSBoundParameters.ContainsKey('MinTests')) {
-    if ($SuiteFloors.ContainsKey($Name)) {
+    # $IsMacOS is undefined under Windows PowerShell 5.1, which reads as
+    # false, so 5.1 keeps the Windows table. Said aloud on macOS, so a
+    # reader of the log knows which number held the run.
+    if ($IsMacOS -and $SuiteFloorsMacOS.ContainsKey($Name)) {
+        $MinTests = $SuiteFloorsMacOS[$Name]
+        Write-Host "  floor   : macOS row ($MinTests), not the Windows $($SuiteFloors[$Name]); see `$SuiteFloorsMacOS"
+    } elseif ($SuiteFloors.ContainsKey($Name)) {
         $MinTests = $SuiteFloors[$Name]
     } else {
         # NEVER SILENTLY DO NOTHING. A name with no floor is a legitimate
