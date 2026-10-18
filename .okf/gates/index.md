@@ -20,6 +20,7 @@ gate's blind spot is as worth knowing as its coverage.
 * [Callbacks have suppliers](callbacks-have-suppliers.md) - the THIRD reachability question, and none of the three subsumes another: `#674`'s asks whether a declared callback is INVOKED, `#872`'s whether a Command is CONSTRUCTED on a path from a UI package, and this one whether any mount ever HANDS ONE OVER. `ValidationDrawer` had three callbacks and exactly one mount that passed none, so two commands, three dialogs and PWR-003's whole remedy chain were unreachable while every suite stayed green. A supplier is a construction OF THAT WIDGET, because `onRemedy:` IS supplied elsewhere and a name grep would have missed the defect it is for. Its exemption list is EMPTY.
 * [Rule review pack](rule-review-pack.md) - every catalogue rule has a group in the domain-review pack, in the right band; it was dead for three rulings before it was a gate. It does not compare the pack on disk, so wording can still be stale.
 * [AC-051 pair coverage](ac-051-pair-coverage.md) - every rule in both bands has a known-bad that fires exactly that rule and a near-miss that does not; the subject is the catalogue, because three enum-driven coverage tests could all pass over a rule with no pair.
+* [Glyph coverage](glyph-coverage.md) - every non-ASCII character a Dart literal can draw exists in both bundled Jost weights, read from the font binary because both backends emit identical ops for a missing glyph. It was in `run_local.ps1` for two months and in neither pipeline: it is the one gate that imports a third-party Python package, so the pipelines install a hash-pinned fontTools first.
 * [The formatter gate](formatter.md) - `dart format` finds nothing to change (DR-017); it has one correct answer, which is why it is absolute where the analyzer is a ratchet. Dart only, and only as right as the configuration it can resolve.
 * [The Windows release build](windows-release-build.md) - the one step that compiles the application the way it ships, on the pinned SDK; it does not run the result, and it builds Windows only.
 * [The Windows release output](windows-release-output.md) - the folder the build produced holds a real executable, exactly the expected native libraries and the packaged starters; written after an Android bridge DLL shipped inside a green build.
@@ -40,6 +41,6 @@ is named here with its reason.
 # Not yet written up
 
 `flutter pin`, `tracked sources (would a clone compile?)`,
-`palette parity`, `JUnit converter self-test` and `glyph coverage`. The pipeline
+`palette parity` and `JUnit converter self-test`. The pipeline
 concept above covers what they prove COLLECTIVELY on the service; it does not
 replace a per-gate write-up.

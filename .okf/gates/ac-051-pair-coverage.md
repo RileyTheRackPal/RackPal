@@ -9,7 +9,10 @@ status: enforced
 ---
 
 `dart test test/validation/drc_corpus_test.dart`, run from `packages/rackpal_core`,
-is the `AC-051 pair coverage` step of `tools/ci/run_local.ps1`.
+is the `AC-051 pair coverage` step of `tools/ci/run_local.ps1` and the
+`Gate: AC-051 pair coverage` step of both pipelines. The pipelines lacked the named step
+until 2026-10-18, so on the service the file ran only inside the core suite and a missing
+pair read as one red case among thousands, which is what the step exists to prevent.
 
 # Why it is a named step
 

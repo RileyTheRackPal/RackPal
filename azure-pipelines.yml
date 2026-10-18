@@ -386,8 +386,9 @@ jobs:
           Write-Host "core.eol      : $eol"
           Write-Host "commit        : $commit"
           Write-Host ''
-          # The gate scripts assume `python` (3.7+, standard library only --
-          # tools/pal1_check.py already assumes it) and `pwsh` are on PATH on
+          # The gate scripts assume `python` (3.7+; standard library only except
+          # glyph_coverage_check.py, whose fontTools comes from the install step
+          # that precedes it) and `pwsh` are on PATH on
           # the hosted image. Recorded rather than pinned with
           # UsePythonVersion, which would add a task that can fail for its own
           # reasons; if either line below is empty, that is the explanation
@@ -658,6 +659,25 @@ jobs:
         displayName: 'Gate: rule review pack grouping (#972)'
         condition: succeededOrFailed()
 
+      # DR-090 section 11.89.8. THE ONE GATE HERE THAT READS A FONT BINARY,
+      # and the one that imports a package outside the standard library
+      # (fontTools), so it has its own install step ahead of it. It was in
+      # run_local.ps1 from 2026-08-25 and in NO pipeline until this step:
+      # CI had never run it, which nobody chose, and found only when the
+      # step list was copied for the macOS definition (DR-255).
+      # The pin and its hash are in tools/ci/requirements.txt.
+      - pwsh: |
+          python -m pip install --require-hashes --only-binary=:all: -r tools/ci/requirements.txt
+          exit $LASTEXITCODE
+        displayName: 'Python gate dependencies (fontTools, hash-pinned)'
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          python tools/glyph_coverage_check.py
+          exit $LASTEXITCODE
+        displayName: 'Gate: glyph coverage (DR-090)'
+        condition: succeededOrFailed()
+
       # ==================================================================
       # GATE 3 — THE REPORTING PATH ITSELF
       # ==================================================================
@@ -669,6 +689,19 @@ jobs:
           python tools/ci/junit_converter_selftest.py
           exit $LASTEXITCODE
         displayName: 'Gate: JUnit converter self-test'
+        condition: succeededOrFailed()
+
+      # AC-051, #302. A NAMED STEP even though the core suite below runs this
+      # file anyway: what it protects is a SCHEDULE control (roadmap M5's risk
+      # list names a rule added without its pair as how that milestone
+      # overruns), and buried among thousands of passing tests that failure
+      # reads as one red line. Here it reads as this step's name, which is
+      # where somebody adding a rule will look. Needs `pub get`, above.
+      - pwsh: |
+          dart test test/validation/drc_corpus_test.dart
+          exit $LASTEXITCODE
+        displayName: 'Gate: AC-051 pair coverage'
+        workingDirectory: packages/rackpal_core
         condition: succeededOrFailed()
 
       # ==================================================================
