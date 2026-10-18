@@ -1,0 +1,241 @@
+# ======================================================================
+# RackPal CI (macOS): Azure DevOps, Microsoft-hosted. DR-009, D4 (#459).
+# ======================================================================
+#
+# WHY A SECOND DEFINITION AND NOT A SECOND JOB IN azure-pipelines.yml.
+# The Windows job is the blocking build-validation policy on `main` and
+# runs on the self-hosted agent, which costs no hosted minutes. This job
+# needs a Microsoft-hosted macOS image, and the organisation has ONE free
+# hosted parallel job with 1,800 minutes a month. A job inside the Windows
+# definition would make the blocking policy's verdict depend on that
+# allowance: the month the minutes run out, nothing merges. A separate
+# definition lets this run as an OPTIONAL (non-blocking) PR check, which
+# is the cadence the integrator chose on 2026-10-17 over nightly, weekly
+# and manual-only, on last month's 22 PR builds (about 480 minutes).
+#
+# IT MUST STAY NON-BLOCKING for the same reason. Every re-push of a PR
+# re-runs it, so the bill follows push habits, not merge counts.
+#
+# THE FLUTTER PIN IS NOT RESTATED HERE. It lives in azure-pipelines.yml
+# and nowhere else (docs/11 section 7, DR-248), and run_local.ps1 reads it
+# from there. The first step below reads it the same way, with the same
+# two patterns, so moving the pin moves both platforms or fails this one
+# by name. Do not add a `flutterVersion:` line to this file.
+#
+# WHAT IS PER-PLATFORM AND WHAT IS NOT (D4/2, #460). Every gate the
+# Windows job runs is here EXCEPT:
+#   * the timed budgets (rackpal_core_timed): wall-clock assertions of one
+#     frame (16.7 ms) calibrated on the author's machine. A shared hosted
+#     VM measures the VM, not the tree, and a red there teaches people to
+#     ignore this pipeline. The budgets stay gated on Windows.
+#   * `flutter build` and its output gate: there is no `macos/` runner
+#     yet (D1, #453/#454) and no verify_macos_build.ps1 (D6, #463).
+# The analyzer, the formatter and the Python document gates cannot differ
+# by platform in what they check, but they cost seconds and they ARE the
+# D5 question ("do the gate scripts run under pwsh on macOS?"), so they
+# stay until a run has answered it.
+#
+# WHAT IS NOT VERIFIED. As of the commit that adds this file, nothing in
+# it has run. Its first runs are the D5/1 (#461) verification, and the
+# floors in tools/ci/run_suite.ps1 are Windows counts until a macOS run
+# measures its own. Expect the first run to be red, and read WHERE.
+# ======================================================================
+
+trigger: none
+
+# Ignored by Azure Repos, as in azure-pipelines.yml: PR runs come from a
+# build-validation policy, not from this block. Kept so the intent reads
+# from the file.
+pr:
+  branches:
+    include:
+      - main
+
+variables:
+  ciOutDir: '$(Build.SourcesDirectory)/build/ci'
+  PUB_CACHE: '$(Pipeline.Workspace)/.pub-cache'
+
+jobs:
+  - job: macos_ci
+    displayName: 'Analyze, test (macOS)'
+    timeoutInMinutes: 90
+    pool:
+      vmImage: 'macOS-15'
+    steps:
+      - checkout: self
+        displayName: 'Checkout (clean clone)'
+        clean: true
+        fetchDepth: 1
+        fetchTags: false
+        persistCredentials: false
+
+      # The pin, read from the one place it lives. Same patterns as
+      # tools/ci/run_local.ps1. A parse that finds nothing fails here by
+      # name rather than installing an SDK called ''.
+      - pwsh: |
+          $pipeline = Get-Content -Raw 'azure-pipelines.yml'
+          $v = [regex]::Match($pipeline, "(?m)^\s*flutterVersion:\s*'([^']+)'").Groups[1].Value
+          $r = [regex]::Match($pipeline, "(?m)^\s*flutterFrameworkRevision:\s*'([0-9a-f]{40})'").Groups[1].Value
+          if (-not $v -or -not $r) {
+            Write-Host "##vso[task.logissue type=error]could not read the Flutter pin from azure-pipelines.yml (got '$v' / '$r')"
+            exit 1
+          }
+          Write-Host "  pin : $v @ $r"
+          Write-Host "##vso[task.setvariable variable=flutterVersion]$v"
+          Write-Host "##vso[task.setvariable variable=flutterFrameworkRevision]$r"
+        displayName: 'Read the Flutter pin from azure-pipelines.yml'
+
+      # Every gate and run_suite.ps1 call `python`. Hosted macOS images are
+      # not promised to carry that name, only `python3`; this puts both on
+      # PATH for every later step, so no script needs a macOS branch.
+      - task: UsePythonVersion@0
+        displayName: 'Python 3 as `python`'
+        inputs:
+          versionSpec: '3.x'
+
+      - pwsh: |
+          Write-Host '== checkout forensics =='
+          Write-Host "core.autocrlf : $(git config --get core.autocrlf)"
+          Write-Host "core.eol      : $(git config --get core.eol)"
+          Write-Host "commit        : $(git rev-parse HEAD)"
+          Write-Host "os            : $(sw_vers -productVersion) $(uname -m)"
+          Write-Host "python        : $(python --version 2>&1)"
+          Write-Host "pwsh          : $($PSVersionTable.PSVersion)"
+          Write-Host ''
+          Write-Host '-- how git resolved the byte-exact goldens --'
+          git check-attr text eol -- apps/rackpal/assets/starters/apartment.rackpal
+          git check-attr text eol -- packages/rackpal_core/test/fixtures/a_empty_project.rackpal.json
+          New-Item -ItemType Directory -Path '$(ciOutDir)' -Force | Out-Null
+        displayName: 'Checkout forensics'
+        continueOnError: true
+
+      - task: Cache@2
+        displayName: 'Restore Flutter SDK cache'
+        inputs:
+          key: 'flutter | "$(Agent.OS)" | "$(Agent.OSArchitecture)" | "$(flutterVersion)"'
+          path: '$(Agent.ToolsDirectory)/flutter'
+        continueOnError: true
+
+      - pwsh: |
+          pwsh -NoProfile -File tools/ci/ensure_flutter.ps1 -Version '$(flutterVersion)' -ExpectedFrameworkRevision '$(flutterFrameworkRevision)' -InstallRoot '$(Agent.ToolsDirectory)'
+          exit $LASTEXITCODE
+        displayName: 'Install and VERIFY Flutter $(flutterVersion)'
+
+      - task: Cache@2
+        displayName: 'Restore pub cache'
+        inputs:
+          key: 'pub | "$(Agent.OS)" | "$(flutterVersion)" | pubspec.lock'
+          path: '$(PUB_CACHE)'
+        continueOnError: true
+
+      - pwsh: |
+          flutter pub get --enforce-lockfile
+          exit $LASTEXITCODE
+        displayName: 'flutter pub get (workspace root)'
+
+      - pwsh: |
+          pwsh -NoProfile -File tools/ci/analyze_gate.ps1
+          exit $LASTEXITCODE
+        displayName: 'Gate: analyzer (0 errors, 0 warnings, ratcheted infos)'
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          dart format --output=none --set-exit-if-changed .
+          exit $LASTEXITCODE
+        displayName: 'Gate: dart format'
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          python tools/pal1_check.py
+          exit $LASTEXITCODE
+        displayName: 'Gate: PAL-1 palette conformance'
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          python tools/palette_parity.py
+          exit $LASTEXITCODE
+        displayName: 'Gate: palette docs/registry parity'
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          python tools/registry_parity.py
+          exit $LASTEXITCODE
+        displayName: 'Gate: palette code/registry parity'
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          python tools/milestone_gate.py
+          exit $LASTEXITCODE
+        displayName: 'Gate: milestone completeness (section 8.9)'
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          python tools/rule_review.py --check
+          exit $LASTEXITCODE
+        displayName: 'Gate: rule review pack grouping (#972)'
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          python tools/ci/junit_converter_selftest.py
+          exit $LASTEXITCODE
+        displayName: 'Gate: JUnit converter self-test'
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackpal_core -Runner dart -Name rackpal_core -Tests untimed -OutDir '$(ciOutDir)'
+          exit $LASTEXITCODE
+        displayName: 'Test: rackpal_core (pure Dart, untimed)'
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackpal_text -Runner dart -Name rackpal_text -OutDir '$(ciOutDir)'
+          exit $LASTEXITCODE
+        displayName: 'Test: rackpal_text (pure Dart)'
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackpal_export -Runner dart -Name rackpal_export -OutDir '$(ciOutDir)'
+          exit $LASTEXITCODE
+        displayName: 'Test: rackpal_export (pure Dart)'
+        condition: succeededOrFailed()
+
+      # Expected RED until Story #61 vendors a macOS pdfium: the loader
+      # hard-codes third_party/pdfium/win-x64/pdfium.dll. Left in, not
+      # skipped, so the debt is visible on every run until it is paid.
+      - pwsh: |
+          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackpal_pdfium -Runner dart -Name rackpal_pdfium -OutDir '$(ciOutDir)'
+          exit $LASTEXITCODE
+        displayName: 'Test: rackpal_pdfium (pure Dart, vendored native)'
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackpal_ui -Runner flutter -Name rackpal_ui -OutDir '$(ciOutDir)'
+          exit $LASTEXITCODE
+        displayName: 'Test: rackpal_ui (Flutter)'
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package apps/rackpal -Runner flutter -Name rackpal_app -OutDir '$(ciOutDir)'
+          exit $LASTEXITCODE
+        displayName: 'Test: apps/rackpal (Flutter)'
+        condition: succeededOrFailed()
+
+      - task: PublishTestResults@2
+        displayName: 'Publish test results'
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: 'JUnit'
+          testResultsFiles: '**/*.junit.xml'
+          searchFolder: '$(ciOutDir)'
+          mergeTestResults: true
+          testRunTitle: 'RackPal macOS, Flutter $(flutterVersion)'
+          failTaskOnFailedTests: true
+          failTaskOnMissingResultsFile: true
+
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish raw test streams (forensics)'
+        condition: succeededOrFailed()
+        inputs:
+          targetPath: '$(ciOutDir)'
+          artifact: 'test-streams-macos'
+          publishLocation: 'pipeline'
