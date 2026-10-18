@@ -2,6 +2,15 @@
 
 ## 2026-10-17
 
+Entry 144.
+
+* **Added**: [glyph coverage](gates/glyph-coverage.md). Both pipelines now run it and the named
+  [AC-051 pair coverage](gates/ac-051-pair-coverage.md) step; CI had run neither as a step of its own, and glyph
+  coverage not at all, since the gate arrived two days before the pipeline did.
+* **Note**: **A COPIED STEP LIST COPIES THE ASSUMPTIONS OF THE LIST.** Every gate script was standard-library
+  only except this one, so the omission could not be repaired by adding the line: a clean agent has no fontTools.
+  The fix is a hash-pinned `tools/ci/requirements.txt` and an install step ahead of the gate.
+
 Entry 143.
 
 * **Added**: [the macOS pipeline](gates/the-macos-pipeline.md), definition 2. Its first run, build 481, measured

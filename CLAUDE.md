@@ -64,10 +64,13 @@ warm-cache path at 18m28s.
   policy build (~18 min) before the PR can complete.
 - The pipeline is the same gate set as `run_local.ps1` minus the two local-only
   checks (`flutter pin`, `tracked sources`), which a clean clone cannot fail by
-  construction. **AND MINUS TWO MORE THAT NOBODY CHOSE**, found 2026-10-18 while
-  copying the step list for macOS: `glyph coverage` (`tools/glyph_coverage_check.py`)
-  has no step in either pipeline, so CI has never run it, and the named `AC-051 pair
-  coverage` step is absent too (its file still runs inside the core suite).
+  construction. **THAT SENTENCE HAD A SECOND HALF UNTIL 2026-10-18**: *"and minus two
+  more that nobody chose"*, `glyph coverage` and the named `AC-051 pair coverage` step,
+  found while copying the step list for macOS. Both are now steps in both pipelines.
+  The lesson was in why `glyph coverage` was the one missing: **it is the only gate
+  that imports a third-party Python package** (`fontTools`), so copying its line would
+  have gone red on a clean agent. A step installs it first from the hash-pinned
+  `tools/ci/requirements.txt`. A new gate script that needs a package goes in that file.
 - **DEFINITION 2, `RackPal CI (macOS)`** (`azure-pipelines-macos.yml`, DR-255), runs on
   a Microsoft-hosted `macOS-15` image against the one free hosted job of 1,800 minutes
   a month, as an **optional** PR check. **It may never be made blocking**: the month the

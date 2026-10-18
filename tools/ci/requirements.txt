@@ -1,0 +1,16 @@
+# The Python packages the CI gates import beyond the standard library.
+#
+# There is one, and it is why this file was nearly not written: every gate script
+# was "standard library only" until tools/glyph_coverage_check.py (DR-090 section
+# 11.89.8), which reads the bundled fonts' cmaps through fontTools. That gate sat
+# in run_local.ps1 from 2026-08-25 and in neither pipeline until the step that
+# installs this file was added, because a clean agent has no fontTools.
+#
+# Installed with `--require-hashes --only-binary=:all:`, so the graph is exactly
+# what is written here and each archive is checked, as pubspec.lock does for pub
+# (DR-248). fonttools 4.63.0 was published 2026-05-14, well past the fourteen
+# days; the hash is the pure-Python wheel (py3-none-any), which every platform
+# accepts, and the package has no required dependencies. Moving the pin is a
+# reviewed act: the hash comes from the release's own PyPI page.
+fonttools==4.63.0 \
+    --hash=sha256:445af2eab030a16b9171ea8bdda7ebf7d96bda2df88ee182a464252f6e05e20d

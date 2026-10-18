@@ -175,10 +175,35 @@ jobs:
         displayName: 'Gate: rule review pack grouping (#972)'
         condition: succeededOrFailed()
 
+      # DR-090 section 11.89.8. Reads the bundled fonts' cmaps, which are
+      # committed bytes, so nothing here differs by platform. fontTools is the
+      # one Python dependency outside the standard library; see
+      # tools/ci/requirements.txt for the pin and why it is hash-checked.
+      - pwsh: |
+          python -m pip install --require-hashes --only-binary=:all: -r tools/ci/requirements.txt
+          exit $LASTEXITCODE
+        displayName: 'Python gate dependencies (fontTools, hash-pinned)'
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          python tools/glyph_coverage_check.py
+          exit $LASTEXITCODE
+        displayName: 'Gate: glyph coverage (DR-090)'
+        condition: succeededOrFailed()
+
       - pwsh: |
           python tools/ci/junit_converter_selftest.py
           exit $LASTEXITCODE
         displayName: 'Gate: JUnit converter self-test'
+        condition: succeededOrFailed()
+
+      # AC-051, #302: a named step so a rule added without its pair reads as
+      # its own red line. The same file also runs inside the core suite.
+      - pwsh: |
+          dart test test/validation/drc_corpus_test.dart
+          exit $LASTEXITCODE
+        displayName: 'Gate: AC-051 pair coverage'
+        workingDirectory: packages/rackpal_core
         condition: succeededOrFailed()
 
       - pwsh: |
