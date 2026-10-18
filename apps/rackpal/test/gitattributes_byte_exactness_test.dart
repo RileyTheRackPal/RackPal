@@ -72,9 +72,16 @@ const String kRepoRoot = '../..';
 /// guard doing exactly its job: it says "either it moved — update
 /// kByteExactRoots — or the goldens are gone", and here the first was
 /// true.
+///
+/// **`packages/rackpal_export/test/fixtures` holds the four starter PDFs**
+/// that `starters_pdf_golden_test.dart` compares byte for byte (DR-253,
+/// docs/13 §4). They are `binary`, not `eol=lf`, because a PDF carries raw
+/// CR bytes inside its deflated streams, which is why the CR case below
+/// reads only the files that resolve `lf`.
 const List<String> kByteExactRoots = <String>[
   'apps/rackpal/assets/starters',
   'packages/rackpal_core/test/fixtures',
+  'packages/rackpal_export/test/fixtures',
 ];
 
 /// The check-out states in which the committed bytes survive verbatim.
@@ -388,9 +395,11 @@ void main() {
     // `binary` would be the only safe marking. It cannot: the canonical
     // JSON writer escapes control characters, so a CR inside a string
     // value is written as the two ASCII bytes `\r`. This measures that
-    // rather than trusting it.
+    // rather than trusting it. A `binary` golden is never normalised, so
+    // its CR bytes are data and it is not read here.
     final withCr = <String>[];
     for (final file in byteExact) {
+      if (resolveCheckout(rules, _repoPath(file)) != 'lf') continue;
       final bytes = file.readAsBytesSync();
       final count = bytes.where((b) => b == 0x0D).length;
       if (count > 0) withCr.add('${_repoPath(file)} — $count CR bytes');

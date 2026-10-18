@@ -1470,7 +1470,11 @@ $SuiteFloors = @{
     # 309 at `#1022` (IN-2, DR-241 §11.240.2): +1 in elevation_summary_
     # wrap_test.dart, a 52-device rear sheet's NOT DRAWN HERE line that
     # overflows Jost's 319 pt column, printed as two whole rows.
-    'rackpal_export' = 309
+    # 319 at docs/13 section 4 (DR-253, DR-255): +10 in starters_pdf_golden_
+    # test.dart, each starter's drawing and file against committed PDFs
+    # written on Windows, so the macOS run compares across platforms, and
+    # two cases proving the comparison names a changed sheet.
+    'rackpal_export' = 319
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
