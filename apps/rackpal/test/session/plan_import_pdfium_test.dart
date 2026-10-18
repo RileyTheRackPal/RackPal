@@ -38,6 +38,7 @@ import 'package:rackpal/src/session/plan_import_actions.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 
 import '../storage/fake_file_store.dart';
+import 'macos_pdfium_debt.dart';
 import 'session_fakes.dart';
 
 final _fixed = DateTime.utc(2026, 9, 10, 9);
@@ -179,5 +180,5 @@ void main() {
       expect(underlay.sourcePage!.pageIndex, 0);
       expect(h.session.members[underlay.sourcePage!.member], pdf);
     });
-  });
+  }, skip: noMacOSPdfium);
 }

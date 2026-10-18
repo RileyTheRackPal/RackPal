@@ -16,6 +16,7 @@ import 'package:rackpal/src/session/logo_import_actions.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 
 import '../storage/fake_file_store.dart';
+import 'macos_pdfium_debt.dart';
 import 'pdf_page_import_test.dart' show realJpeg, smallVectorPdf;
 import 'session_fakes.dart';
 
@@ -100,7 +101,7 @@ void main() {
       expect((logo.logo.pixelWidth, logo.logo.pixelHeight), (750, 375));
       expect(logo.logo.format, PlanImageFormat.png);
       expect(img.decodePng(logo.memberBytes)!.width, 750);
-    });
+    }, skip: noMacOSPdfium);
 
     test(
       'AN SVG IS DRAWN, then rendered like a PDF, and the ink is there',
@@ -114,6 +115,7 @@ void main() {
         expect(centre.b, greaterThan(centre.r));
         expect(centre.r, lessThan(100));
       },
+      skip: noMacOSPdfium,
     );
 
     test(
@@ -127,6 +129,7 @@ void main() {
         );
         expect((logo.logo.pixelWidth, logo.logo.pixelHeight), (375, 375));
       },
+      skip: noMacOSPdfium,
     );
 
     test('ANYTHING ELSE IS REFUSED BY NAME', () async {
@@ -195,6 +198,7 @@ void main() {
           final centre = img.decodePng(logo.memberBytes)!.getPixel(417, 104);
           expect((centre.r, centre.g, centre.b), isNot((255, 255, 255)));
         },
+        skip: noMacOSPdfium,
       );
     }
 
