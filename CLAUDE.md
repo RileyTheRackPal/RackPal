@@ -178,7 +178,6 @@ warm-cache path at 18m28s.
 | `docs/research/` | **Working papers**, non-normative rationale, kept for audit. Its README states the status; the plan documents win wherever they disagree. |
 | `docs/reference/keymap-windows.md` | **Generated** from `kKeymap` and held by a golden test (`keymap_reference_golden_test.dart`). Do not edit by hand. |
 | `docs/reference/keystone/` | **Reference material**: photographs and technical drawings of the real strap and plate parts, supplied for DR-007 §11.7. Its README says what belongs there. Not prose and not subject to the prose rules. |
-| `docs/md_renderer.html` | **Role unclear.** A standalone "Portable Markdown Reader" page that nothing tracked references and that carries no header saying what it is for. It is a tool, not a document, and no ruling governs it. |
 
 **Canon §12 lists derived-document edits that are owed but unmade.** Read the
 ruling, not only the derived sentence. A stale sentence in `docs/09` once produced

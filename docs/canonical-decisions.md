@@ -24756,7 +24756,8 @@ fixture and the coverage gate, and re-baselining PDF metrics).
   said on its first commit that docs/08 §10.1's `RackMono` `CABLE ID` column met the argument on paper.
   docs/08 states the design, not the exporter; the DOCS-2i pass found the gap the same day, before the
   ruling merged.)* Whether the PDF should embed Space Mono for identifier columns is a product question
-  this ruling does not answer; it is `#1099`.
+  this ruling does not answer; it is `#1099`, answered by DR-252 (§11.251): the PDF embeds Space Mono for
+  identifier columns.
 - **The condensed cut** is §11.248.3.
 - **Greek coverage holds, by different codepoints.** Jost carries `U+03A9` and `U+00B5`; Space Mono
   carries `U+2126` (the ohm sign) and `U+00B5`, and not `U+03A9`. A string that names one ohm
@@ -24851,6 +24852,116 @@ and the log, the thing §11.95.2 exists to forbid.
 
 **Scope.** No product scope moves. It narrows §11.95.2's reach (§12.58). The substitution is owed on
 `#1087`, and the orientation pages' name on `#1081`.
+
+---
+
+### 11.251 DR-252 · The PDF embeds Space Mono, and identifier columns print in it
+
+**Settled by the user on 2026-10-17, for `#1099`**, the question DR-249 §11.248.2 left open.
+
+**11.251.1 THE FACT.** The PDF embeds one face, Jost Regular: `kExportFont` in
+`apps/rackpal/lib/src/session/export_controller.dart` registers `FontRef('Jost')` alone, and
+`sheet_frame.dart`'s `kSheetFont` resolves to it. Space Mono, whose zero is marked (three contours
+against `O`'s two), reaches the screen and never the paper, so every printed cable ID, designator and
+port label is in the face where `0` and `O` differ only by width. CR-080's first argument for a mono
+face, that identifiers are transcribed onto physical labels, is not met on any sheet the product prints.
+
+**11.251.2 RULED BY THE USER: THE EXPORT EMBEDS SPACE MONO, AND THE IDENTIFIER COLUMNS USE IT.** Where
+docs/08 §10.1 sets a column in `RackMono`, the printed sheet sets it in Space Mono. The question carried
+its price: the `pdf` package subsets each embedded font (`TtfWriter`), so the file grows by the glyphs
+used and not by the 99 KB face, an amount measured at build rather than assumed; `ExportRequest`'s font
+map already takes several faces; about 63 font-choice sites across 24 sheet builders read `kSheetFont`
+today, and measured widths change, so truncation, fit and dry-run tests re-baseline. Not taken: keeping
+one face and recording the risk; and embedding Jost Medium as well.
+
+**Scope.** Not new scope: it builds what docs/08 §10.1 already specifies and DR-249 ratified as the mono
+face. Built as `MONO-A`, `#1104`, under M6. AC-054's print clauses read the result.
+
+**What this does not rule.** Which columns are identifiers beyond docs/08 §10.1's table, which `MONO-A`'s
+decomposition reads. Whether Space Mono Bold is embedded, which follows from whether a column docs/08
+sets bold is in scope. Jost Medium in print, which was offered and not taken.
+
+---
+
+### 11.252 DR-253 · "Goldens pass" means the byte and text goldens: a committed fixture compared exactly
+
+**Settled by the user on 2026-10-17, for `#1102`**, a gap docs/12 §4.3 recorded on the same day.
+
+**11.252.1 THE FACT.** Roadmap §4's per-milestone rule reads *"CI passes, goldens pass, the app opens
+the four starter projects"*, and nothing in the corpus says what a golden is. The tree has **no pixel
+golden** (no `matchesGoldenFile`, no `flutter_test_config.dart`) and **four byte and text goldens**
+regenerated under `UPDATE_GOLDENS`: `byte_roundtrip_test.dart`, `schematic_fixture.dart`,
+`schematic_perf_test.dart` and `keymap_reference_golden_test.dart`. docs/11 §2 budgets about 150 pixel
+and 400 display-list goldens that were never built. So the limb was read as vacuous for every
+milestone, which made a rule nobody could satisfy and nobody could fail.
+
+**11.252.2 RULED BY THE USER: A GOLDEN IS A COMMITTED FIXTURE COMPARED EXACTLY.** Exported bytes,
+display-list text and generated reference text, each held against a file in the tree and failing on
+any difference, are what the rule means. The limb is **satisfied today** by the four that exist, and
+**every milestone's "goldens pass" is now checkable** by running the suites that hold them. Not taken:
+pixel or display-list goldens per docs/11 §2's budget, which would leave the limb unmet for every
+milestone until weeks of harness and fixtures were built; and dropping the limb, which loses the one
+limb that says outputs did not drift.
+
+**What this does not rule.** Whether pixel goldens are ever built: they stay docs/11's aspiration and
+carry no gate. Which outputs deserve a golden next; a new one is ordinary work under this definition.
+
+**Scope.** No scope moves. A definition of a word in roadmap §4 (§12.59). docs/09 §4 and docs/12 §4.3
+point here.
+
+---
+
+### 11.253 DR-254 · The Microsoft Store alpha is parked on M8, anonymity is a distribution constraint, and the route is ruled after it is verified
+
+**Settled by the user on 2026-10-17**, answering board `#482` (*create the Partner Center account*),
+whose parent `#101` had been closed as *"DECIDED: Individual, sole copyright"* with the account itself
+never made.
+
+**11.253.1 THE FACT.** The Microsoft Store alpha (Epic `#100`, MSIX-0 to MSIX-7) is board-born: no
+ruling created it, and it is sized in roadmap §6.1's table. Its path runs through a Partner Center
+account, which Microsoft verifies against the publisher's identity; the Store signs what it
+distributes, and a package flighted outside the Store needs a signature of the publisher's own. Its
+MSIX-7 (`#171`) is also where DR-179 §11.178 put file-type registration, under a deadline *"earlier
+than M8"*.
+
+**11.253.2 THE USER'S DIRECTION, IN THEIR WORDS, AND WHAT IT IS NOT.** *"This may not actually be the
+direction taken; I believe the WinGet method for Windows & a Brew cask for macOS, plus GitHub's native
+Ephemeral Signing should at least help adoption initially. I'm hoping to remain anonymous at least
+initially, and having any form of code signing beyond ephemeral makes that hard."* The direction is
+recorded and **not ruled**: the user said in terms it may change, and the question that offered it
+carried facts that cut against parts of it, gathered from secondary sources and not yet verified:
+
+- Homebrew ended support for casks that fail Gatekeeper on 2026-09-01 and removed `--no-quarantine`,
+  so an un-notarized app cannot ship in the main cask repository; a personal tap is unconfirmed.
+- GitHub artifact attestations (Sigstore keyless signing) are a provenance record. They are not an
+  Authenticode or Apple signature and do nothing for SmartScreen or Gatekeeper. Their certificate names
+  the repository's workflow rather than a person, and a public repository's goes into a public log.
+- WinGet accepts an unsigned `.exe`, with SmartScreen reputation attached to each file's hash, so each
+  release starts as an unknown publisher.
+- Apple notarization needs a Developer ID enrolled under a legal name, which is the anonymity conflict
+  in its sharpest form.
+
+**11.253.3 RULED BY THE USER: THE STORE IS PARKED, AND ONLY THAT MOVES NOW.** The user chose this over
+ruling the new route now and over keeping the Store path.
+
+1. **Epic `#100` is parked on M8** under DR-095's definition: reassigned by this ruling to a named later
+   milestone, for the structural reason that the distribution route it presumes is not chosen.
+   `#482` closes as not pursued.
+2. **File-type registration (`#171`) moves to M8 with it**, because it belongs to whichever installer
+   M8 rules. DR-179 §11.178's *"earlier than M8"* deadline was the Store alpha's and lapses with it.
+3. **Anonymity, at least initially, is a stated constraint on distribution.** A route that publishes
+   the author's legal identity is not taken without a ruling that says so.
+4. **The route is ruled at M8's decomposition**, after `DIST-0` (`#1105`) verifies the facts in
+   §11.253.2 from primary sources.
+
+**What this does not rule.** The route itself. **DR-006 stands until then** (Windows self-signed with a
+timestamp, §11.6.2's split M8 criterion); whether its self-signed certificate is compatible with the
+anonymity constraint is one of `#1105`'s questions. macOS notarization, which DR-009 puts in v1 and
+which §11.253.2 shows is where anonymity costs most. Moving the repository to GitHub (`#1028`) and its
+anonymity scrub (`#783`), which this direction makes more likely and which stay as filed.
+
+**Scope.** An amendment under §8.3, in its own commit: the Store alpha leaves v1's pre-M8 work and waits
+on M8 (§12.60).
 
 ---
 
@@ -25672,6 +25783,19 @@ close and a reopen.
 | Ruling | What it said | What now governs |
 |---|---|---|
 | **DR-096 §11.95.2**, its list of record | *"the `.okf` decision bundle (191, of which 95 are the decision files) are history"* | **`.okf/decisions/` and `.okf/log.md` are record.** `.okf/gates/`, `.okf/invariants/`, `.okf/practices/`, `getting-started.md` and `index.md` are live reference and take current paths and the current name, a quoted path staying quoted (§11.250.2). |
+
+### 12.59 Defined by DR-253 (what "goldens pass" means)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **§9 / roadmap §4**, the per-milestone green rule | *"Every milestone ends green: CI passes, goldens pass, the app opens the four starter projects."* No definition of a golden | **A golden is a committed fixture compared exactly**: exported bytes, display-list text, generated reference text (§11.252.2). The limb is checkable and satisfied by the goldens that exist; pixel goldens are not required. |
+
+### 12.60 Parked by DR-254 (the Microsoft Store alpha waits on M8)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **Roadmap §6.1**, the *Microsoft Store alpha* row | The Store alpha, MSIX-0 to MSIX-7, sized as pre-M8 work | **Parked on M8** (§11.253.3). Its route is ruled at M8's decomposition, after `#1105`. |
+| **DR-179 §11.178**, its deadline bullet | *"The deadline is earlier than M8."* MSIX-7 (`#171`) registers the extensions in the package manifest | **The deadline lapses with the Store alpha**; file-type registration moves to M8 and belongs to whichever installer M8 rules. The extensions themselves stand. |
 
 ## 13. Resolved §10 questions
 

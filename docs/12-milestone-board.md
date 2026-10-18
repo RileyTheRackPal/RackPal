@@ -599,7 +599,12 @@ anything.
 **That reconciliation exists only in a source comment.** Neither docs/09 nor docs/05 has been
 edited, so the next reader meets the same contradiction the salvage already settled.
 
-### 4.3 There are no goldens
+### 4.3 CLOSED 2026-10-17 by DR-253: there are no PIXEL goldens, and the rule does not ask for them
+
+**DR-253 (canon §11.252) defines the word**: a golden is a committed fixture compared exactly
+(exported bytes, display-list text, generated reference text). The roadmap's *"goldens pass"* limb is
+therefore checkable and is met by the four byte and text goldens listed below; pixel goldens carry no
+gate. The heading read *"There are no goldens"* until this close.
 
 **RE-MEASURED 2026-10-17, and the heading holds in one sense of the word and not in another.** The
 paragraphs below are the original measurement and are kept as it was. By grep over `*.dart`:
