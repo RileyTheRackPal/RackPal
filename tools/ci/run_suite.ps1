@@ -1488,7 +1488,11 @@ $SuiteFloors = @{
     # same bytes twice, so every other case passes against an upside-down
     # floorplan; deleting the counter-flip fails that case and nothing
     # else. PLAN-A/3 met the same defect one package over.
-    'rackpal_pdfium' = 22
+    # 24 at #468: +2 in pdfium_vendoring_test.dart when the loader learned
+    # a path per OS. On macOS the shipped copy is the bundle's, in
+    # Contents/Frameworks, not beside the executable; and an OS with no
+    # vendored binary is told so by name rather than handed a Windows path.
+    'rackpal_pdfium' = 24
     # 1489 at DR-128: +6 from schematic_remedy_dr128_test.dart, which
     # presses the two new remedy buttons on chips raised by a real drag.
     # The core suites cannot see whether the SCREEN reaches the commands.
@@ -2406,11 +2410,11 @@ $SuiteFloors = @{
 # the skips, the count would come in above the floor and pass with a "+N"
 # that nobody reads, which is how a floor stops being exact.
 $SuiteFloorsMacOS = @{
-    # 22 - 13. The 13 render cases in pdfium_render_test.dart skip on
-    # macOS (`noMacOSPdfium`): the loader finds the win-x64 DLL and dlopen
-    # refuses it. 'an empty file is refused' never reaches the binary, and
-    # the 8 vendoring cases read files, so all 9 run.
-    'rackpal_pdfium' = 9
+    # 24 - 13. The 13 render cases in pdfium_render_test.dart skip on
+    # macOS (`noMacOSPdfium`): no macOS binary is pinned yet (#468).
+    # 'an empty file is refused' never reaches the binary, and the 10
+    # vendoring cases read files, so all 11 run.
+    'rackpal_pdfium' = 11
     # 1205 - 4 - 9. The 4 are file_store_contract_test.dart's
     # `testOn: 'windows'` cases (share modes, MAX_PATH), which macOS never
     # registers. The 9 skip on macOS (`noMacOSPdfium`,

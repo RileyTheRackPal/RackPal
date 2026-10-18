@@ -13,6 +13,6 @@ export 'src/pdfium_library.dart'
         PdfiumUnavailable,
         kPdfiumPathVariable,
         kVendorCommand,
-        kVendoredPdfiumPath,
+        kVendoredPdfiumPaths,
         loadPdfium,
         pdfiumPath;

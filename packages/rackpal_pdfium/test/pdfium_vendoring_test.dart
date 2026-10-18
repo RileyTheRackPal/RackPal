@@ -25,44 +25,72 @@ import 'package:test/test.dart';
 /// The repository root, from the package directory tests run in.
 const String kRepoRoot = '../..';
 
-File get _pin => File('$kRepoRoot/third_party/pdfium/pdfium.pin.json');
-File get _dll => File('$kRepoRoot/$kVendoredPdfiumPath');
+File get _pinFile => File('$kRepoRoot/third_party/pdfium/pdfium.pin.json');
+
+/// The pin, read once. One release, one entry per platform's artifact.
+final Map<String, dynamic> _pin =
+    jsonDecode(_pinFile.readAsStringSync()) as Map<String, dynamic>;
+
+Map<String, dynamic> get _platforms =>
+    _pin['platforms'] as Map<String, dynamic>;
 
 void main() {
+  // ONE PAIR PER PINNED PLATFORM, generated from the pin, so an artifact
+  // added to the pin is checked by the same two assertions on the day it
+  // lands rather than when somebody remembers to write them. The tree is
+  // the same on every OS, so every platform's binary is checked on every
+  // OS, including the ones that cannot load it.
   group('the vendored binary', () {
-    test('is where the loader looks for it', () {
-      expect(
-        _dll.existsSync(),
-        isTrue,
-        reason:
-            'pdfium is not vendored yet. It is placed by a person on '
-            'purpose (CR-100): $kVendorCommand',
-      );
-    });
+    for (final MapEntry(key: platform, value: raw) in _platforms.entries) {
+      final entry = raw as Map<String, dynamic>;
+      final relative = 'third_party/pdfium/${entry['binary']}';
+      final file = File('$kRepoRoot/$relative');
 
-    test('matches the checksum it was pinned at', () {
-      final pin = jsonDecode(_pin.readAsStringSync()) as Map<String, dynamic>;
-      final expected = (pin['dllSha256'] as String).toLowerCase();
-      final actual = sha256.convert(_dll.readAsBytesSync()).toString();
+      test('$platform: is where the loader looks for it', () {
+        expect(
+          kVendoredPdfiumPaths.values,
+          contains(relative),
+          reason: 'the pin and pdfium_library.dart name different files',
+        );
+        expect(
+          file.existsSync(),
+          isTrue,
+          reason:
+              'pdfium is not vendored yet. It is placed by a person on '
+              'purpose (CR-100): $kVendorCommand',
+        );
+      });
 
-      expect(
-        actual,
-        expected,
-        reason:
-            'the DLL in the tree is not the one recorded in '
-            'pdfium.pin.json. Nobody reviews megabytes of opaque bytes '
-            'in a diff, so this is the only thing that would notice.',
-      );
-    });
+      test('$platform: matches the checksum it was pinned at', () {
+        final expected = (entry['binarySha256'] as String).toLowerCase();
+        final actual = sha256.convert(file.readAsBytesSync()).toString();
+
+        expect(
+          actual,
+          expected,
+          reason:
+              'the binary in the tree is not the one recorded in '
+              'pdfium.pin.json. Nobody reviews megabytes of opaque bytes '
+              'in a diff, so this is the only thing that would notice.',
+        );
+      });
+    }
 
     test('the pin names the release it came from', () {
-      final pin = jsonDecode(_pin.readAsStringSync()) as Map<String, dynamic>;
       // A checksum with no provenance is a number. The tag is what makes
       // the binary re-obtainable by somebody who does not trust ours.
-      expect(pin['release'], isA<String>());
-      expect((pin['release']! as String).trim(), isNotEmpty);
-      expect(pin['url'], contains('pdfium-binaries'));
-      expect(pin['archiveSha256'], isA<String>());
+      expect(_pin['release'], isA<String>());
+      expect((_pin['release']! as String).trim(), isNotEmpty);
+      for (final raw in _platforms.values) {
+        final entry = raw as Map<String, dynamic>;
+        expect(entry['url'], contains('pdfium-binaries'));
+        // One release for every platform, so each URL names the same tag.
+        expect(
+          entry['url'],
+          contains((_pin['release']! as String).replaceAll('/', '%2F')),
+        );
+        expect(entry['archiveSha256'], isA<String>());
+      }
     });
 
     test('the licence travels with it', () {
@@ -114,9 +142,46 @@ void main() {
 
     test('the repository copy is found by walking up from anywhere', () {
       // The real filesystem, so this also proves the walk terminates.
+      // Windows only until a macOS binary is pinned (#468): the walk is
+      // the same code on both, and the file it finds is not.
       expect(
-        pdfiumPath(environment: const {}),
+        pdfiumPath(environment: const {}, operatingSystem: 'windows'),
         endsWith('pdfium.dll'),
+      );
+    });
+
+    test("on macOS the shipped copy is the bundle's, in Frameworks", () {
+      // The executable is RackPal.app/Contents/MacOS/<name>, so the copy a
+      // shipped app loads is one level up. Only the bundle's copy exists
+      // here, so a loader that looked beside the executable, as Windows
+      // does, finds nothing and fails the case.
+      final found = pdfiumPath(
+        environment: const {},
+        operatingSystem: 'macos',
+        exists: (path) => path
+            .replaceAll(r'\', '/')
+            .endsWith('/../Frameworks/libpdfium.dylib'),
+      );
+      expect(
+        found.replaceAll(r'\', '/'),
+        endsWith('Frameworks/libpdfium.dylib'),
+      );
+    });
+
+    test('an OS with no vendored binary is told so by name', () {
+      expect(
+        () => pdfiumPath(
+          environment: const {},
+          operatingSystem: 'linux',
+          exists: (_) => true,
+        ),
+        throwsA(
+          isA<PdfiumUnavailable>().having(
+            (e) => e.message,
+            'message',
+            allOf(contains('linux'), contains('windows and macos')),
+          ),
+        ),
       );
     });
   });
