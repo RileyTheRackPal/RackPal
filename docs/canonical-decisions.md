@@ -24963,6 +24963,38 @@ anonymity scrub (`#783`), which this direction makes more likely and which stay 
 **Scope.** An amendment under §8.3, in its own commit: the Store alpha leaves v1's pre-M8 work and waits
 on M8 (§12.60).
 
+### 11.254 DR-255 · macOS CI is a second pipeline on a hosted image, run as an optional PR check, and it may never block
+
+**Settled by the user on 2026-10-17**, opening D4 (`#459`, `#460`) of the macOS debt register (docs/13)
+under DR-009. The user has no Mac, so the job cannot run on a machine of theirs.
+
+**11.254.1 THE FACT.** CI runs on one self-hosted Windows agent (definition 1, the blocking
+build-validation policy on `main`), which costs no hosted minutes. The organisation's hosted
+allowance, read from `distributedtask/resourceusage` on 2026-10-17, is **one free parallel job and
+1,800 minutes a month**, none of it in use. `main` took 70 builds in the first 17 days of October,
+about 124 a month, and there were 22 PR builds in the 31 days before. A macOS run is unmeasured; the
+question priced it at about 22 minutes on the Windows hosted mean of 19.4.
+
+**11.254.2 RULED BY THE USER: AN OPTIONAL PR CHECK.** Chosen over a nightly run when `main` moved
+(the recommendation), a weekly run and manual-only. On last month's count that is about 480 minutes.
+Running on every build was not offered: about 2,700 minutes, 150% of the allowance.
+
+**11.254.3 WHAT FOLLOWS, DECIDED FROM THE TREE.**
+
+1. **A second definition, `azure-pipelines-macos.yml`, not a job in `azure-pipelines.yml`.** A job
+   inside definition 1 would tie the blocking policy's verdict to the hosted allowance.
+2. **It is never blocking.** Every merge would stop the day the minutes ran out. A blocking macOS check
+   needs a macOS agent that costs no minutes, which is a later ruling.
+3. **The Flutter pin is not restated.** The pipeline reads it from `azure-pipelines.yml` with
+   `run_local.ps1`'s two patterns, so DR-248's single home survives a second platform.
+4. **Per-platform and once (D4/2, `#460`).** The timed budgets stay Windows-only: their limits are wall
+   clock calibrated on one machine, and a shared hosted VM measures the VM. The build and its output
+   gate wait for D1 and D6. Everything else runs on both.
+
+**What this does not rule.** The cost of a macOS run, which its first runs measure. The macOS test
+floors, which `tools/ci/run_suite.ps1` records once measured. Notarization (D8), which stays DR-009's
+and DR-254's.
+
 ---
 
 ## 12. Superseded rulings

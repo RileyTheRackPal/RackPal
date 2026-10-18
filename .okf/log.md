@@ -2,6 +2,14 @@
 
 ## 2026-10-17
 
+Entry 142.
+
+* **Added**: [DR-255](decisions/dr-255-macos-ci-is-an-optional-pr-check.md) (macOS CI is a second pipeline on a
+  hosted image, run as an optional PR check that may never block), opening D4 (`#459`) of the macOS debt register.
+* **Note**: **A BUDGET IS A NUMBER, SO READ IT BEFORE ASKING.** The hosted allowance and the build count were each
+  one API call. Together they removed every-build as an option before the question was asked, and put a minute
+  figure on each option that was left.
+
 Entry 141.
 
 * **Added**: [DR-252](decisions/dr-252-the-pdf-embeds-space-mono.md) (the PDF embeds Space Mono for identifier
