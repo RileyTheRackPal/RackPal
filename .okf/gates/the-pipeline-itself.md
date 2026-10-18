@@ -60,9 +60,19 @@ goes looking, which is what `#764` had to do after finding 3,247 tests of slack.
   `integration_test` target. What *is* checked is one step short and labelled as such: the
   four starters were packaged into the bundle and are byte-intact there.
 * **Anything but Windows.** A green Linux job would say nothing about a Windows desktop
-  application, and several suites are Windows-specific by design.
+  application, and several suites are Windows-specific by design. **macOS is covered by
+  [a second definition](the-macos-pipeline.md) since DR-255**, optional and not blocking,
+  so this definition is still Windows only.
 
-## The blind spot that matters
+## The blind spot that matters, and how it closed
+
+**CLOSED ON 2026-10-18, AND NOT BY THIS DEFINITION.** The paragraphs below were true when
+written. The service has since gone red on this definition for environmental reasons
+(builds 195 and 207, recorded in CLAUDE.md), and build 481, the first run of
+[the macOS pipeline](the-macos-pipeline.md), failed 23 test cases: all 23 reached the Tests
+tab with their messages, and `PublishTestResults` failed its step on them. The converter and
+the publish task are the same files in both definitions, so the reporter's red path is now
+observed. What has still never happened is a failing TEST on definition 1.
 
 **Nothing has ever gone red on the service.** Every gate script was mutation-tested
 *locally*, but no Azure DevOps run has ever failed, so the service-side reporting path is

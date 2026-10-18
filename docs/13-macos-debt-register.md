@@ -54,8 +54,8 @@ Cost column is an **estimate**, not a measurement, unless marked otherwise.
 | **D1** | **No `macos/` platform directory.** `apps/rackpal` has `windows/` only | `ls apps/rackpal/` | hours |
 | **D2** | **Native file dialog.** RackPal drives `IFileDialog` itself from `windows/runner/file_dialog_channel.cpp` + `.h`, deliberately, `file_selector` was removed on purpose (`pubspec.yaml:8-20`). macOS needs an `NSOpenPanel`/`NSSavePanel` channel behind the existing `FilePicker` interface | `windows/runner/` | **largest item**: days |
 | **D3** | **`path_provider_windows`** must gain a macOS answer at the one call site | `path_provider_windows` in `apps/rackpal/pubspec.yaml` (cited by name, since the line drifted from `:70` to `:89` by 2026-10-17) | hours |
-| **D4** | **CI has one job, pinned to Windows.** The `windows_ci` job in `azure-pipelines.yml`, which since 2026-08-30 runs on a self-hosted Windows agent in the `Default` pool where it once named `vmImage: 'windows-2022'`. Needs a macOS job, and that job cannot use the Windows agent. Note the pipeline's own header comment already anticipates a matrix: *"that is a later question"*; **it is now this question** | `azure-pipelines.yml` | days |
-| **D5** | **Gate scripts are PowerShell.** Six `.ps1` under `tools/ci/`. Likely runnable under `pwsh` on macOS unmodified, **verify before budgeting a rewrite** | `tools/ci/` | verify first |
+| **D4** | **CI has one job, pinned to Windows.** The `windows_ci` job in `azure-pipelines.yml`, which since 2026-08-30 runs on a self-hosted Windows agent in the `Default` pool where it once named `vmImage: 'windows-2022'`. Needs a macOS job, and that job cannot use the Windows agent. Note the pipeline's own header comment already anticipates a matrix: *"that is a later question"*; **it is now this question**. **A macOS JOB EXISTS SINCE 2026-10-17 (DR-255, §2.5)**: `azure-pipelines-macos.yml`, definition 2, a Microsoft-hosted `macOS-15` image run as an optional PR check, never blocking, at a measured 27.2 minutes. What it lacks is a build: D1 and D6 | `azure-pipelines.yml`; `azure-pipelines-macos.yml` | **job done**; build waits on D1, D6 |
+| **D5** | **Gate scripts are PowerShell.** Six `.ps1` under `tools/ci/`. Likely runnable under `pwsh` on macOS unmodified, **verify before budgeting a rewrite**. **VERIFIED ON BUILD 481 (§2.5)**: one of the six needed changing, `ensure_flutter.ps1`, which probed `flutter.bat` and fetched the Windows archive; it now chooses by OS (`554cdd04`). The other five ran unmodified, and `python` is supplied by a pipeline step | `tools/ci/` | **done** |
 | **D6** | **`verify_windows_build.ps1`** is Windows-specific by name and purpose; needs a macOS counterpart | `tools/ci/` | hours |
 | **D7** | ~~KEYBOARD MODIFIERS~~: **CLEARED, GATE INCOMPLETE.** Was 43 hard-coded `SingleActivator` bindings assuming `Ctrl`, across six files. Now a 35-row `kKeymap` registry whose primary modifier resolves once, in `KeyBinding.activatorFor(TargetPlatform)`, through `defaultTargetPlatform`. **Zero `SingleActivator` instances remain outside the registry today**, but see §3.1 and §2.1: the ban is enforced in **one file**, and not in the package where M3 is built, and M2-F added **nine** more rows to that ungated package (35 → 44), **~~gate owed~~ PAID at #94, §2.2: `keymap_source_ban_test.dart` scans all of `rackpal_ui/lib`, comments stripped, three constructors banned, mutation-verified** | `packages/rackpal_ui/lib/src/keymap/keymap.dart` | **done** |
 | **D8** | **Code signing.** DR-006 rules Windows self-signing; macOS needs **notarisation and stapling**, which D10 names and §12.9 explicitly leaves *"unaffected and still binding"* | canon `:2696`, `:5875` | days + Apple Developer enrolment lead time |
@@ -213,6 +213,53 @@ carried by Story #61 (extended to D15 by BOARD-1j, #1098).
 The remedy is the one §2.3 already names: a row cited by line number goes stale by being right once.
 Name the thing, and let the reader search for it.
 
+### 2.5 The first macOS run (build 481, 2026-10-18): D5 verified, D4 has a job, and the census was right
+
+**DR-255 (canon §11.254) gave D4 a job**: `azure-pipelines-macos.yml`, definition 2, on a
+Microsoft-hosted `macOS-15` image, run as an optional PR check because the organisation's hosted
+allowance is one job of 1,800 minutes a month and a blocking check would let that allowance decide what
+merges. Build 481 was its first run, on `macos-ci-459` at `9fc65910`, and it ran **before** a single
+test was changed, so it measured the tree rather than a tree adjusted to pass.
+
+**D5 is answered, and the register's guess was nearly right.** Of the six `.ps1`, **one** could not run
+on macOS, and reading said so before the run: `ensure_flutter.ps1` probed `flutter.bat`, fetched the
+Windows archive and extracted with `System32\tar.exe`. It now chooses each by OS (`554cdd04`), and on
+its first macOS execution it installed the pin and verified the framework revision. The other five ran
+unmodified. `verify_windows_build.ps1` is not run there, since there is nothing to build (D1, D6). The
+interpreter name was the only other gap, `python` against an image that promises `python3`, and one
+pipeline step closes it for every script rather than a branch in each.
+
+**Every non-suite gate is green on macOS**, the analyzer at exactly the Windows pin, which is the one
+the audit flagged as plausibly platform-dependent.
+
+**A read-only census predicted the reds before the run, case for case.** Six sub-agents read the gate
+scripts and the test trees; their prediction and build 481's result:
+
+| Suite | Predicted | Measured |
+|---|---|---|
+| core, text, export, ui | green, at the Windows floor | green, at the Windows floor |
+| `rackpal_pdfium` | 13 of 22 fail on the pdfium load | 13 of 22 failed, one message: *"found .../win-x64/pdfium.dll but could not load it"* |
+| `apps/rackpal` | 9 fail on the pdfium load, 1 test defect, 4 not registered | exactly that: 1,201 registered against 1,205 |
+
+The one defect was in a test, not the product. `file_store_contract_test.dart` asked
+`Platform.isWindows` which errno to expect from `FakeFileStore`, which has Windows semantics
+everywhere; the host and the fake had always agreed, so it passed for months. The harness now takes the
+store's semantics as a parameter, and a mutation that lies about them fails on Windows with the message
+macOS printed.
+
+**The 22 pdfium cases skip on macOS**, the first `skip:` in this repository, because a check that is red
+for a known reason cannot show a new one. Each cites Story #61 and Chapter #468, and the macOS floors in
+`tools/ci/run_suite.ps1` are lower by exactly them; #468 deletes the skips and those floor rows
+together. **Windows never skips.**
+
+**It costs 27.2 minutes, not the 22 DR-255's question assumed.** The SDK install was 1.5 minutes on a
+cold cache, so caching saves little; `rackpal_ui` is 11.4 of it. On last month's 22 PR builds that is
+about 600 minutes, a third of the allowance.
+
+**And it proved something the Windows pipeline never had.** CLAUDE.md recorded that no test had ever
+failed on the service, so the JUnit reporter had only been seen in the green direction. Build 481's 23
+failures reached the Tests tab with their messages, and `PublishTestResults` failed the step on them.
+
 ---
 
 ## 3. Why D7 is scheduled into M2 and the rest is not
@@ -342,6 +389,8 @@ That is the one item that could turn a bounded port into a design question, but 
 narrows it twice. It is **not** a CR-117 question (that gate is the `.rppj` JSON), and it is
 **not cheap to answer**: the existing determinism test compares two exports in one process, so
 answering it means writing a golden-bytes comparison **and** having D4's macOS job to run it on.
+**The job exists since DR-255 (§2.5)**, and `rackpal_export` passes on it, so what is owed now is
+only the comparison: the suite that passes there compares within one process, not across platforms.
 The text pipeline is already platform-independent by construction; the concrete risk that remains
 is **D14**, and that one is not even macOS-specific.
 

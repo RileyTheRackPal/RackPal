@@ -64,7 +64,16 @@ warm-cache path at 18m28s.
   policy build (~18 min) before the PR can complete.
 - The pipeline is the same gate set as `run_local.ps1` minus the two local-only
   checks (`flutter pin`, `tracked sources`), which a clean clone cannot fail by
-  construction.
+  construction. **AND MINUS TWO MORE THAT NOBODY CHOSE**, found 2026-10-18 while
+  copying the step list for macOS: `glyph coverage` (`tools/glyph_coverage_check.py`)
+  has no step in either pipeline, so CI has never run it, and the named `AC-051 pair
+  coverage` step is absent too (its file still runs inside the core suite).
+- **DEFINITION 2, `RackPal CI (macOS)`** (`azure-pipelines-macos.yml`, DR-255), runs on
+  a Microsoft-hosted `macOS-15` image against the one free hosted job of 1,800 minutes
+  a month, as an **optional** PR check. **It may never be made blocking**: the month the
+  minutes ran out, nothing would merge. It reads the Flutter pin from
+  `azure-pipelines.yml`. Its floors differ only where `$SuiteFloorsMacOS` in
+  `run_suite.ps1` says, and every difference names its cause.
 - **CI RUNS ON A SELF-HOSTED AGENT SINCE 2026-08-30**, `{agent-host}` in the
   **`Default`** pool (not `LocalMachine`, which exists and has zero agents). It
   lives at `C:\Users\riley\Documents\vsts-agent-win-x64-5.277.0` and runs
@@ -151,12 +160,14 @@ warm-cache path at 18m28s.
   `$top` bigger than the number of builds that can finish while yours runs. The same
   poller watching `refs/pull/119/merge` with `$top=10` saw `inProgress` fine, which is
   why this looked like a service delay rather than a filter.
-- **A FAILING TEST is still not proven, and that is a different path sharing a word.**
-  No test has ever failed on a run, so the JUnit converter's output has only ever been
-  parsed in the green direction: **do not yet treat a green Tests tab as proof the
-  reporter works.** Trust the build result; do not yet trust the Tests tab. Every gate
-  script was mutation-tested locally, which is not the same evidence. docs/12 §4.1
-  carries the measurement.
+- **A FAILING TEST IS PROVEN ON THE SERVICE SINCE 2026-10-18, BY THE macOS PIPELINE.**
+  This bullet said *"still not proven"* until then: no test had failed on a run, so the
+  JUnit converter had only been parsed in the green direction. Build `481`, the first run
+  of definition 2 (`azure-pipelines-macos.yml`, DR-255), failed 23 cases on the pdfium
+  debt and one test defect. All 23 reached the Tests tab with their messages, and
+  `PublishTestResults` failed its step on them. **The converter and the publish task are
+  the same files in both definitions**, so this is evidence for definition 1's reporter
+  too; what it is not is a red run OF definition 1. docs/13 §2.5 carries the measurement.
 
 ## The corpus, and which document wins
 
