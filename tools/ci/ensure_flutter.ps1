@@ -67,11 +67,24 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# WHICH OS, DECIDED ONCE. Every caller runs this under pwsh 7 (the pipeline and
+# run_local.ps1 both say `pwsh`), where $IsWindows exists. Windows PowerShell 5.1
+# has no $IsWindows and only ever runs on Windows, so the PSEdition test keeps
+# that case on the Windows branch instead of reading an undefined variable as
+# "not Windows". The macOS job (DR-009) is the only caller of the other branch.
+$onWindows = ($PSVersionTable.PSEdition -ne 'Core') -or $IsWindows
+if (-not $onWindows -and -not $IsMacOS) {
+    Write-Host "##vso[task.logissue type=error]ensure_flutter.ps1 supports Windows and macOS only (DR-009)."
+    exit 1
+}
+
 Write-Host "== flutter pin =="
 Write-Host "  required version : $Version"
 
 if (-not $VerifyOnly) {
-    if (-not $InstallRoot) { $InstallRoot = Join-Path $env:USERPROFILE 'flutter-sdk' }
+    if (-not $InstallRoot) {
+        $InstallRoot = if ($onWindows) { Join-Path $env:USERPROFILE 'flutter-sdk' } else { Join-Path $HOME 'flutter-sdk' }
+    }
     $flutterHome = Join-Path $InstallRoot 'flutter'
     $flutterBin  = Join-Path $flutterHome 'bin'
 
@@ -84,7 +97,7 @@ if (-not $VerifyOnly) {
     # below rejected (build 463). So read the version the SDK records about
     # itself, the marker the pipeline's probe step reads, and REPLACE the
     # SDK when it is not the pin or cannot say what it is.
-    $existing = Join-Path $flutterBin 'flutter.bat'
+    $existing = Join-Path $flutterBin $(if ($onWindows) { 'flutter.bat' } else { 'flutter' })
     if (Test-Path $existing) {
         $marker = Join-Path $flutterHome 'bin/cache/flutter.version.json'
         $onDisk = $null
@@ -94,7 +107,13 @@ if (-not $VerifyOnly) {
         } else {
             Write-Host "  found an SDK at $flutterHome reporting '$onDisk', not ${Version}: replacing it"
             Remove-Item -LiteralPath $flutterHome -Recurse -Force -ErrorAction SilentlyContinue
-            if (Test-Path $flutterHome) { & cmd.exe /c "rmdir /s /q `"$flutterHome`"" }
+            if (Test-Path $flutterHome) {
+                # The second attempt differs by OS: cmd's rmdir copes with the
+                # long paths and read-only files that defeat Remove-Item on
+                # Windows; macOS has no such quirk, so rm is the plain retry.
+                if ($onWindows) { & cmd.exe /c "rmdir /s /q `"$flutterHome`"" }
+                else { & /bin/rm -rf $flutterHome }
+            }
             if (Test-Path $flutterHome) {
                 Write-Host "##vso[task.logissue type=error]could not remove the stale SDK at $flutterHome; delete it by hand and re-run."
                 exit 1
@@ -108,36 +127,69 @@ if (-not $VerifyOnly) {
         # and this script has never been run against it from a developer
         # machine -- see the header of azure-pipelines.yml for what is
         # verified and what is not. If it 404s, the fix is one line here.
-        $archive = "flutter_windows_$Version-stable.zip"
-        $url = "https://storage.googleapis.com/flutter_infra_release/releases/stable/windows/$archive"
-        $zip = Join-Path $env:TEMP $archive
+        if ($onWindows) {
+            $archive = "flutter_windows_$Version-stable.zip"
+            $url = "https://storage.googleapis.com/flutter_infra_release/releases/stable/windows/$archive"
+            $zip = Join-Path $env:TEMP $archive
+        } else {
+            # Apple Silicon has its own archive; the unsuffixed one is Intel.
+            # Asking the OS rather than assuming, because hosted macOS images
+            # come in both architectures. A wrong archive could still run
+            # under Rosetta and report the right version, so the measurement
+            # below could not catch it.
+            $arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
+            $archive = if ($arch -eq [System.Runtime.InteropServices.Architecture]::Arm64) {
+                "flutter_macos_arm64_$Version-stable.zip"
+            } else {
+                "flutter_macos_$Version-stable.zip"
+            }
+            $url = "https://storage.googleapis.com/flutter_infra_release/releases/stable/macos/$archive"
+            $zip = Join-Path ([System.IO.Path]::GetTempPath()) $archive
+            Write-Host "  architecture     : $arch"
+        }
 
         Write-Host "  downloading $url"
         $null = New-Item -ItemType Directory -Path $InstallRoot -Force
         # curl.exe ships with Windows and streams to disk; Invoke-WebRequest
-        # buffers a ~1 GB body in memory first.
+        # buffers a ~1 GB body in memory first. macOS ships curl as /usr/bin/curl.
         # One line: this is the branch that has never been executed, so it is
         # the last place to leave a backtick continuation that a stray
         # trailing space would turn into a syntax error.
-        & curl.exe --location --fail --show-error --silent --retry 3 --retry-delay 5 --output $zip $url
+        $curl = if ($onWindows) { 'curl.exe' } else { '/usr/bin/curl' }
+        & $curl --location --fail --show-error --silent --retry 3 --retry-delay 5 --output $zip $url
         if ($LASTEXITCODE -ne 0) {
             Write-Host "##vso[task.logissue type=error]could not download the pinned Flutter SDK from $url (curl exit $LASTEXITCODE). If the archive name changed, fix it in tools/ci/ensure_flutter.ps1 -- do NOT switch to a channel, the exact version is the point."
             exit 1
         }
 
         Write-Host "  extracting to $InstallRoot"
-        # bsdtar (Windows 10+) unpacks a zip far faster than Expand-Archive.
-        # BY PATH: the bsdtar Windows ships. Run from Git Bash, a bare `tar.exe`
-        # resolved to GNU tar, which read `C:` as a remote host and failed.
-        & (Join-Path $env:SystemRoot 'System32\tar.exe') -xf $zip -C $InstallRoot
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "  tar failed; falling back to Expand-Archive"
-            Expand-Archive -Path $zip -DestinationPath $InstallRoot -Force
+        if ($onWindows) {
+            # bsdtar (Windows 10+) unpacks a zip far faster than Expand-Archive.
+            # BY PATH: the bsdtar Windows ships. Run from Git Bash, a bare `tar.exe`
+            # resolved to GNU tar, which read `C:` as a remote host and failed.
+            & (Join-Path $env:SystemRoot 'System32\tar.exe') -xf $zip -C $InstallRoot
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "  tar failed; falling back to Expand-Archive"
+                Expand-Archive -Path $zip -DestinationPath $InstallRoot -Force
+            }
+        } else {
+            # unzip, not tar and not Expand-Archive. Flutter's macOS archive
+            # carries executable bits (bin/flutter, the Dart SDK binaries) and
+            # symlinks (the framework bundles under bin/cache/artifacts). Info-ZIP
+            # restores both; bsdtar can read the zip but Expand-Archive drops the
+            # bits, which would surface as "permission denied" on the first
+            # `flutter` call, so there is deliberately no fallback here.
+            # -o overwrites without prompting on a re-run over a half-extracted SDK.
+            & /usr/bin/unzip -q -o $zip -d $InstallRoot
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "##vso[task.logissue type=error]could not extract $zip into $InstallRoot (unzip exit $LASTEXITCODE)."
+                exit 1
+            }
         }
         Remove-Item $zip -Force -ErrorAction SilentlyContinue
     }
 
-    $env:PATH = "$flutterBin;$env:PATH"
+    $env:PATH = "$flutterBin$([System.IO.Path]::PathSeparator)$env:PATH"
     # Azure DevOps only: make the PATH change outlive this step.
     Write-Host "##vso[task.prependpath]$flutterBin"
     # BEST EFFORT, DELIBERATELY. These are configuration niceties, not gates:
@@ -150,8 +202,9 @@ if (-not $VerifyOnly) {
     & flutter config --no-cli-animations 2>&1 | Out-Null
     # Desktop has been on by default since 2.10; asserted here so a config
     # left over in a restored SDK cache cannot turn `flutter build windows`
-    # into "no devices".
-    & flutter config --enable-windows-desktop 2>&1 | Out-Null
+    # (or `flutter build macos`) into "no devices".
+    if ($onWindows) { & flutter config --enable-windows-desktop 2>&1 | Out-Null }
+    else { & flutter config --enable-macos-desktop 2>&1 | Out-Null }
 }
 
 # ----------------------------------------------------------------------
