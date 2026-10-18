@@ -54,7 +54,7 @@ Cost column is an **estimate**, not a measurement, unless marked otherwise.
 | **D1** | **No `macos/` platform directory.** `apps/rackpal` has `windows/` only | `ls apps/rackpal/` | hours |
 | **D2** | **Native file dialog.** RackPal drives `IFileDialog` itself from `windows/runner/file_dialog_channel.cpp` + `.h`, deliberately, `file_selector` was removed on purpose (`pubspec.yaml:8-20`). macOS needs an `NSOpenPanel`/`NSSavePanel` channel behind the existing `FilePicker` interface | `windows/runner/` | **largest item**: days |
 | **D3** | **`path_provider_windows`** must gain a macOS answer at the one call site | `path_provider_windows` in `apps/rackpal/pubspec.yaml` (cited by name, since the line drifted from `:70` to `:89` by 2026-10-17) | hours |
-| **D4** | **CI has one job, pinned to Windows.** The `windows_ci` job in `azure-pipelines.yml`, which since 2026-08-30 runs on a self-hosted Windows agent in the `Default` pool where it once named `vmImage: 'windows-2022'`. Needs a macOS job, and that job cannot use the Windows agent. Note the pipeline's own header comment already anticipates a matrix: *"that is a later question"*; **it is now this question**. **A macOS JOB EXISTS SINCE 2026-10-17 (DR-255, §2.5)**: `azure-pipelines-macos.yml`, definition 2, a Microsoft-hosted `macOS-15` image run as an optional PR check, never blocking, at a measured 27.2 minutes. What it lacks is a build: D1 and D6 | `azure-pipelines.yml`; `azure-pipelines-macos.yml` | **job done**; build waits on D1, D6 |
+| **D4** | **CI has one job, pinned to Windows.** The `windows_ci` job in `azure-pipelines.yml`, which since 2026-08-30 runs on a self-hosted Windows agent in the `Default` pool where it once named `vmImage: 'windows-2022'`. Needs a macOS job, and that job cannot use the Windows agent. Note the pipeline's own header comment already anticipates a matrix: *"that is a later question"*; **it is now this question**. **A macOS JOB EXISTS SINCE 2026-10-17 (DR-255, §2.5)**: `azure-pipelines-macos.yml`, definition 2, a Microsoft-hosted `macOS-15` image run as an optional PR check, never blocking, at a measured 27.2 minutes. What it lacks is a build: D1 and D6. **AND IT IS AN INTEL MACHINE**: build 486's forensics step printed `15.7.9 x86_64`, so nothing it proves reaches Apple Silicon (§2.6) | `azure-pipelines.yml`; `azure-pipelines-macos.yml` | **job done**; build waits on D1, D6; arm64 unmeasured |
 | **D5** | **Gate scripts are PowerShell.** Six `.ps1` under `tools/ci/`. Likely runnable under `pwsh` on macOS unmodified, **verify before budgeting a rewrite**. **VERIFIED ON BUILD 481 (§2.5)**: one of the six needed changing, `ensure_flutter.ps1`, which probed `flutter.bat` and fetched the Windows archive; it now chooses by OS (`554cdd04`). The other five ran unmodified, and `python` is supplied by a pipeline step | `tools/ci/` | **done** |
 | **D6** | **`verify_windows_build.ps1`** is Windows-specific by name and purpose; needs a macOS counterpart | `tools/ci/` | hours |
 | **D7** | ~~KEYBOARD MODIFIERS~~: **CLEARED, GATE INCOMPLETE.** Was 43 hard-coded `SingleActivator` bindings assuming `Ctrl`, across six files. Now a 35-row `kKeymap` registry whose primary modifier resolves once, in `KeyBinding.activatorFor(TargetPlatform)`, through `defaultTargetPlatform`. **Zero `SingleActivator` instances remain outside the registry today**, but see §3.1 and §2.1: the ban is enforced in **one file**, and not in the package where M3 is built, and M2-F added **nine** more rows to that ungated package (35 → 44), **~~gate owed~~ PAID at #94, §2.2: `keymap_source_ban_test.dart` scans all of `rackpal_ui/lib`, comments stripped, three constructors banned, mutation-verified** | `packages/rackpal_ui/lib/src/keymap/keymap.dart` | **done** |
@@ -130,7 +130,10 @@ the file named.
 
 **Not yet measured, and required before this register can be called complete:** whether the four
 starter projects open on macOS; whether the PDF export's **content streams** are identical across
-platforms; and whether `pwsh` runs the gate suite unmodified (D5).
+platforms; and whether `pwsh` runs the gate suite unmodified (D5). **Two of the three are answered
+since 2026-10-18**: D5 on build 481 (§2.5), and the content streams on build 486, which found the
+whole FILE identical on Intel macOS and left Apple Silicon unmeasured (§2.6). Whether the starters
+open waits on a build (D1).
 
 > **Correction, 2026-07-29.** This paragraph previously read *"whether the PDF export is
 > byte-identical across platforms (CR-117 is a byte gate…)"*. **That cited the wrong gate, and the
@@ -260,6 +263,41 @@ about 600 minutes, a third of the allowance.
 failed on the service, so the JUnit reporter had only been seen in the green direction. Build 481's 23
 failures reached the Tests tab with their messages, and `PublishTestResults` failed the step on them.
 
+### 2.6 The PDF is the same file on macOS (build 486, 2026-10-18), on Intel, and arm64 is not measured
+
+§4 called one item *"genuinely unknown"*: whether the export's content streams survive a platform
+change. `export_determinism_test.dart` could not say, because it compares two exports made in one
+process. **`packages/rackpal_export/test/starters_pdf_golden_test.dart` can** (Story #1106): it
+exports the four starters at a fixed `issuedAt` and holds each against a PDF committed from Windows
+under `test/fixtures/starters/`, which is a golden as DR-253 defines one, a committed fixture
+compared exactly. It asserts two layers, because they fail for different reasons: **the content**
+(every indirect object with its streams inflated and its compressed `/Length` blanked) and **the
+file** (byte for byte). Every stream is deflated by `dart:io`'s zlib, so the file is a property of
+the SDK's zlib build as well as of the drawing, and a failure says which layer moved.
+
+**What could vary was censused before the test was written.** The issue date is injected, and
+`/CreationDate` and `/ID` are rewritten from it and from the contents (M6-I5). The starters are
+`eol=lf` and the font `binary`. Nothing in the lib trees of `rackpal_export`, `rackpal_text` or
+`rackpal_core` reads `Platform`, a locale, a time zone, or a `HashMap` or `HashSet`. Two inputs were
+left that the tree cannot pin: **the SDK's zlib**, and **the platform libm** behind `math.sin`,
+`math.cos` and `math.pow`, which the scene and `pdf` itself call before `PdfNum` rounds to five
+places.
+
+**Build 486, on `6b794ea5`: all ten cases passed, and so did every suite.** The four starters
+came out of macOS as the same files Windows wrote, byte for byte, so the content streams are
+identical too, and the zlib and libm differences that could have moved them did not. No D-row is
+owed for it.
+
+**THE MACHINE WAS INTEL.** The `macOS-15` hosted image ran `15.7.9 x86_64`, so this compared two
+operating systems on one CPU architecture. That is a weaker result than the question deserves:
+an Apple Silicon Mac runs an arm64 Dart VM, whose zlib and libm are different builds of exactly the
+two inputs the census could not pin. Whether those builds produce different output is **not read
+from their sources here**; that they could is the whole reason to measure. **Whether arm64
+writes the same file is unmeasured**, and the golden is already the test for it: it needs an arm64
+runner and nothing else. A failure there names the object and sheet that moved, and says whether
+only the encoding did, which would be the cheaper finding: the drawing would be identical and the
+deliverable would differ only in how it is compressed.
+
 ---
 
 ## 3. Why D7 is scheduled into M2 and the rest is not
@@ -384,15 +422,17 @@ were built for other purposes and are already in place. The two items with real 
 **D8** (Apple Developer enrolment, notarisation) and **D11** (a physical print test); neither is
 code, and both should be started early precisely because they are not.
 
-**What is genuinely unknown** is whether the PDF's **content streams** survive a platform change.
-That is the one item that could turn a bounded port into a design question, but §2's correction
-narrows it twice. It is **not** a CR-117 question (that gate is the `.rppj` JSON), and it is
-**not cheap to answer**: the existing determinism test compares two exports in one process, so
-answering it means writing a golden-bytes comparison **and** having D4's macOS job to run it on.
-**The job exists since DR-255 (§2.5)**, and `rackpal_export` passes on it, so what is owed now is
-only the comparison: the suite that passes there compares within one process, not across platforms.
-The text pipeline is already platform-independent by construction; the concrete risk that remains
-is **D14**, and that one is not even macOS-specific.
+**What was genuinely unknown** is whether the PDF's **content streams** survive a platform change,
+the one item that could have turned a bounded port into a design question. ~~Answering it means
+writing a golden-bytes comparison **and** having D4's macOS job to run it on.~~ **BOTH EXIST, AND
+THE ANSWER IS YES ON INTEL (§2.6).** `starters_pdf_golden_test.dart` holds the four starters against
+PDFs committed from Windows, and on build 486 macOS wrote the same four files byte for byte, so the
+content streams are identical and so is everything around them. **What stays unknown is narrower:
+Apple Silicon.** The hosted image is `x86_64`, and an arm64 Dart VM carries its own builds of zlib
+and libm, the two inputs the tree cannot pin. The golden already answers it the day it runs on an arm64
+machine. It is still **not** a CR-117 question (that gate is the `.rppj` JSON). The text pipeline is
+platform-independent by construction; the concrete risk that remains is **D14**, and that one is
+not even macOS-specific.
 
 **Two ordering consequences worth acting on before the big items.** ~~**D13 before D2**: widening
 the dialog contract after the macOS implementation exists means writing it twice.~~ **BOUGHT, and
