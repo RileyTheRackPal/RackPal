@@ -107,16 +107,15 @@ if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) {
 
 # --- the native set -------------------------------------------------------
 $frameworksDir = Join-Path $AppPath 'Contents/Frameworks'
-# THE EXACT SET IS NOT KNOWN YET. These three are the ones that must be there
-# for any runnable build with pdfium: the engine, the compiled app, and the
-# vendored dylib (DR-153, CR-100). The plugin frameworks (window_manager,
-# screen_retriever and whatever else the lock graph pulls in) are not listed
-# because no build had been measured when this was written. The listing below
-# is printed on every run so the first CI run records the real set, and THIS
-# LIST IS TO BE TIGHTENED TO AN EXACT, WITH-REASONS LIST once measured, as
-# verify_windows_build.ps1's DLL list is. Until then an extra entry is
-# printed and does not fail, because a list that fails on the unmeasured is a
-# list that gets deleted.
+# THE EXACT SET, MEASURED ON BUILD 497 (2026-10-19), and an entry in either
+# direction fails, as verify_windows_build.ps1's DLL list does. The first
+# version of this script required these three and only PRINTED the rest,
+# because no build had been measured and a list that fails on the
+# unmeasured is a list that gets deleted. Build 497 measured it: these three
+# and nothing else. The plugins (window_manager, screen_retriever_macos) are
+# linked statically through Swift Package Manager rather than embedded as
+# frameworks, so a plugin framework appearing here means that changed, and
+# somebody should know why before it ships.
 $expectedNative = [ordered]@{
     'FlutterMacOS.framework' =
         'the Flutter engine itself. Its absence means the build produced no runnable application.'
@@ -142,6 +141,39 @@ foreach ($entry in $actualNative) {
 foreach ($name in $expectedNative.Keys) {
     if ($name -notin $actualNative) {
         $problems += "expected native library NOT shipped: $name -- $($expectedNative[$name])"
+    }
+}
+foreach ($name in $actualNative) {
+    if (-not $expectedNative.Contains($name)) {
+        $problems += "UNEXPECTED entry in Contents/Frameworks: $name. Add it to `$expectedNative with the reason it ships, or find what started embedding it."
+    }
+}
+
+# --- the app itself is universal ------------------------------------------
+# The dylib's arm64 slice (checked below) is only ever loaded by an arm64
+# process. If the executable or the frameworks it links were x86_64 alone,
+# an Apple Silicon Mac would run the whole app under Rosetta, the x86_64
+# slice of pdfium would load there too, and the arm64 half would ship and
+# never run anywhere. This Intel image cannot execute arm64, so presence is
+# again the check.
+$universal = [ordered]@{
+    'Contents/MacOS/RackPal'                               = 'the executable'
+    'Contents/Frameworks/App.framework/App'                = 'the compiled Dart program'
+    'Contents/Frameworks/FlutterMacOS.framework/FlutterMacOS' = 'the engine'
+}
+foreach ($rel in $universal.Keys) {
+    $bin = Join-Path $AppPath $rel
+    if (-not (Test-Path -LiteralPath $bin)) {
+        $problems += "no $rel ($($universal[$rel])) to check for slices"
+        continue
+    }
+    $out = & /usr/bin/lipo -archs $bin 2>&1
+    $slices = @(("$out" -split '\s+') | Where-Object { $_ })
+    Write-Host "  $rel slices : $($slices -join ' ')"
+    foreach ($want in 'x86_64', 'arm64') {
+        if ($LASTEXITCODE -ne 0 -or $want -notin $slices) {
+            $problems += "$rel ($($universal[$rel])) has no $want slice (found: $($slices -join ' ')); an Apple Silicon Mac would run this build under Rosetta."
+        }
     }
 }
 
