@@ -84,3 +84,17 @@ third_party/pdfium/** binary
 # CRLF checkout invites a rewrite on the first `pub get`, so check it out
 # the way pub writes it.
 pubspec.lock text eol=lf
+
+# ==================================================================
+# THE macOS RUNNER (DR-009, DR-256)
+# ==================================================================
+# The macOS CI job checks out LF, and Xcode and plutil expect LF in a
+# .pbxproj, .xcscheme, .plist, .entitlements or .xcconfig. The root
+# `* text=auto` would give a Windows checkout CRLF in all of them, so the
+# whole tree is pinned `eol=lf` and a Mac and a Windows checkout read the
+# same bytes. The rasters are listed AFTER it because a later line wins:
+# `text eol=lf` would otherwise re-enable text handling that the earlier
+# `*.png binary` line had switched off.
+apps/rackpal/macos/** text eol=lf
+apps/rackpal/macos/**/*.png binary
+apps/rackpal/macos/**/*.icns binary

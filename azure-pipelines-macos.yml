@@ -28,8 +28,10 @@
 #     frame (16.7 ms) calibrated on the author's machine. A shared hosted
 #     VM measures the VM, not the tree, and a red there teaches people to
 #     ignore this pipeline. The budgets stay gated on Windows.
-#   * `flutter build` and its output gate: there is no `macos/` runner
-#     yet (D1, #453/#454) and no verify_macos_build.ps1 (D6, #463).
+# The build IS here: `flutter build macos --release` and its output gate
+# arrive with D1 (the `macos/` runner, #453/#454) and D6
+# (tools/ci/verify_macos_build.ps1, #463), which the header used to say this
+# file was waiting for. Only the timed budgets still stay on Windows.
 # The analyzer, the formatter and the Python document gates cannot differ
 # by platform in what they check, but they cost seconds and they ARE the
 # D5 question ("do the gate scripts run under pwsh on macOS?"), so they
@@ -38,7 +40,10 @@
 # WHAT IS NOT VERIFIED. As of the commit that adds this file, nothing in
 # it has run. Its first runs are the D5/1 (#461) verification, and the
 # floors in tools/ci/run_suite.ps1 are Windows counts until a macOS run
-# measures its own. Expect the first run to be red, and read WHERE.
+# measures its own. Expect the first run to be red, and read WHERE. The
+# build steps at the end are the least measured of all: the Frameworks set
+# verify_macos_build.ps1 expects is only the three entries that cannot be
+# absent, and its first run is what records the real list.
 # ======================================================================
 
 trigger: none
@@ -103,8 +108,8 @@ jobs:
           Write-Host "pwsh          : $($PSVersionTable.PSVersion)"
           Write-Host ''
           Write-Host '-- how git resolved the byte-exact goldens --'
-          git check-attr text eol -- apps/rackpal/assets/starters/apartment.rackpal
-          git check-attr text eol -- packages/rackpal_core/test/fixtures/a_empty_project.rackpal.json
+          git check-attr text eol -- apps/rackpal/assets/starters/apartment.rppj
+          git check-attr text eol -- packages/rackpal_core/test/fixtures/a_empty_project.rmpj.json
           New-Item -ItemType Directory -Path '$(ciOutDir)' -Force | Out-Null
         displayName: 'Checkout forensics'
         continueOnError: true
@@ -224,9 +229,9 @@ jobs:
         displayName: 'Test: rackpal_export (pure Dart)'
         condition: succeededOrFailed()
 
-      # Expected RED until Story #61 vendors a macOS pdfium: the loader
-      # hard-codes third_party/pdfium/win-x64/pdfium.dll. Left in, not
-      # skipped, so the debt is visible on every run until it is paid.
+      # The vendored universal dylib (#468) loads here as its x86_64 slice:
+      # this image is Intel, so the arm64 half is checked for presence by
+      # pdfium_vendoring_test.dart and run only on an Apple Silicon Mac.
       - pwsh: |
           pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackpal_pdfium -Runner dart -Name rackpal_pdfium -OutDir '$(ciOutDir)'
           exit $LASTEXITCODE
@@ -263,4 +268,68 @@ jobs:
         inputs:
           targetPath: '$(ciOutDir)'
           artifact: 'test-streams-macos'
+          publishLocation: 'pipeline'
+
+      # ==================================================================
+      # THE macOS RELEASE BUILD (D1 #453/#454, D6 #463)
+      # ==================================================================
+      # Runs even when a suite failed, for the reason the Windows file gives:
+      # whether the application still builds is independent information.
+      # The hosted image is Intel (DR-255), so this builds and runs the
+      # x86_64 slice only; the arm64 slice of pdfium is checked for presence
+      # by the gate below and executed by no CI.
+      - pwsh: |
+          flutter build macos --release
+          $code = $LASTEXITCODE
+          if ($code -eq 0) {
+            # Consumed by the three steps below. WITHOUT IT they would run
+            # against a bundle that does not exist and file a second,
+            # misleading failure on top of the real one.
+            Write-Host '##vso[task.setvariable variable=macosBuildProduced]true'
+          }
+          exit $code
+        displayName: 'Build macOS release'
+        workingDirectory: 'apps/rackpal'
+        condition: succeededOrFailed()
+
+      # Asserts things about what the build ACTUALLY PRODUCED (D6): the
+      # bundle layout, both pdfium slices, the signatures, no JNI library,
+      # the four starters. See the script's header.
+      - pwsh: |
+          pwsh -NoProfile -File tools/ci/verify_macos_build.ps1
+          exit $LASTEXITCODE
+        displayName: 'Gate: macOS release output'
+        condition: and(succeededOrFailed(), eq(variables['macosBuildProduced'], 'true'))
+
+      # `ditto`, NOT ArchiveFiles@2. A framework is built of symlinks
+      # (Versions/Current and the top-level links into it), and a zip that
+      # flattens them or drops the executable bit breaks the bundle's code
+      # signature, which macOS reports to whoever downloads it as "damaged".
+      # `ditto -c -k --keepParent` is Apple's own way to zip an .app and keeps
+      # symlinks, modes and signatures. AND THE ARCHIVE IS ROUND-TRIPPED: it is
+      # extracted into an empty directory and the extracted app must pass the
+      # same `codesign --verify --strict` the build did, so "the download is
+      # intact" is checked rather than assumed. It is still an ad-hoc,
+      # un-notarised build for inspection; D8 makes a shippable one.
+      - pwsh: |
+          $app = '$(Build.SourcesDirectory)/apps/rackpal/build/macos/Build/Products/Release/RackPal.app'
+          $zip = '$(Build.ArtifactStagingDirectory)/rackpal-macos-$(Build.BuildNumber).zip'
+          & /usr/bin/ditto -c -k --keepParent $app $zip
+          if ($LASTEXITCODE -ne 0) { Write-Host "##vso[task.logissue type=error]ditto could not archive $app"; exit 1 }
+          $check = Join-Path ([System.IO.Path]::GetTempPath()) ('rackpal-zip-' + [guid]::NewGuid().ToString('N'))
+          New-Item -ItemType Directory -Path $check | Out-Null
+          & /usr/bin/ditto -x -k $zip $check
+          if ($LASTEXITCODE -ne 0) { Write-Host "##vso[task.logissue type=error]the archive does not extract"; exit 1 }
+          & /usr/bin/codesign --verify --strict (Join-Path $check 'RackPal.app') 2>&1 | ForEach-Object { Write-Host "  $_" }
+          if ($LASTEXITCODE -ne 0) { Write-Host "##vso[task.logissue type=error]the app extracted from the archive does not verify: the zip broke the bundle"; exit 1 }
+          Write-Host "  archived and round-tripped: $((Get-Item $zip).Length) bytes, extracted app verifies"
+        displayName: 'Archive macOS release (ditto, round-tripped)'
+        condition: and(succeededOrFailed(), eq(variables['macosBuildProduced'], 'true'))
+
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish macOS release artifact'
+        condition: and(succeededOrFailed(), eq(variables['macosBuildProduced'], 'true'))
+        inputs:
+          targetPath: '$(Build.ArtifactStagingDirectory)/rackpal-macos-$(Build.BuildNumber).zip'
+          artifact: 'rackpal-macos'
           publishLocation: 'pipeline'

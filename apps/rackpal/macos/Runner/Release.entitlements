@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<!-- DR-256: no App Sandbox, so nothing is entitled. The release build is AOT and
+     needs no allow-jit; the hardened runtime is on (ENABLE_HARDENED_RUNTIME). -->
+<dict/>
+</plist>

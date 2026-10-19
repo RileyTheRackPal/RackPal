@@ -1,6 +1,23 @@
 # Update Log
 
+## 2026-10-19
+
+Entry 147.
+
+* **Changed**: [the macOS pipeline](gates/the-macos-pipeline.md). It builds `RackPal.app` since D1 and gates it
+  with `verify_macos_build.ps1` (D6): the exact Frameworks set build 497 measured, and the app universal, measured
+  on build 498. Blind spots gain the one that matters most: nothing here ever executes arm64.
+* **Note**: **A TOOL THAT HIDES A BYTE CANNOT REPORT IT.** `flutter create` on Windows wrote the runner CRLF, and
+  two agents checked it with Git Bash's `grep` and `cat -A`, which strip carriage returns on this machine, and
+  reported LF. A new test then failed on the generating machine and would have passed on any clone. A byte count
+  in Python found it. CLAUDE.md now says so.
+
 ## 2026-10-18
+
+Entry 146.
+
+* **Added**: [DR-256](decisions/dr-256-the-macos-bundle-identity.md), the macOS bundle's identity, name and sandbox,
+  opening D1 (`#453`). Three template defaults that a shipped bundle cannot keep, each put as a question with its cost.
 
 Entry 145.
 
