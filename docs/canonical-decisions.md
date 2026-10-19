@@ -24995,6 +24995,42 @@ Running on every build was not offered: about 2,700 minutes, 150% of the allowan
 floors, which `tools/ci/run_suite.ps1` records once measured. Notarization (D8), which stays DR-009's
 and DR-254's.
 
+### 11.255 DR-256 · The macOS app is `com.rackpal.rackpal`, named `RackPal.app`, unsandboxed with the hardened runtime
+
+**Settled by the user on 2026-10-18**, opening D1 (`#453`, `#454`) of the macOS debt register (docs/13)
+under DR-009. Flutter's macOS template supplies three defaults that a shipped bundle cannot keep, and each
+was put as a question with its cost.
+
+**11.255.1 THE FACTS.** `flutter create` writes the bundle identifier into `AppInfo.xcconfig` and the
+test target, and the copyright line into the same file as `Copyright © <year> <org>`. macOS keys a
+bundle's preferences, its privacy permissions and, when sandboxed, its data container on that
+identifier, so changing it after release orphans all three. The template turns **App Sandbox on** in both
+entitlements files. The bundle's file name is `PRODUCT_NAME`, which is also the bold application menu and
+"Quit …" on a Mac. Windows already ships as `com.rackpal`: `Runner.rc` gives `CompanyName "com.rackpal"`
+and `LegalCopyright "Copyright (C) 2026 com.rackpal"`, and its binary is `rackpal.exe` behind a shortcut
+titled "RackPal".
+
+**11.255.2 RULED BY THE USER, EACH ON THE RECOMMENDATION.**
+
+1. **The bundle identifier is `com.rackpal.rackpal`**, the identifier `flutter create --org com.rackpal`
+   produces, so both platforms name the same maker. It names no person, which DR-254 §11.253.3.3 requires
+   of any distribution identity. Not taken: `com.rackpal.app`; a domain the author controls, which
+   could publish their identity in every copy.
+2. **No App Sandbox; the hardened runtime is on.** Files are opened and saved by plain path as on
+   Windows, recent files survive a relaunch without security-scoped bookmarks, and data lives in
+   `~/Library/Application Support/`. The hardened runtime is what notarisation (D8) requires. The cost,
+   stated in the question: the Mac App Store is closed without revisiting this, which DR-254's direction
+   (a download and a Homebrew cask) does not need. Not taken: the sandbox, which would have broken the
+   recent-files list after relaunch until every path became a bookmark, moved data into
+   `~/Library/Containers/`, and needed a library-validation exception for the vendored pdfium.
+3. **The bundle is `RackPal.app`**, the name the Windows window title already uses, so the menu bar reads
+   "RackPal". The executable inside it is named the same. Not taken: `rackpal.app`, which matches the
+   Windows binary and reads "Quit rackpal".
+
+**What this does not rule.** The copyright holder's name, which stays `com.rackpal` as on Windows until a
+ruling names one. Code signing and notarisation (D8). Document-type registration in `Info.plist`, which
+the Windows runner does not do either.
+
 ---
 
 ## 12. Superseded rulings

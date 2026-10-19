@@ -2,6 +2,11 @@
 
 ## 2026-10-18
 
+Entry 146.
+
+* **Added**: [DR-256](decisions/dr-256-the-macos-bundle-identity.md), the macOS bundle's identity, name and sandbox,
+  opening D1 (`#453`). Three template defaults that a shipped bundle cannot keep, each put as a question with its cost.
+
 Entry 145.
 
 * **Changed**: [a vendored binary needs its own control](practices/a-vendored-binary-needs-its-own-control.md). Its third
