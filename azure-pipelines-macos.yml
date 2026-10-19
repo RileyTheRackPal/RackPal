@@ -301,20 +301,30 @@ jobs:
         displayName: 'Gate: macOS release output'
         condition: and(succeededOrFailed(), eq(variables['macosBuildProduced'], 'true'))
 
-      # ArchiveFiles zips the bundle as a directory tree. It does not run
-      # `ditto`, so whether the executable bit and the framework symlinks
-      # survive the round trip is UNMEASURED; the artifact is for a reviewer
-      # to inspect, not a release, and D8 (signing, notarisation) is where a
-      # shippable archive gets made.
-      - task: ArchiveFiles@2
-        displayName: 'Archive macOS release'
+      # `ditto`, NOT ArchiveFiles@2. A framework is built of symlinks
+      # (Versions/Current and the top-level links into it), and a zip that
+      # flattens them or drops the executable bit breaks the bundle's code
+      # signature, which macOS reports to whoever downloads it as "damaged".
+      # `ditto -c -k --keepParent` is Apple's own way to zip an .app and keeps
+      # symlinks, modes and signatures. AND THE ARCHIVE IS ROUND-TRIPPED: it is
+      # extracted into an empty directory and the extracted app must pass the
+      # same `codesign --verify --strict` the build did, so "the download is
+      # intact" is checked rather than assumed. It is still an ad-hoc,
+      # un-notarised build for inspection; D8 makes a shippable one.
+      - pwsh: |
+          $app = '$(Build.SourcesDirectory)/apps/rackpal/build/macos/Build/Products/Release/RackPal.app'
+          $zip = '$(Build.ArtifactStagingDirectory)/rackpal-macos-$(Build.BuildNumber).zip'
+          & /usr/bin/ditto -c -k --keepParent $app $zip
+          if ($LASTEXITCODE -ne 0) { Write-Host "##vso[task.logissue type=error]ditto could not archive $app"; exit 1 }
+          $check = Join-Path ([System.IO.Path]::GetTempPath()) ('rackpal-zip-' + [guid]::NewGuid().ToString('N'))
+          New-Item -ItemType Directory -Path $check | Out-Null
+          & /usr/bin/ditto -x -k $zip $check
+          if ($LASTEXITCODE -ne 0) { Write-Host "##vso[task.logissue type=error]the archive does not extract"; exit 1 }
+          & /usr/bin/codesign --verify --strict (Join-Path $check 'RackPal.app') 2>&1 | ForEach-Object { Write-Host "  $_" }
+          if ($LASTEXITCODE -ne 0) { Write-Host "##vso[task.logissue type=error]the app extracted from the archive does not verify: the zip broke the bundle"; exit 1 }
+          Write-Host "  archived and round-tripped: $((Get-Item $zip).Length) bytes, extracted app verifies"
+        displayName: 'Archive macOS release (ditto, round-tripped)'
         condition: and(succeededOrFailed(), eq(variables['macosBuildProduced'], 'true'))
-        inputs:
-          rootFolderOrFile: '$(Build.SourcesDirectory)/apps/rackpal/build/macos/Build/Products/Release/RackPal.app'
-          includeRootFolder: true
-          archiveType: 'zip'
-          archiveFile: '$(Build.ArtifactStagingDirectory)/rackpal-macos-$(Build.BuildNumber).zip'
-          replaceExistingArchive: true
 
       - task: PublishPipelineArtifact@1
         displayName: 'Publish macOS release artifact'
