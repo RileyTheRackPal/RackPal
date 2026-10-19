@@ -8,8 +8,9 @@
 // So `dartjni.dll` — an ANDROID JNI BRIDGE — sat in
 // `build/windows/x64/runner/Release/` beside `rackpal.exe`, pulled in by
 // `file_selector_android` and `path_provider_android`, which came along
-// for the ride with the two umbrella packages. This app has no `android/`,
-// `ios/`, `macos/` or `linux/` directory. That DLL could never be loaded,
+// for the ride with the two umbrella packages. This app had no `android/`,
+// `ios/`, `macos/` or `linux/` directory (macOS arrived later, at D1 under
+// DR-256, and Android never has). That DLL could never be loaded,
 // it added weight to a ZIP meant to be copied onto a USB stick, and it was
 // one more unsigned native binary for an enterprise allowlist to refuse.
 import 'dart:io';
