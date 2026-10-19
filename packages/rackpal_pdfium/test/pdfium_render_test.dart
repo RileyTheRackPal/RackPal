@@ -15,7 +15,6 @@
 // whole sheet black, which is what an unfilled buffer looks like: PDF
 // pages have no background, so anything the page does not paint stays
 // whatever the bitmap already held, and a zeroed bitmap is black.
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:rackpal_core/rackpal_core.dart';
@@ -36,18 +35,6 @@ PdfiumDocument openOrFail(Uint8List bytes) {
 /// How many distinct byte values a raster holds, which is the cheapest
 /// honest question to ask of a picture.
 int distinctValues(PdfiumRaster raster) => raster.bgr.toSet().length;
-
-// The only `skip:` reason in this package. third_party/pdfium/ vendors
-// win-x64 alone (DR-153, CR-100), so on macOS the loader finds the Windows
-// DLL and dlopen refuses it: 13 cases here failed with that one message on
-// the first macOS run (build 481, DR-255). A check red for a known reason
-// cannot show a new one, so they skip there, and the macOS floor in
-// tools/ci/run_suite.ps1 is lower by exactly them. Chapter #468 (Story #61)
-// deletes this and that floor row together. 'an empty file is refused'
-// never reaches the binary, so it runs everywhere. Windows never skips.
-final String? noMacOSPdfium = Platform.isMacOS
-    ? 'no macOS pdfium is vendored yet (Story #61, Chapter #468)'
-    : null;
 
 void main() {
   group('a CAD plot renders', () {
@@ -164,7 +151,7 @@ void main() {
         reason: 'each page names a different room',
       );
     });
-  }, skip: noMacOSPdfium);
+  });
 
   group('nothing throws on a bad file (CR-093)', () {
     test('an empty file is refused', () {
@@ -180,7 +167,7 @@ void main() {
         (result as Err<PdfiumDocument>).error.toString(),
         contains('not a PDF'),
       );
-    }, skip: noMacOSPdfium);
+    });
 
     test('a truncated plot is refused rather than half-rendered', () {
       final whole = vectorPdf();
@@ -191,7 +178,7 @@ void main() {
         addTearDown(value.close);
         expect(value.pageCount, greaterThan(0));
       }
-    }, skip: noMacOSPdfium);
+    });
 
     test('a page past the end is an Err naming both numbers', () {
       final doc = openOrFail(vectorPdf(pages: 1));
@@ -203,7 +190,7 @@ void main() {
         (result as Err<PdfiumRaster>).error.toString(),
         allOf(contains('page 5'), contains('has 1')),
       );
-    }, skip: noMacOSPdfium);
+    });
 
     test('a zero-sized raster is refused before pdfium is asked', () {
       final doc = openOrFail(vectorPdf(pages: 1));
@@ -211,19 +198,19 @@ void main() {
 
       expect(doc.render(0, width: 0, height: 10), isA<Err<PdfiumRaster>>());
       expect(doc.render(0, width: 10, height: -1), isA<Err<PdfiumRaster>>());
-    }, skip: noMacOSPdfium);
+    });
 
     test('a closed document refuses rather than using a freed handle', () {
       final doc = openOrFail(vectorPdf(pages: 1))..close();
 
       expect(doc.render(0, width: 10, height: 10), isA<Err<PdfiumRaster>>());
       expect(doc.sizeOf(0), isA<Err<PdfiumPageSize>>());
-    }, skip: noMacOSPdfium);
+    });
 
     test('closing twice is not a double free', () {
       openOrFail(vectorPdf(pages: 1))
         ..close()
         ..close();
-    }, skip: noMacOSPdfium);
+    });
   });
 }

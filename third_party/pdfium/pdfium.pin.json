@@ -1,8 +1,21 @@
 {
   "release": "chromium/8044",
-  "artifact": "pdfium-win-x64.tgz",
-  "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F8044/pdfium-win-x64.tgz",
-  "archiveSha256": "78a17d9a5f14467631c26a3ac8741b27a0471ecc05bd6a119b523598160a0537",
-  "dllSha256": "04100c03e41cac1f979e36e5e26fb860bcb5a7461f53830d3c098716624a27a9",
-  "recordedAt": "2026-09-10"
+  "platforms": {
+    "mac-univ": {
+      "artifact": "pdfium-mac-univ.tgz",
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F8044/pdfium-mac-univ.tgz",
+      "archiveSha256": "69585a13d636c5dc1df86827390edfd469c8ddae62f5a102bdea4500eaf6ea5d",
+      "binary": "mac-univ/libpdfium.dylib",
+      "binarySha256": "862a3c6d60954a2d0dd9c7820550bdf159812501adcd2571c04145ebe94f9ca6",
+      "recordedAt": "2026-10-18"
+    },
+    "win-x64": {
+      "artifact": "pdfium-win-x64.tgz",
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F8044/pdfium-win-x64.tgz",
+      "archiveSha256": "78a17d9a5f14467631c26a3ac8741b27a0471ecc05bd6a119b523598160a0537",
+      "binary": "win-x64/pdfium.dll",
+      "binarySha256": "04100c03e41cac1f979e36e5e26fb860bcb5a7461f53830d3c098716624a27a9",
+      "recordedAt": "2026-09-10"
+    }
+  }
 }

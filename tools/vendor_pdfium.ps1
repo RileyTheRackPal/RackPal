@@ -1,46 +1,62 @@
 <#
 .SYNOPSIS
-    Vendors pdfium into third_party/pdfium, pinned by version and SHA-256.
+    Vendors pdfium into third_party/pdfium, pinned by version and SHA-256,
+    one artifact per platform.
 
 .DESCRIPTION
     CR-100 rules that the pdfium binaries are "vendored into the repo rather
     than downloaded at build time (a network-fetched binary in a signed
     release is a supply-chain and reproducibility problem, not just a CI
-    problem)". DR-153 §11.152.3 makes that concrete: one Windows x64
-    pdfium.dll, committed, pinned by release tag and checksum.
+    problem)". DR-153 §11.152.3 makes that concrete: committed, pinned by
+    release tag and checksum.
 
-    THIS SCRIPT IS RUN ONCE BY A PERSON, NOT BY THE BUILD. That is the whole
-    point. Nothing in CI or in a developer's ordinary loop invokes it: the
-    binary is already in the tree, and `-Verify` is what checks that the one
-    sitting there is the one that was pinned.
+    THIS SCRIPT IS RUN ONCE PER PLATFORM BY A PERSON, NOT BY THE BUILD. That
+    is the whole point. Nothing in CI or in a developer's ordinary loop
+    invokes it: the binaries are already in the tree, and `-Verify` is what
+    checks that the ones sitting there are the ones that were pinned.
 
     THE TRUST DECISION IS THE HUMAN'S AND THE SCRIPT SAYS SO. On a first run
-    there is no checksum to verify against, because a checksum invented by
-    the thing doing the downloading proves nothing. So `-Bootstrap` prints
-    what it got, writes the pin, and tells you to check it against the
-    release page before committing. Every run after that verifies.
+    for a platform there is no checksum to verify against, because a
+    checksum invented by the thing doing the downloading proves nothing. So
+    `-Bootstrap` compares the archive against the digest GitHub publishes for
+    the release asset, refuses a mismatch, prints what it got, writes that
+    platform's pin entry, and tells you to check it against the release page
+    before committing. Every run after that verifies.
+
+    ONE RELEASE FOR EVERY PLATFORM. The Windows DLL and the macOS dylib come
+    from the same bblanchon/pdfium-binaries tag, so a document renders
+    through the same pdfium wherever it is opened. A second tag is refused
+    rather than quietly mixed in; moving the release re-pins every platform.
+
+.PARAMETER Platform
+    Which artifact: 'win-x64' (the default, pdfium.dll) or 'mac-univ' (one
+    universal libpdfium.dylib holding both the x86_64 and arm64 slices,
+    DR-255's macOS job loading the first and an Apple Silicon Mac the
+    second).
 
 .PARAMETER Release
-    The bblanchon/pdfium-binaries release tag, e.g. 'chromium/7047'.
+    The bblanchon/pdfium-binaries release tag, e.g. 'chromium/8044'.
     Required unless the pin file already names one.
     Releases: https://github.com/bblanchon/pdfium-binaries/releases
 
 .PARAMETER Bootstrap
-    Record the observed checksums into the pin file instead of verifying
-    against them. Use once, then read the printed hashes against the
-    release page.
+    Record the observed checksums into the pin entry for -Platform instead
+    of verifying against them. Use once per platform, then read the printed
+    hashes against the release page.
 
 .PARAMETER Verify
-    Check the committed DLL against the pin and exit. Downloads nothing.
+    Check EVERY pinned binary against the pin and exit. Downloads nothing.
 
 .EXAMPLE
-    pwsh -File tools/vendor_pdfium.ps1 -Release chromium/7047 -Bootstrap
+    pwsh -File tools/vendor_pdfium.ps1 -Platform mac-univ -Bootstrap
 
 .EXAMPLE
     pwsh -File tools/vendor_pdfium.ps1 -Verify
 #>
 [CmdletBinding()]
 param(
+    [ValidateSet('win-x64', 'mac-univ')]
+    [string] $Platform = 'win-x64',
     [string] $Release,
     [switch] $Bootstrap,
     [switch] $Verify
@@ -51,8 +67,15 @@ Set-StrictMode -Version Latest
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $vendorDir = Join-Path $repoRoot 'third_party/pdfium'
-$dllPath = Join-Path $vendorDir 'win-x64/pdfium.dll'
 $pinPath = Join-Path $vendorDir 'pdfium.pin.json'
+
+# Per platform: the release artifact, the file inside it, and where that
+# file is committed. The committed path is what pdfium_library.dart looks
+# for, and pdfium_vendoring_test.dart holds the two to each other.
+$layouts = @{
+    'win-x64'  = @{ artifact = 'pdfium-win-x64.tgz';  inner = 'bin/pdfium.dll';      binary = 'win-x64/pdfium.dll' }
+    'mac-univ' = @{ artifact = 'pdfium-mac-univ.tgz'; inner = 'lib/libpdfium.dylib'; binary = 'mac-univ/libpdfium.dylib' }
+}
 
 function Read-Pin {
     if (-not (Test-Path $pinPath)) { return $null }
@@ -64,35 +87,70 @@ function Get-Sha256([string] $path) {
 }
 
 # ======================================================================
-# -Verify: the committed tree against the committed pin
+# -Verify: the committed tree against the committed pin, every platform
 # ======================================================================
 # Runs with no network and is the only mode anything automated should use.
 if ($Verify) {
     $pin = Read-Pin
     if ($null -eq $pin) { throw "no pin at $pinPath -- run with -Bootstrap first" }
-    if (-not (Test-Path $dllPath)) {
-        throw "pdfium is NOT VENDORED: $dllPath is missing. Run: pwsh -File tools/vendor_pdfium.ps1 -Release $($pin.release) (it will verify against the pin)"
+    $failed = $false
+    foreach ($name in ($pin.platforms.PSObject.Properties.Name | Sort-Object)) {
+        $entry = $pin.platforms.$name
+        $path = Join-Path $vendorDir $entry.binary
+        if (-not (Test-Path $path)) {
+            Write-Host "$name : NOT VENDORED, $path is missing. Run: pwsh -File tools/vendor_pdfium.ps1 -Platform $name (it will verify against the pin)" -ForegroundColor Red
+            $failed = $true
+            continue
+        }
+        $actual = Get-Sha256 $path
+        if ($actual -ne $entry.binarySha256) {
+            Write-Host "$name : $($entry.binary) does not match the pin.`n  expected $($entry.binarySha256)`n  actual   $actual`nThe binary in the tree is not the one that was reviewed." -ForegroundColor Red
+            $failed = $true
+            continue
+        }
+        # The licence material lives beside the binary it covers, and a
+        # binary without it is not vendored: BSD-style licences require the
+        # notices to travel with binary distributions, and until #468 this
+        # tree carried the packager's LICENSE and none of them.
+        $platformDir = Split-Path -Parent $path
+        $notices = Join-Path $platformDir 'licenses'
+        if (-not (Test-Path (Join-Path $platformDir 'LICENSE')) -or -not (Test-Path $notices) -or
+            @(Get-ChildItem -Path $notices -File -Recurse).Count -eq 0) {
+            Write-Host "$name : the binary matches, but $platformDir lacks LICENSE or a non-empty licenses/. Re-run: pwsh -File tools/vendor_pdfium.ps1 -Platform $name" -ForegroundColor Red
+            $failed = $true
+            continue
+        }
+        Write-Host "$name : $($entry.binary) matches the pin ($($pin.release), sha256 $actual), licences present" -ForegroundColor Green
     }
-    $actual = Get-Sha256 $dllPath
-    if ($actual -ne $pin.dllSha256) {
-        throw "pdfium.dll does not match the pin.`n  expected $($pin.dllSha256)`n  actual   $actual`nThe binary in the tree is not the one that was reviewed."
-    }
-    Write-Host "pdfium.dll matches the pin ($($pin.release), sha256 $actual)" -ForegroundColor Green
+    if ($failed) { exit 1 }
     exit 0
 }
 
 $pin = Read-Pin
 if (-not $Release) {
     if ($null -eq $pin) {
-        throw "no pin yet, so -Release is required. Pick a tag from https://github.com/bblanchon/pdfium-binaries/releases (e.g. -Release chromium/7047) and pass -Bootstrap."
+        throw "no pin yet, so -Release is required. Pick a tag from https://github.com/bblanchon/pdfium-binaries/releases (e.g. -Release chromium/8044) and pass -Bootstrap."
     }
     $Release = $pin.release
+}
+if ($null -ne $pin -and $Release -ne $pin.release) {
+    throw "the pin is at $($pin.release) and this run asks for $Release. Every platform comes from one release, so moving it means re-pinning all of them, deliberately; this script will not mix two."
+}
+
+$layout = $layouts[$Platform]
+$entry = $null
+if ($null -ne $pin -and $pin.platforms.PSObject.Properties.Name -contains $Platform) {
+    $entry = $pin.platforms.$Platform
+}
+if (-not $Bootstrap -and $null -eq $entry) {
+    throw "there is no pin entry for $Platform yet -- pass -Bootstrap to record one"
 }
 
 # The tag contains a slash, which has to survive the URL.
 $tag = $Release -replace '/', '%2F'
-$artifact = 'pdfium-win-x64.tgz'
+$artifact = $layout.artifact
 $url = "https://github.com/bblanchon/pdfium-binaries/releases/download/$tag/$artifact"
+$binaryPath = Join-Path $vendorDir $layout.binary
 
 $work = Join-Path ([System.IO.Path]::GetTempPath()) ("pdfium-" + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $work -Force | Out-Null
@@ -105,64 +163,101 @@ try {
     $archiveSha = Get-Sha256 $archive
     Write-Host "archive sha256: $archiveSha"
 
-    if (-not $Bootstrap) {
-        if ($null -eq $pin) { throw "no pin to verify against -- pass -Bootstrap" }
-        if ($archiveSha -ne $pin.archiveSha256) {
-            throw "the downloaded archive does not match the pin.`n  expected $($pin.archiveSha256)`n  actual   $archiveSha`nEither the release was re-cut or this is not the file that was reviewed. Do NOT commit it."
+    if ($Bootstrap) {
+        # A SECOND WITNESS FOR THE FIRST RUN. GitHub publishes a digest for
+        # every release asset, computed by GitHub rather than by this
+        # download, so a file altered in transit or on a mirror disagrees
+        # with it. It does not make the release trustworthy; it makes this
+        # copy the release's copy. For win-x64 it matched the pin that was
+        # recorded by hand on 2026-09-10.
+        $api = "https://api.github.com/repos/bblanchon/pdfium-binaries/releases/tags/$tag"
+        $published = (Invoke-RestMethod -Uri $api -UseBasicParsing).assets |
+            Where-Object { $_.name -eq $artifact } | Select-Object -First 1
+        if ($null -eq $published -or -not $published.PSObject.Properties['digest'] -or -not $published.digest) {
+            throw "GitHub publishes no digest for $artifact in $Release, so there is nothing independent to check this download against. Do not bootstrap from it."
         }
+        $publishedSha = ($published.digest -replace '^sha256:', '').ToLowerInvariant()
+        if ($publishedSha -ne $archiveSha) {
+            throw "the downloaded archive does not match the digest GitHub publishes for it.`n  published $publishedSha`n  actual    $archiveSha`nDo NOT commit it."
+        }
+        Write-Host "archive matches the digest GitHub publishes for $artifact" -ForegroundColor Green
+    } elseif ($archiveSha -ne $entry.archiveSha256) {
+        throw "the downloaded archive does not match the pin.`n  expected $($entry.archiveSha256)`n  actual   $archiveSha`nEither the release was re-cut or this is not the file that was reviewed. Do NOT commit it."
     }
 
-    # bsdtar ships with Windows 10 1803 and later, so no third-party
-    # unpacker is needed to open a .tgz.
+    # bsdtar ships with Windows 10 1803 and later, and with macOS, so no
+    # third-party unpacker is needed to open a .tgz.
     & tar -xzf $archive -C $work
     if ($LASTEXITCODE -ne 0) { throw "tar failed to extract $archive" }
 
-    $sourceDll = Join-Path $work 'bin/pdfium.dll'
-    if (-not (Test-Path $sourceDll)) {
-        throw "the archive has no bin/pdfium.dll -- has the release layout changed?"
+    $sourceBinary = Join-Path $work $layout.inner
+    if (-not (Test-Path $sourceBinary)) {
+        throw "the archive has no $($layout.inner) -- has the release layout changed?"
     }
-    $dllSha = Get-Sha256 $sourceDll
-    Write-Host "pdfium.dll sha256: $dllSha"
+    $binarySha = Get-Sha256 $sourceBinary
+    Write-Host "$($layout.inner) sha256: $binarySha"
 
-    if (-not $Bootstrap -and $dllSha -ne $pin.dllSha256) {
-        throw "pdfium.dll does not match the pin.`n  expected $($pin.dllSha256)`n  actual   $dllSha"
+    if (-not $Bootstrap -and $binarySha -ne $entry.binarySha256) {
+        throw "$($layout.inner) does not match the pin.`n  expected $($entry.binarySha256)`n  actual   $binarySha"
     }
 
-    New-Item -ItemType Directory -Path (Split-Path -Parent $dllPath) -Force | Out-Null
-    Copy-Item $sourceDll $dllPath -Force
-
-    # THE LICENCE TRAVELS WITH THE BINARY. DR-036's census covers what is
-    # in the tree, and CR-100 says a vendored pdfium reopens it: a binary
-    # whose licence is a URL somebody has to go and find is a binary
-    # nobody can audit from the repository.
+    # THE LICENCE TRAVELS WITH THE BINARY, ALL OF IT. DR-036's census covers
+    # what is in the tree, and CR-100 says a vendored pdfium reopens it: a
+    # binary whose licence is a URL somebody has to go and find is a binary
+    # nobody can audit from the repository. The archive's LICENSE is the
+    # PACKAGER's (MIT, bblanchon) and says the rest is in licenses/:
+    # pdfium's own BSD licence and every library compiled into it. Until
+    # #468 only the first was vendored. Both now go BESIDE THE BINARY they
+    # cover, per platform, because two builds of one release can compile
+    # in different third-party code and carry different notices; one
+    # shared file made a second platform overwrite the first's or stop.
     $sourceLicense = Join-Path $work 'LICENSE'
-    if (Test-Path $sourceLicense) {
-        Copy-Item $sourceLicense (Join-Path $vendorDir 'LICENSE') -Force
-    } else {
-        Write-Warning "the archive carries no LICENSE file -- fetch it from the pdfium source tree before committing"
+    $sourceNotices = Join-Path $work 'licenses'
+    if (-not (Test-Path $sourceLicense) -or -not (Test-Path $sourceNotices)) {
+        throw "the archive has no LICENSE or no licenses/ directory -- has the release layout changed? Nothing was copied."
     }
+
+    # NOTHING IS COPIED UNTIL EVERY CHECK ABOVE HAS PASSED, and then the
+    # binary and its licences land together. The first version of this
+    # script copied the binary before a licence check that could stop it,
+    # which left a dylib in the tree with no pin entry: the half-vendored
+    # state the pin exists to rule out.
+    $platformDir = Split-Path -Parent $binaryPath
+    New-Item -ItemType Directory -Path $platformDir -Force | Out-Null
+    Copy-Item $sourceBinary $binaryPath -Force
+    Copy-Item $sourceLicense (Join-Path $platformDir 'LICENSE') -Force
+    $treeNotices = Join-Path $platformDir 'licenses'
+    if (Test-Path $treeNotices) { Remove-Item $treeNotices -Recurse -Force }
+    Copy-Item $sourceNotices $treeNotices -Recurse -Force
 
     if ($Bootstrap) {
-        $pinObject = [ordered]@{
-            release       = $Release
+        $platforms = [ordered]@{}
+        if ($null -ne $pin) {
+            foreach ($name in $pin.platforms.PSObject.Properties.Name) { $platforms[$name] = $pin.platforms.$name }
+        }
+        $platforms[$Platform] = [ordered]@{
             artifact      = $artifact
             url           = $url
             archiveSha256 = $archiveSha
-            dllSha256     = $dllSha
+            binary        = $layout.binary
+            binarySha256  = $binarySha
             recordedAt    = (Get-Date -Format 'yyyy-MM-dd')
         }
-        $pinObject | ConvertTo-Json | Set-Content -Path $pinPath -Encoding utf8
+        $sorted = [ordered]@{}
+        foreach ($name in ($platforms.Keys | Sort-Object)) { $sorted[$name] = $platforms[$name] }
+        $pinObject = [ordered]@{ release = $Release; platforms = $sorted }
+        $pinObject | ConvertTo-Json -Depth 4 | Set-Content -Path $pinPath -Encoding utf8NoBOM
         Write-Host ''
         Write-Host 'WROTE THE PIN. Before committing, check these against the release page:' -ForegroundColor Yellow
         Write-Host "  release       $Release"
         Write-Host "  archive       $archiveSha"
-        Write-Host "  pdfium.dll    $dllSha"
+        Write-Host "  $($layout.inner)  $binarySha"
         Write-Host 'A checksum computed by the downloader proves the file did not change in transit and nothing else.'
     }
 
-    $size = [math]::Round((Get-Item $dllPath).Length / 1MB, 1)
+    $size = [math]::Round((Get-Item $binaryPath).Length / 1MB, 1)
     Write-Host ''
-    Write-Host "vendored $dllPath ($size MB)" -ForegroundColor Green
+    Write-Host "vendored $binaryPath ($size MB)" -ForegroundColor Green
     Write-Host 'Commit third_party/pdfium/ and it is done: nothing else ever downloads it.'
 }
 finally {

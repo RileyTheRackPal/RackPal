@@ -16,10 +16,22 @@
 //   1. `RACKPAL_PDFIUM_DLL`, for a machine that keeps it elsewhere. An
 //      override that exists and is wrong is an error rather than a
 //      fallthrough: somebody set it deliberately.
-//   2. Beside the running executable, which is where the Windows build
-//      installs it and where the shipped app finds it.
-//   3. `third_party/pdfium/win-x64/` in the repository, walking up from
-//      the working directory, which is the developer and CI case.
+//   2. Where the shipped app keeps it: beside the executable on Windows,
+//      where the Windows build installs it, and in the bundle's
+//      `Contents/Frameworks/` on macOS, where a `macos/` runner will (D1).
+//   3. The platform's file under `third_party/pdfium/` in the repository,
+//      walking up from the working directory, which is the developer and
+//      CI case.
+//
+// ═══════════════════════════════════════════════════════════════════════
+// ONE FILE PER OS, AND THE macOS ONE IS UNIVERSAL
+// ═══════════════════════════════════════════════════════════════════════
+// macOS gets one `libpdfium.dylib` holding both the x86_64 and the arm64
+// slice (#468), so the loader never asks which chip it is on: `dlopen`
+// picks the slice. DR-255's hosted macOS image is Intel and loads the
+// first; an Apple Silicon Mac loads the second, which no CI here runs.
+// `pdfium_vendoring_test.dart` reads the file's Mach-O header to prove the
+// arm64 slice is at least present.
 import 'dart:ffi';
 import 'dart:io';
 
@@ -28,13 +40,18 @@ import 'package:rackpal_pdfium/src/pdfium_ffi.dart';
 /// The environment variable that overrides the search.
 const String kPdfiumPathVariable = 'RACKPAL_PDFIUM_DLL';
 
-/// Where the binary sits in the repository, relative to its root.
-const String kVendoredPdfiumPath = 'third_party/pdfium/win-x64/pdfium.dll';
+/// Where each platform's binary sits in the repository, relative to its
+/// root, keyed by `Platform.operatingSystem`. A platform absent here has no
+/// vendored pdfium, and the loader says so rather than guessing a name.
+const Map<String, String> kVendoredPdfiumPaths = {
+  'windows': 'third_party/pdfium/win-x64/pdfium.dll',
+  'macos': 'third_party/pdfium/mac-univ/libpdfium.dylib',
+};
 
 /// The one command that fixes an absent binary.
 const String kVendorCommand =
-    'pwsh -File tools/vendor_pdfium.ps1 -Release '
-    '<tag> -Bootstrap';
+    'pwsh -File tools/vendor_pdfium.ps1 -Platform <win-x64|mac-univ> '
+    '-Release <tag> -Bootstrap';
 
 /// pdfium could not be loaded, and the message says which of the two
 /// reasons it was.
@@ -71,9 +88,7 @@ PdfiumBindings loadPdfium() {
     // ignore: avoid_catching_errors
   } on ArgumentError catch (error) {
     throw PdfiumUnavailable(
-      'found $path but could not load it ($error). On Windows this is '
-      'usually a 32-bit binary in a 64-bit process, or a missing Visual '
-      'C++ runtime.',
+      'found $path but could not load it ($error). ${_loadHint()}',
     );
   }
 
@@ -83,19 +98,35 @@ PdfiumBindings loadPdfium() {
 
 PdfiumBindings? _bindings;
 
+/// What a load failure usually means on this OS. Each is the cause seen
+/// most often there, not a diagnosis.
+String _loadHint() => switch (Platform.operatingSystem) {
+  'windows' =>
+    'On Windows this is usually a 32-bit binary in a 64-bit process, or a '
+        'missing Visual C++ runtime.',
+  'macos' =>
+    'On macOS this is usually a dylib without a slice for this CPU (check '
+        '`lipo -archs`), or one quarantined by Gatekeeper after a download '
+        'rather than a checkout.',
+  _ => 'pdfium is vendored for Windows and macOS only.',
+};
+
 /// The path the loader will use, without loading it.
 ///
-/// **THE TWO COLLABORATORS ARE PARAMETERS SO THE ORDER CAN BE TESTED.**
+/// **THE THREE COLLABORATORS ARE PARAMETERS SO THE ORDER CAN BE TESTED.**
 /// `Platform.environment` cannot be written from inside a Dart process,
 /// and a test that spawned one to set a variable would be testing the
-/// spawn. [environment] and [exists] default to the real ones, which is
-/// the only configuration that ships.
+/// spawn; nor can a Windows test run as macOS. [environment], [exists] and
+/// [operatingSystem] default to the real ones, which is the only
+/// configuration that ships.
 String pdfiumPath({
   Map<String, String>? environment,
   bool Function(String path)? exists,
+  String? operatingSystem,
 }) {
   final env = environment ?? Platform.environment;
   final present = exists ?? (String path) => File(path).existsSync();
+  final os = operatingSystem ?? Platform.operatingSystem;
 
   final override = env[kPdfiumPathVariable];
   if (override != null && override.trim().isNotEmpty) {
@@ -108,11 +139,25 @@ String pdfiumPath({
     return override;
   }
 
-  final exeDir = File(Platform.resolvedExecutable).parent.path;
-  final beside = '$exeDir${Platform.pathSeparator}pdfium.dll';
-  if (present(beside)) return beside;
+  final relative = kVendoredPdfiumPaths[os];
+  if (relative == null) {
+    throw PdfiumUnavailable(
+      'pdfium is vendored for ${kVendoredPdfiumPaths.keys.join(' and ')} '
+      'only, and this is $os.',
+    );
+  }
 
-  final vendored = _walkUpFor(kVendoredPdfiumPath, present);
+  final exeDir = File(Platform.resolvedExecutable).parent.path;
+  final sep = Platform.pathSeparator;
+  // The shipped app's copy. On macOS the executable is
+  // `RackPal.app/Contents/MacOS/<name>`, so the bundle's frameworks are
+  // one level up.
+  final shipped = os == 'macos'
+      ? '$exeDir$sep..${sep}Frameworks${sep}libpdfium.dylib'
+      : '$exeDir${sep}pdfium.dll';
+  if (present(shipped)) return shipped;
+
+  final vendored = _walkUpFor(relative, present);
   if (vendored != null) return vendored;
 
   throw const PdfiumUnavailable(
