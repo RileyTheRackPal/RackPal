@@ -21,12 +21,18 @@ not a second job: a blocking macOS check would let a minute counter decide what 
 
 # What it runs, and what it does not
 
-Every step of [the pipeline itself](the-pipeline-itself.md) except two:
+Every step of [the pipeline itself](the-pipeline-itself.md) except one:
 
 * **The timed budgets.** Their limits are wall clock calibrated on one machine; on a
   shared VM they would measure the VM.
-* **The build and its output gate.** There is no `macos/` runner (docs/13 D1) and no
-  `verify_macos_build.ps1` (D6) yet.
+
+**It builds `RackPal.app` since D1 (2026-10-19)**, about 2.6 minutes, and
+`tools/ci/verify_macos_build.ps1` (D6) gates what the build produced: the executable;
+`Contents/Frameworks` held to the exact set build 497 measured (`App.framework`,
+`FlutterMacOS.framework`, `libpdfium.dylib`; the plugins link statically); the executable
+and both frameworks universal; the dylib's two slices and its signature; no JNI library;
+the four starters packaged. The bundled dylib is not compared with the pin, because signing
+on copy writes into it.
 
 The Flutter pin is read from `azure-pipelines.yml`, never restated, and a
 `UsePythonVersion` step supplies the `python` every gate calls.
@@ -45,7 +51,10 @@ them, with their floor row, in the same change, so the floor stayed exact.
 
 # Blind spots
 
-* **It is not a release.** Nothing is built, signed or notarised (D8) on macOS.
+* **It is not a release.** The bundle is built and ad-hoc signed, never signed with a
+  Developer ID or notarised (D8); the archived `.app` is for inspection.
+* **It never runs the arm64 half.** The image is Intel. Every arm64 check here is a
+  check that the slice is present, and only an Apple Silicon Mac executes it.
 * **Optional means ignorable.** An optional red check that gets merged over once stops
   being read. Its value is entirely in somebody looking at it.
 * **It does not compare across platforms.** `rackpal_export` passing on both says each

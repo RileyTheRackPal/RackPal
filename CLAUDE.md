@@ -76,7 +76,13 @@ warm-cache path at 18m28s.
   a month, as an **optional** PR check. **It may never be made blocking**: the month the
   minutes ran out, nothing would merge. It reads the Flutter pin from
   `azure-pipelines.yml`. Its floors differ only where `$SuiteFloorsMacOS` in
-  `run_suite.ps1` says, and every difference names its cause.
+  `run_suite.ps1` says, and every difference names its cause. **It builds `RackPal.app`**
+  (D1, DR-256: `com.rackpal.rackpal`, no sandbox, hardened runtime) and gates it with
+  `verify_macos_build.ps1`. **The image is Intel**, so nothing here ever executes arm64.
+- **`flutter create` ON WINDOWS WRITES CRLF**, and `.gitattributes` makes every checkout
+  of `apps/rackpal/macos/` LF, so a freshly generated tree and a clone differ on this
+  machine. **Git Bash's `grep` and `cat -A` hide carriage returns here**; two agents
+  reported the CRLF tree as LF that way. Count bytes in Python before believing either.
 - **CI RUNS ON A SELF-HOSTED AGENT SINCE 2026-08-30**, `{agent-host}` in the
   **`Default`** pool (not `LocalMachine`, which exists and has zero agents). It
   lives at `C:\Users\riley\Documents\vsts-agent-win-x64-5.277.0` and runs

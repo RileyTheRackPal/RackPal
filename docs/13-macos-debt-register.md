@@ -51,12 +51,12 @@ Cost column is an **estimate**, not a measurement, unless marked otherwise.
 
 | # | Item | Evidence | Est. |
 |---|---|---|---|
-| **D1** | **No `macos/` platform directory.** `apps/rackpal` has `windows/` only | `ls apps/rackpal/` | hours |
+| **D1** | ~~**No `macos/` platform directory.** `apps/rackpal` has `windows/` only~~ **CLEARED 2026-10-19 (#453, #454, DR-256, section 2.8)**: `apps/rackpal/macos/` is Flutter 3.47.5's template as `com.rackpal.rackpal` / `RackPal.app`, unsandboxed with the hardened runtime, and definition 2 builds it universal in 2.6 minutes. The app it builds still lacks D2's dialog and D3's data folder | `apps/rackpal/macos/`; `azure-pipelines-macos.yml` | **done** |
 | **D2** | **Native file dialog.** RackPal drives `IFileDialog` itself from `windows/runner/file_dialog_channel.cpp` + `.h`, deliberately, `file_selector` was removed on purpose (`pubspec.yaml:8-20`). macOS needs an `NSOpenPanel`/`NSSavePanel` channel behind the existing `FilePicker` interface | `windows/runner/` | **largest item**: days |
 | **D3** | **`path_provider_windows`** must gain a macOS answer at the one call site | `path_provider_windows` in `apps/rackpal/pubspec.yaml` (cited by name, since the line drifted from `:70` to `:89` by 2026-10-17) | hours |
 | **D4** | **CI has one job, pinned to Windows.** The `windows_ci` job in `azure-pipelines.yml`, which since 2026-08-30 runs on a self-hosted Windows agent in the `Default` pool where it once named `vmImage: 'windows-2022'`. Needs a macOS job, and that job cannot use the Windows agent. Note the pipeline's own header comment already anticipates a matrix: *"that is a later question"*; **it is now this question**. **A macOS JOB EXISTS SINCE 2026-10-17 (DR-255, §2.5)**: `azure-pipelines-macos.yml`, definition 2, a Microsoft-hosted `macOS-15` image run as an optional PR check, never blocking, at a measured 27.2 minutes. What it lacks is a build: D1 and D6. **AND IT IS AN INTEL MACHINE**: build 486's forensics step printed `15.7.9 x86_64`, so nothing it proves reaches Apple Silicon (§2.6) | `azure-pipelines.yml`; `azure-pipelines-macos.yml` | **job done**; build waits on D1, D6; arm64 unmeasured |
 | **D5** | **Gate scripts are PowerShell.** Six `.ps1` under `tools/ci/`. Likely runnable under `pwsh` on macOS unmodified, **verify before budgeting a rewrite**. **VERIFIED ON BUILD 481 (§2.5)**: one of the six needed changing, `ensure_flutter.ps1`, which probed `flutter.bat` and fetched the Windows archive; it now chooses by OS (`554cdd04`). The other five ran unmodified, and `python` is supplied by a pipeline step | `tools/ci/` | **done** |
-| **D6** | **`verify_windows_build.ps1`** is Windows-specific by name and purpose; needs a macOS counterpart | `tools/ci/` | hours |
+| **D6** | ~~**`verify_windows_build.ps1`** is Windows-specific by name and purpose; needs a macOS counterpart~~ **CLEARED 2026-10-19 (#463, section 2.8)**: `tools/ci/verify_macos_build.ps1` gates the bundle definition 2 builds: the executable, the exact `Contents/Frameworks` set as measured, the executable and both frameworks universal, the dylib's two slices and its signature, no JNI library, the starters packaged | `tools/ci/verify_macos_build.ps1` | **done** |
 | **D7** | ~~KEYBOARD MODIFIERS~~: **CLEARED, GATE INCOMPLETE.** Was 43 hard-coded `SingleActivator` bindings assuming `Ctrl`, across six files. Now a 35-row `kKeymap` registry whose primary modifier resolves once, in `KeyBinding.activatorFor(TargetPlatform)`, through `defaultTargetPlatform`. **Zero `SingleActivator` instances remain outside the registry today**, but see §3.1 and §2.1: the ban is enforced in **one file**, and not in the package where M3 is built, and M2-F added **nine** more rows to that ungated package (35 → 44), **~~gate owed~~ PAID at #94, §2.2: `keymap_source_ban_test.dart` scans all of `rackpal_ui/lib`, comments stripped, three constructors banned, mutation-verified** | `packages/rackpal_ui/lib/src/keymap/keymap.dart` | **done** |
 | **D8** | **Code signing.** DR-006 rules Windows self-signing; macOS needs **notarisation and stapling**, which D10 names and §12.9 explicitly leaves *"unaffected and still binding"* | canon `:2696`, `:5875` | days + Apple Developer enrolment lead time |
 | **D9** | **pdfium is vendored per platform** (CR-100), ~~**but not yet, and not by anything shipped.** `printing`/pdfium is in **no pubspec in this tree**; PDF comes from pure-Dart `pdf ^3.13.0`. docs/03 §10.1 *plans* `printing ^5.15.0` *"behind an explicit 'Verify output' button only"* and docs/11:432 schedules vendored pdfium at **M8**.~~ **THAT WAS TRUE UNTIL DR-153 (canon §11.152, 2026-09-09) AND IS NOT NOW.** The tree vendors pdfium as `packages/rackpal_pdfium`, a pure-Dart `dart:ffi` binding that only `apps/rackpal` depends on (§11.152.4), over `third_party/pdfium/`, which holds **`win-x64/pdfium.dll` and no other platform**: `pdfium.pin.json` records one release, one archive checksum and one DLL checksum, and `pwsh -File tools/vendor_pdfium.ps1 -Verify` says whether the file is in the tree. A person places it (CR-100, §11.152.3); nothing fetches it. `printing` is still in no pubspec, but it no longer stands between the tree and a pdfium: the export preview renders the real PDF through the vendored binary (DR-230 §11.229), so D9 is no longer triggered by a future button. PDF generation itself is still the pure-Dart `pdf`, and **adding a sheet role costs zero here**. **The debt is now concrete: a macOS binary and its loader.** That is a macOS pdfium under `third_party/pdfium/` with its pin and vendoring-script entries (both record `win-x64` alone); a loader that can find it (`pdfium_library.dart` hard-codes `third_party/pdfium/win-x64/pdfium.dll` and words its load failure for Windows); and an install step in a `macos/` runner that D1 has not created, as `apps/rackpal/windows/CMakeLists.txt` does for the DLL. DR-153 deferred it on purpose: *"macOS binaries when macOS work starts"*, because an unused binary is an unverified one. **The board item that carries it is Story #61**, retitled for D9 and D15 together by BOARD-1j (#1098). D15 is the same fact (see there). **VENDORED 2026-10-18 (#468, §2.7)**: `mac-univ/libpdfium.dylib`, universal (x86_64 and arm64), from the same `chromium/8044` as Windows; the pin holds an entry per platform and the loader picks the file by OS. What remains is the install into the app bundle, which needs D1 | `packages/rackpal_pdfium/`; `third_party/pdfium/` (`README.md`, `pdfium.pin.json`); canon §11.152.3, §11.229 | **binary and loader done** (#468); the bundle install waits on D1 |
@@ -331,6 +331,38 @@ Mach-O header on every OS to prove the slice is there; an Apple Silicon Mac is t
 
 **Still owed to D9's licence half, and not here**: a shipped app has to carry those notices too, which is
 release packaging (M8-B, #407, for Windows; D1 and D6 for the macOS bundle).
+
+### 2.8 D1 and D6 are cleared (2026-10-19): the bundle builds on CI, universal, and is gated
+
+**DR-256 (canon section 11.255) ruled the bundle's identity first**, because Flutter's template supplies three
+defaults a shipped app cannot keep: `com.example`, App Sandbox on, and a bundle that reads "Quit rackpal". The
+user chose `com.rackpal.rackpal` (what Windows' `Runner.rc` already implies, naming no person), no sandbox with
+the hardened runtime, and `RackPal.app`. A census of the lock found **no dependency change needed**:
+`window_manager` and `screen_retriever_macos` were already locked, well past DR-248's fourteen days.
+
+**Build 497, the first macOS build, passed first try** and measured what the gate had left open:
+
+| Measured | Value |
+|---|---|
+| `flutter build macos --release` | 2.6 minutes on the hosted image |
+| `Contents/MacOS/RackPal` | 499,232 bytes |
+| `Contents/Frameworks` | exactly `App.framework`, `FlutterMacOS.framework`, `libpdfium.dylib`: the plugins link statically through Swift Package Manager |
+| `libpdfium.dylib` | x86_64 and arm64, signed on copy, `codesign --verify --strict` exit 0 |
+| starters | all four packaged, CR-free |
+
+The Frameworks list is now exact in both directions, and the executable and both frameworks must carry both slices,
+because an x86_64-only app would run under Rosetta on Apple Silicon and the dylib's arm64 slice would ship and
+never load. The dylib in the bundle is **not** compared with the pin: signing on copy writes into it.
+
+**Two things found on the way.** `flutter create` on Windows writes CRLF, so the generated tree was CRLF on the
+machine that made it while `.gitattributes` (now `apps/rackpal/macos/** text eol=lf`) makes every checkout LF; a
+new test anchored on `
+` failed on the first and would have passed on the second. And two agents reported the
+tree as LF because Git Bash's `grep` and `cat` hide carriage returns here; only a byte count saw them.
+
+**What the built app does not do yet**: open or save a file (D2, the native dialog), keep recovery, recents or
+preferences (D3: `path_provider_windows` throws on its first call, and the app starts with persistence off), or
+run the arm64 half anywhere but an Apple Silicon Mac, which no CI here has.
 
 ---
 
