@@ -2404,7 +2404,12 @@ $SuiteFloors = @{
     # 1205 at `#832` (SFE-C4): +3 in session/library_io_test.dart. A clone
     # lands in My library and a second time says so; an unreadable My
     # library is left byte-identical; no library folder writes nothing.
-    'rackpal_app'    = 1205
+    # 1209 at `#1107` (D1, DR-256): +4 in pdfium_install_test.dart, the
+    # macOS twin of the Windows install check. The Xcode project references
+    # the committed dylib, builds it signed on copy, lists it in the
+    # Frameworks copy phase, and the Runner target runs that phase: four
+    # links any one of which an Xcode edit can drop without a compile error.
+    'rackpal_app'    = 1209
 }
 
 # MACOS FLOORS (DR-255, D4 #459), MEASURED ON BUILD 481. ONLY THE ROWS THAT
@@ -2423,10 +2428,10 @@ $SuiteFloors = @{
 # pdfium row in one change, and moved the app row up by the nine, so the
 # floor stayed exact rather than passing with an unread "+N".
 $SuiteFloorsMacOS = @{
-    # 1205 - 4. file_store_contract_test.dart's `testOn: 'windows'` cases
+    # 1209 - 4. file_store_contract_test.dart's `testOn: 'windows'` cases
     # (share modes, MAX_PATH), which macOS never registers. Not debt: they
     # test Windows behaviour, and macOS has none to test.
-    'rackpal_app'    = 1201
+    'rackpal_app'    = 1205
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
