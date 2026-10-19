@@ -1,5 +1,16 @@
 # Update Log
 
+## 2026-10-18
+
+Entry 145.
+
+* **Changed**: [a vendored binary needs its own control](practices/a-vendored-binary-needs-its-own-control.md). Its third
+  control, a licence in the tree, was half done: the vendored `LICENSE` was the packager's and pointed at a `licenses/`
+  directory that had never been vendored. Found at #468, when the macOS pdfium landed; both platforms now carry it.
+* **Note**: **CHECK WHICH RELEASE, NOT ONLY WHICH HASH.** The first macOS placement was a genuine file whose hash matched
+  its own release page, `chromium/8100`, six days old, against Windows' `chromium/8044`. A hash proves a file is the
+  one the page describes; it says nothing about whether it is the page you meant.
+
 ## 2026-10-17
 
 Entry 144.

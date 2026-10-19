@@ -48,6 +48,25 @@ survived transit and nothing else, so it must not present that as verification:
 vendoring script that fetches, hashes and commits in one motion has reinvented
 the build-time download that CR-100 refused, with an extra file in git.
 
+# Read the licence you vendored, because it may point somewhere else
+
+**The third control was half done for five weeks.** The archive's `LICENSE` was
+vendored, and it is the PACKAGER's (MIT, bblanchon/pdfium-binaries), whose last
+line says the rest is in `licenses/`: pdfium's own BSD licence and the notices
+for every library compiled into it. `licenses/` was not vendored. A test checked
+that `LICENSE` existed, which it did, so the check passed over a pointer to
+notices that were not in the tree.
+
+It surfaced at #468 (2026-10-18), when the macOS artifact's `LICENSE` differed
+from the Windows one in line endings only, and the script stopped rather than
+overwrite one licence with another. Each platform now carries `LICENSE` and
+`licenses/` beside its binary, and the test asserts a non-empty `licenses/`.
+
+**And copy nothing until every check has passed.** The same stop showed the
+script had already placed the binary, leaving a dylib in the tree with no pin
+entry: exactly the state the pin exists to rule out, produced by the tool that
+writes the pin.
+
 # The tell
 
 A plan that says "vendor it" and stops. Ask what the package manager was doing

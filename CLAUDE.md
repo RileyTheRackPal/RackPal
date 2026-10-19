@@ -238,7 +238,7 @@ a board task instructing weeks of work that a ruling had abolished.
 - `packages/rackpal_core` model, commands, derived, persistence, draw scene, catalog
 - `packages/rackpal_ui` Flutter widgets, canvas, inspector, palette
 - `packages/rackpal_export` PDF backend
-- `packages/rackpal_pdfium` the vendored pdfium binding (`dart:ffi`, DR-153). **The binary is committed, not downloaded** (CR-100) and is placed by a person: `pwsh -File tools/vendor_pdfium.ps1 -Verify` says whether the tree has it
+- `packages/rackpal_pdfium` the vendored pdfium binding (`dart:ffi`, DR-153). **The binaries are committed, not downloaded** (CR-100) and are placed by a person, one per platform from ONE release: `win-x64/pdfium.dll` and a universal `mac-univ/libpdfium.dylib` (#468), each with its licences beside it. `pwsh -File tools/vendor_pdfium.ps1 -Verify` says whether the tree has them. **Run it by FULL PATH** (`pwsh -File C:\...\<worktree>\tools\vendor_pdfium.ps1 ...`): it resolves the repository from its own location, and on 2026-10-18 a run typed from the wrong folder re-stamped the main checkout's pin instead of vendoring into the worktree
 - `packages/rackpal_text` text metrics
 - `apps/rackpal` shell, session, storage
 

@@ -34,10 +34,14 @@ The Flutter pin is read from `azure-pipelines.yml`, never restated, and a
 # Its floors differ, and each difference is named
 
 `$SuiteFloorsMacOS` in `tools/ci/run_suite.ps1` holds only the rows that differ from the
-Windows table, with the arithmetic: `testOn: 'windows'` cases macOS never registers, and
-the pdfium cases that skip there (Story #61, Chapter #468). Those are the repository's
-first `skip:`. A check that stayed red for a known reason could not show a new one, so they
-skip on macOS and nowhere else.
+Windows table, with the arithmetic. Today that is one row: the app suite, lower by the four
+`testOn: 'windows'` cases macOS never registers, which test Windows behaviour and are not
+debt.
+
+**There were briefly 22 `skip:` lines, the repository's first**, for the pdfium cases that
+could not load a Windows DLL on macOS: a check that stayed red for a known reason could not
+show a new one. Chapter #468 vendored the universal macOS dylib and deleted every one of
+them, with their floor row, in the same change, so the floor stayed exact.
 
 # Blind spots
 
