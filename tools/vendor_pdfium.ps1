@@ -108,7 +108,19 @@ if ($Verify) {
             $failed = $true
             continue
         }
-        Write-Host "$name : $($entry.binary) matches the pin ($($pin.release), sha256 $actual)" -ForegroundColor Green
+        # The licence material lives beside the binary it covers, and a
+        # binary without it is not vendored: BSD-style licences require the
+        # notices to travel with binary distributions, and until #468 this
+        # tree carried the packager's LICENSE and none of them.
+        $platformDir = Split-Path -Parent $path
+        $notices = Join-Path $platformDir 'licenses'
+        if (-not (Test-Path (Join-Path $platformDir 'LICENSE')) -or -not (Test-Path $notices) -or
+            @(Get-ChildItem -Path $notices -File -Recurse).Count -eq 0) {
+            Write-Host "$name : the binary matches, but $platformDir lacks LICENSE or a non-empty licenses/. Re-run: pwsh -File tools/vendor_pdfium.ps1 -Platform $name" -ForegroundColor Red
+            $failed = $true
+            continue
+        }
+        Write-Host "$name : $($entry.binary) matches the pin ($($pin.release), sha256 $actual), licences present" -ForegroundColor Green
     }
     if ($failed) { exit 1 }
     exit 0
@@ -189,27 +201,34 @@ try {
         throw "$($layout.inner) does not match the pin.`n  expected $($entry.binarySha256)`n  actual   $binarySha"
     }
 
-    New-Item -ItemType Directory -Path (Split-Path -Parent $binaryPath) -Force | Out-Null
-    Copy-Item $sourceBinary $binaryPath -Force
-
-    # THE LICENCE TRAVELS WITH THE BINARY. DR-036's census covers what is
-    # in the tree, and CR-100 says a vendored pdfium reopens it: a binary
-    # whose licence is a URL somebody has to go and find is a binary
-    # nobody can audit from the repository.
-    # ONE LICENCE FILE FOR EVERY PLATFORM, so a second artifact whose
-    # licence text differs is stopped rather than allowed to overwrite the
-    # first: two artifacts of one release should carry one licence, and if
-    # they do not, a person reads both.
+    # THE LICENCE TRAVELS WITH THE BINARY, ALL OF IT. DR-036's census covers
+    # what is in the tree, and CR-100 says a vendored pdfium reopens it: a
+    # binary whose licence is a URL somebody has to go and find is a binary
+    # nobody can audit from the repository. The archive's LICENSE is the
+    # PACKAGER's (MIT, bblanchon) and says the rest is in licenses/:
+    # pdfium's own BSD licence and every library compiled into it. Until
+    # #468 only the first was vendored. Both now go BESIDE THE BINARY they
+    # cover, per platform, because two builds of one release can compile
+    # in different third-party code and carry different notices; one
+    # shared file made a second platform overwrite the first's or stop.
     $sourceLicense = Join-Path $work 'LICENSE'
-    $treeLicense = Join-Path $vendorDir 'LICENSE'
-    if (Test-Path $sourceLicense) {
-        if ((Test-Path $treeLicense) -and ((Get-Sha256 $sourceLicense) -ne (Get-Sha256 $treeLicense))) {
-            throw "the LICENSE in $artifact differs from the one already in $vendorDir. Read both before choosing; this script will not overwrite one licence with another."
-        }
-        Copy-Item $sourceLicense $treeLicense -Force
-    } else {
-        Write-Warning "the archive carries no LICENSE file -- fetch it from the pdfium source tree before committing"
+    $sourceNotices = Join-Path $work 'licenses'
+    if (-not (Test-Path $sourceLicense) -or -not (Test-Path $sourceNotices)) {
+        throw "the archive has no LICENSE or no licenses/ directory -- has the release layout changed? Nothing was copied."
     }
+
+    # NOTHING IS COPIED UNTIL EVERY CHECK ABOVE HAS PASSED, and then the
+    # binary and its licences land together. The first version of this
+    # script copied the binary before a licence check that could stop it,
+    # which left a dylib in the tree with no pin entry: the half-vendored
+    # state the pin exists to rule out.
+    $platformDir = Split-Path -Parent $binaryPath
+    New-Item -ItemType Directory -Path $platformDir -Force | Out-Null
+    Copy-Item $sourceBinary $binaryPath -Force
+    Copy-Item $sourceLicense (Join-Path $platformDir 'LICENSE') -Force
+    $treeNotices = Join-Path $platformDir 'licenses'
+    if (Test-Path $treeNotices) { Remove-Item $treeNotices -Recurse -Force }
+    Copy-Item $sourceNotices $treeNotices -Recurse -Force
 
     if ($Bootstrap) {
         $platforms = [ordered]@{}

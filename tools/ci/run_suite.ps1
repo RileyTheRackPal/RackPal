@@ -1492,7 +1492,18 @@ $SuiteFloors = @{
     # a path per OS. On macOS the shipped copy is the bundle's, in
     # Contents/Frameworks, not beside the executable; and an OS with no
     # vendored binary is told so by name rather than handed a Windows path.
-    'rackpal_pdfium' = 24
+    # 30 at #468, when the macOS dylib landed: 24 + 6 in
+    # pdfium_vendoring_test.dart.
+    #   +2  the dylib's own pinned pair (where the loader looks; checksum)
+    #   +1  licences beside each binary, licenses/ included: two cases
+    #       now, replacing the one shared-LICENSE case
+    #   +1  every OS the loader names has a pinned binary
+    #   +1  the universal dylib carries an x86_64 AND an arm64 slice, read
+    #       from its Mach-O header, which Windows can check and Intel
+    #       macOS CI cannot run
+    #   +1  the walk-up case, now one per OS
+    # 14 render + 16 vendoring, the same count on both OSes.
+    'rackpal_pdfium' = 30
     # 1489 at DR-128: +6 from schematic_remedy_dr128_test.dart, which
     # presses the two new remedy buttons on chips raised by a real drag.
     # The core suites cannot see whether the SCREEN reaches the commands.
@@ -2405,22 +2416,17 @@ $SuiteFloors = @{
 # whole justification. A lower number with no named cause is a deleted
 # test wearing a platform's clothes.
 #
-# WHEN #468 (Story #61) VENDORS A macOS PDFIUM, it deletes the `skip:`
-# reasons named below AND these rows, in one change. If it removed only
-# the skips, the count would come in above the floor and pass with a "+N"
-# that nobody reads, which is how a floor stops being exact.
+# THE PDFIUM DEBT ROWS ARE GONE, AND THAT WAS THE PLAN. Until #468 the
+# 22 pdfium cases skipped on macOS (`noMacOSPdfium`) and two rows here
+# were lower by exactly them (rackpal_pdfium 9, then 11; rackpal_app
+# 1192). #468 vendored the universal dylib, deleted every skip and the
+# pdfium row in one change, and moved the app row up by the nine, so the
+# floor stayed exact rather than passing with an unread "+N".
 $SuiteFloorsMacOS = @{
-    # 24 - 13. The 13 render cases in pdfium_render_test.dart skip on
-    # macOS (`noMacOSPdfium`): no macOS binary is pinned yet (#468).
-    # 'an empty file is refused' never reaches the binary, and the 10
-    # vendoring cases read files, so all 11 run.
-    'rackpal_pdfium' = 11
-    # 1205 - 4 - 9. The 4 are file_store_contract_test.dart's
-    # `testOn: 'windows'` cases (share modes, MAX_PATH), which macOS never
-    # registers. The 9 skip on macOS (`noMacOSPdfium`,
-    # test/session/macos_pdfium_debt.dart): 3 in plan_import_pdfium_test,
-    # 1 in export_preview_pdfium_test, 5 in logo_import_test.
-    'rackpal_app'    = 1192
+    # 1205 - 4. file_store_contract_test.dart's `testOn: 'windows'` cases
+    # (share modes, MAX_PATH), which macOS never registers. Not debt: they
+    # test Windows behaviour, and macOS has none to test.
+    'rackpal_app'    = 1201
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

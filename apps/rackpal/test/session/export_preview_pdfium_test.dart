@@ -15,8 +15,6 @@ import 'package:rackpal/src/session/pdf_rasteriser.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_export/rackpal_export.dart';
 
-import 'macos_pdfium_debt.dart';
-
 void main() {
   test('every page of Whole House renders at its own proportions', () async {
     final outcome = await runExportInline(
@@ -46,5 +44,5 @@ void main() {
       final image = img.decodePng((png as Ok<Uint8List>).value)!;
       expect((image.width, image.height), (width, height), reason: sheet.ncsId);
     }
-  }, skip: noMacOSPdfium);
+  });
 }

@@ -1,6 +1,14 @@
 {
   "release": "chromium/8044",
   "platforms": {
+    "mac-univ": {
+      "artifact": "pdfium-mac-univ.tgz",
+      "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F8044/pdfium-mac-univ.tgz",
+      "archiveSha256": "69585a13d636c5dc1df86827390edfd469c8ddae62f5a102bdea4500eaf6ea5d",
+      "binary": "mac-univ/libpdfium.dylib",
+      "binarySha256": "862a3c6d60954a2d0dd9c7820550bdf159812501adcd2571c04145ebe94f9ca6",
+      "recordedAt": "2026-10-18"
+    },
     "win-x64": {
       "artifact": "pdfium-win-x64.tgz",
       "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F8044/pdfium-win-x64.tgz",
