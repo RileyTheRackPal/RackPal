@@ -33,8 +33,9 @@
     gate, add it in both.
 
 .PARAMETER SkipBuild
-    Skip `flutter build windows --release` and the release-output gate. The
-    build dominates the wall clock; skipping it is for iterating on tests.
+    Skip `flutter build windows --release` (`flutter build macos --release` on
+    a Mac) and the release-output gate. The build dominates the wall clock;
+    skipping it is for iterating on tests.
 
 .PARAMETER SkipTests
     Run only the fast gates (pin, analyzer, palette, converter self-test).
@@ -165,12 +166,27 @@ try {
     }
 
     if (-not $SkipBuild) {
-        Invoke-Gate 'flutter build windows --release' {
-            Push-Location (Join-Path $RepoRoot 'apps/rackpal')
-            try { flutter build windows --release } finally { Pop-Location }
-        }
-        Invoke-Gate 'windows release output' {
-            pwsh -NoProfile -File (Join-Path $ci 'verify_windows_build.ps1')
+        # The build follows the host: a Windows runner cannot be built on a
+        # Mac and the reverse. `$IsMacOS` is undefined in Windows PowerShell
+        # 5.1 (the shell this repository hands to users) and reads as $null
+        # there, which is false, so 5.1 and every non-macOS pwsh keep the
+        # Windows branch exactly as it was.
+        if ($IsMacOS) {
+            Invoke-Gate 'flutter build macos --release' {
+                Push-Location (Join-Path $RepoRoot 'apps/rackpal')
+                try { flutter build macos --release } finally { Pop-Location }
+            }
+            Invoke-Gate 'macos release output' {
+                pwsh -NoProfile -File (Join-Path $ci 'verify_macos_build.ps1')
+            }
+        } else {
+            Invoke-Gate 'flutter build windows --release' {
+                Push-Location (Join-Path $RepoRoot 'apps/rackpal')
+                try { flutter build windows --release } finally { Pop-Location }
+            }
+            Invoke-Gate 'windows release output' {
+                pwsh -NoProfile -File (Join-Path $ci 'verify_windows_build.ps1')
+            }
         }
     }
 } finally {
