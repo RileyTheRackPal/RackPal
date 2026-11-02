@@ -6,7 +6,7 @@
 // ═════════════════════════════════════════════════════════════════════
 // THE SCREEN HAS NO `scene` PARAMETER, AND THAT IS THE FIX
 // ═════════════════════════════════════════════════════════════════════
-// The schematic canvas deleted at `b560a50` was handed its scene by
+// The schematic canvas deleted at `c5669a9` was handed its scene by
 // `main.dart`, which passed a HARDCODED EMPTY `DiagramScene`
 // (`fragments: {}`, `rackId: ''`). The document therefore never reached
 // the canvas at all — and on an empty scene the code MANUFACTURED a fake

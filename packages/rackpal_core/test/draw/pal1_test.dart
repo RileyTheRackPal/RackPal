@@ -278,7 +278,7 @@ void main() {
 
     test('free counts agree with the Python rules, domain by domain', () {
       // Computed by tools/pal1_check.py's own dash_class, luminance and
-      // ratio at a4926a2d, the last commit that had them, over this same
+      // ratio at 96664b10, the last commit that had them, over this same
       // menu. Not derived from pal1.dart, so this is a second
       // differential, and the figures DR-243 declined to copy into canon.
       const expected = {

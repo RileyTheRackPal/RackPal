@@ -13,11 +13,11 @@ shipped claims that did not survive measurement:
 
 | The claim | What measurement found |
 |---|---|
-| The schematic canvas works | It rendered a fabricated symbol behind a run of eight consecutive `fix:` commits, ten in the eighteen-commit detour overall, with zero tests; salvaged and reverted at `b560a50`. (`docs/m1-implementation-log.md:824` says *"twelve consecutive"*; over the range this board cites, `git log --oneline e433ae0^..1eec6bf` shows ten `fix:` subjects and a longest unbroken run of eight, `1eec6bf` back to `3965667`, broken by `a66668b`. The figure is corrected here rather than inherited, a table about unmeasured claims drifting is the last place to restate one) |
-| The rear elevation renders | It was blank. Nothing in the regression net observed `Face.rear` in emitted bytes until `elevation_true_scale_test.dart` was written for that purpose (`0fa532d`) |
+| The schematic canvas works | It rendered a fabricated symbol behind a run of eight consecutive `fix:` commits, ten in the eighteen-commit detour overall, with zero tests; salvaged and reverted at `c5669a9`. (`docs/m1-implementation-log.md:824` says *"twelve consecutive"*; over the range this board cites, `git log --oneline 3a9e1a3^..b29044e` shows ten `fix:` subjects and a longest unbroken run of eight, `b29044e` back to `3965667`, broken by `e31cf60`. The figure is corrected here rather than inherited, a table about unmeasured claims drifting is the last place to restate one) |
+| The rear elevation renders | It was blank. Nothing in the regression net observed `Face.rear` in emitted bytes until `elevation_true_scale_test.dart` was written for that purpose (`6554187`) |
 | PAL-1 is verified clear | Asserted three times by reading an eight-row domain table instead of enumerating the 385 family pairs actually drawn. The palette carried **fourteen** collisions (canon §14.3) |
 | The registry-claim row is accurate | Wrong four times running; the fix was to state a **bound** rather than a closed list, enforced by `apps/rackpal/test/session/registry_claim_test.dart` |
-| The catalog weight is right | It was 1000× off, behind a test that only asserted non-null (`b560a50`) |
+| The catalog weight is right | It was 1000× off, behind a test that only asserted non-null (`c5669a9`) |
 
 Every one of those was an honest claim at the moment it was written. The failure mode is not lying;
 it is an assertion that quietly stops covering the thing it names. So **every row below cites the
@@ -104,33 +104,33 @@ still tracks the criterion.
 
 ## 1. The board at a glance
 
-Verified against the working tree at `0fa532d`, by reading code rather than checkboxes. Suite
+Verified against the working tree at `6554187`, by reading code rather than checkboxes. Suite
 counts from that session: `rackpal_core` 886, `rackpal_ui` 351, `apps/rackpal` 651,
 `rackpal_export` 183, `rackpal_text` 1, **2072 passing, 0 failing**. `flutter analyze`: 195
 issues, all info-level, **zero errors, zero warnings**. `flutter build windows --release`: exit 0.
 
-**M2's row alone was re-audited at `ea0af6d`** (M2-F) and again after M2-G, against the thirteen
+**M2's row alone was re-audited at `13758ff`** (M2-F) and again after M2-G, against the thirteen
 local gates: `rackpal_core` 1380, `rackpal_ui` 592, `apps/rackpal` 690, `rackpal_export` 183,
 `rackpal_text` 1, **2846 passing, 0 failing**, analyzer pinned at exactly 194 infos by
-`tools/ci/analyze_info_baseline.txt`. **Every other row is still as of `0fa532d`** and carries
+`tools/ci/analyze_info_baseline.txt`. **Every other row is still as of `6554187`** and carries
 whatever drift the intervening milestones introduced; a row this file has not re-read is a row it
 does not vouch for, and saying so is cheaper than a footnote per row that would go stale the same
 way. Board item #92 is the scheduled full sweep.
 
 **Both paragraphs above are historical, as of 2026-10-17.** Their suite counts, analyzer figure and
-build result are what those two sessions measured at `0fa532d` (M1's closing commit, §3.2) and at
+build result are what those two sessions measured at `6554187` (M1's closing commit, §3.2) and at
 M2-F/M2-G, and they are kept because they date the audit, not because they are current. They are
 not the present figures. The present figures live in the gates, which are the only copy that cannot
 go stale: the suite floors in `$SuiteFloors` in `tools/ci/run_suite.ps1`, the analyzer pin in
 `tools/ci/analyze_info_baseline.txt`, and the build step in `tools/ci/run_local.ps1`. **The sentence
-"Every other row is still as of `0fa532d`" stopped being true as the rows were re-marked**; each row
+"Every other row is still as of `6554187`" stopped being true as the rows were re-marked**; each row
 in the table below says in its own text when it was last re-marked, and where it says nothing the
 row is the original audit's.
 
 | # | Milestone | Size | Exit clauses demonstrated | Status: weakest mark | The short reason |
 |---|---|---|---|---|---|
-| **M0** | Foundations | `S` | **8 of 8** | **CRITERION MET**: `DEMONSTRATED` | **The last two clauses closed on 2026-08-27, and both had been `VACUOUS` for reasons that expired without anyone noticing** (§0: *"true today, and true for a reason that will stop being true"*). Clause 4a needed a command that touches `doc.templates`; M4-S landed one, and `command_roundtrip_test.dart` now draws `SaveTemplateToProjectCommand` **717 times across its 1000 sequences** (`8af36ed`, `#513`). Clause 5 needed a derived pipeline to snapshot; three exist, and `epoch_mask_test.dart` now folds them into the same changed-key set, moving on **9 of 35 command cases** and guarded by a source-reading field count so the projection cannot fall behind (`38167ec`, `#507`). Both figures are measured rather than asserted, because §5.1's `#587` records an arm offered thousands of times that fired zero |
-| **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET**: `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28 at **under three minutes** against a four-minute criterion. The drill's re-run **failed first**, the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5), then passed against `616a301`. The three-minute figure is a 140+ wpm operator who knew the keymap; §3.2 records that condition because M7's accessibility criterion rests on this clause. The goal line's *"ships to real users"* is **not** met |
+| **M0** | Foundations | `S` | **8 of 8** | **CRITERION MET**: `DEMONSTRATED` | **The last two clauses closed on 2026-08-27, and both had been `VACUOUS` for reasons that expired without anyone noticing** (§0: *"true today, and true for a reason that will stop being true"*). Clause 4a needed a command that touches `doc.templates`; M4-S landed one, and `command_roundtrip_test.dart` now draws `SaveTemplateToProjectCommand` **717 times across its 1000 sequences** (`0d4ce0c`, `#513`). Clause 5 needed a derived pipeline to snapshot; three exist, and `epoch_mask_test.dart` now folds them into the same changed-key set, moving on **9 of 35 command cases** and guarded by a source-reading field count so the projection cannot fall behind (`97a4d4b`, `#507`). Both figures are measured rather than asserted, because §5.1's `#587` records an arm offered thousands of times that fired zero |
+| **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET**: `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28 at **under three minutes** against a four-minute criterion. The drill's re-run **failed first**, the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5), then passed against `7d4a307`. The three-minute figure is a 140+ wpm operator who knew the keymap; §3.2 records that condition because M7's accessibility criterion rests on this clause. The goal line's *"ships to real users"* is **not** met |
 | **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET**: `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate, **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met. **This row read, until 2026-10-17, that the roadmap's global *"ends green"* rule was not met "because no CI service has ever run".** That reason expired on 2026-08-27, when the pipeline first ran and passed (§4.1, `DISCHARGED`); the rule's other limb, *"goldens pass"*, is §4.3's question |
 | **M3** | Structure + field | `M` | **4 of 5**, the fifth parked | **CRITERION MET**: `CONFIRMED` | **The header of §5.2 read `NOT STARTED` until 2026-08-27, and DR-095 §11.94.8 exists because a ruling was written on that staleness.** DR-040 (§11.39) and M3-K (`#661`, four tasks Done, 2026-08-11) built clauses 2b and 4: `BindEndpoint`, `@panel=` landing forty-six drops on a panel's rear port, and the rack label allocated through the one format engine. Clause 3's derivation ships and its **sheet is M6's** by DR-027, which is the parked one, `#574`. **Clause 1 is `CONFIRMED`**: the 60-drop drill, closed on the operator's confirmation 2026-08-27 (`#89`, `#163`–`#165`). Run 1 on 2026-08-13 is kept at §4.1 of docs/16 as `UNVERIFIABLE` because the app was closed without saving, and the procedure, not the operator, is what failed |
 | **M4** | Device builder | **`L`** *(was `M`)* | **2 of 2** | **CRITERION MET**: `CONFIRMED` | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **CLAUSE 2 IS NOW CONFIRMED, performed on 2026-09-01** (§5.3.30), and it was performable only from §5.3.13: it could not be, for four days, because a template authored in the builder saved into the project and **no surface offered it for placement** (§5.3.8). M4-S (`#701`, DR-077) makes the palette list the DOCUMENT's own shelf, forks a version on a second `Save`, and resolves the newest version at placement; the equipment-list half is read through `File ▸ Export PDF…`, which is the criterion's own reading rather than a missing view. `#251` demonstrated it: every unknown column printed `—` and said so, which is G4/CR-114 read off a printed sheet for the first time. **The archetype path ran the same day at 46 SECONDS against the DSL path's 93** (`#250`), which is what settled whether the generators earned their place. **EVERY M4 STORY IS NOW CLOSED** (§5.3.1–§5.3.30), the last being the drill itself (`#188`), and **95 chapters are Done under this epic with none left open or re-parented**, which is where `v0.4.95` comes from. **M4-P shipped RJ-012's two extensibility surfaces and found each chapter to be something else underneath**: the builder could not save a field device at all, the media-type editor's real gap was MERGE rather than create, and connector aliases were already resolved and only lacked a writer (§5.3.28, DR-107, `v0.4.93`). **RJ-012 stays two-thirds met**: its third surface, a per-family colour override row in settings, has nowhere to go because `ProjectSettings` has no editor and none is assigned to any milestone (`#805`). **M4-K made the rear panel a derived drawing and gave the builder its right dock**, three previews all coming from the scene builders that print rather than from preview widgets (§5.3.26, DR-105, CR-086, `v0.4.89`); **its parked nudge canvas was then un-parked by DR-106 and built** as a sixth `Panel` section, with its align/distribute arithmetic in core (§5.3.27, `v0.4.90`). **M4-O made the Device Manager tab a real browser** and found, while doing it, that the `Project ▸ New device template…` menu item DR-104 assumed existed does not (§5.3.25, DR-104, `v0.4.86`). **M4-L gave three modelled-since-M0 fields their first producer** (`DeviceOverrides`, `derivedFrom`, `PortOverrides`, §5.3.22), **M4-M made `.rmdx` a real format with both file verbs, a real `contentHash` and a size cap on every import path** (§5.3.23, DR-100, DR-101, `v0.4.78`), and **M4-N built the whole library subsystem: the writable shelf, the `.rmda` archive, both file verbs, provenance as a sealed class and a palette that lists several libraries at once and can place from them** (§5.3.24, DR-102, DR-103, `v0.4.83`). **None of the three moved this criterion**, and that was the point of the row for a fortnight: story after story closed while clause 2 remained a person with a document to read. **It was read on 2026-09-01** (§5.3.30), which is the only thing that could ever have closed it. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
@@ -167,7 +167,7 @@ starting rather than trusting them; that is what the `Mn-0` rows now say.
 and `#453` is `D1/1`, the macOS platform directory), and sequenced with M6 where page setup is actually built, rather
   than with the macOS work where it would be found late because it is filed under the wrong heading.
 - **`D13`'s register text is stale in one detail**: it says the dialog filter is hard-coded to
-  `.rackpal`; DR-015 made that `*.rmpj;*.rackpal` at `dc22ddc`. The hard-coding is unchanged, only
+  `.rackpal`; DR-015 made that `*.rmpj;*.rackpal` at `ac64fcf`. The hard-coding is unchanged, only
   the strings moved. The work itself is M4's (`#234`), so `D13`'s own row (`#475`, a Story that reads Done on the board) just points there. This line
 said `#453`'s sibling row until 2026-10-17, the same mis-citation as `D14` above.
 - **`D7` is closed on the board**, matching docs/13 §2.2, the debt cleared and its owed gate was
@@ -230,15 +230,15 @@ answer, and §4.3 now says in which sense of the word the claim holds and in whi
 | 2 | 1/32-inch clearance exact, 45U accumulation exact (CR-001) | **DEMONSTRATED** | `packages/rackpal_core/test/units_test.dart:6` "1/32 inch inter-panel clearance is exact" and `:15` "zero accumulated error across a 45U rack stack", exact integer nanometre arithmetic, no tolerance |
 | 3 | `write(read(bytes)) == bytes` on **three** fixtures | **DEMONSTRATED: exceeded** | `packages/rackpal_core/test/byte_roundtrip_test.dart` writes and re-reads **four** real files under `packages/rackpal_core/test/fixtures/`: `a_empty_project`, `b_rack_and_device`, `c_fuller_project`, `d_templates_and_power` |
 | 4 | Command round-trip on 1,000 generated sequences | **DEMONSTRATED** | `packages/rackpal_core/test/command_roundtrip_test.dart:35` `_sequenceCount = 1000`, seeded `Random(20260718 + i)`, byte identity of real `JsonDocumentCodec` output asserted after `apply;revert` **at every step**. The run log shows 1000 discrete cases |
-| 4a | *…"including `templates.keys`: AC-015"* | **DEMONSTRATED** *(was `VACUOUS`)* | `command_roundtrip_test.dart` gained a `saveTemplateToProject` arm on 2026-08-27 (`8af36ed`). Its first draft **failed**, on seed `20260724` step 2, with `"templates"` returning `{}` where a snapshot had been: the generator drew a version from a literal range and broke `SaveTemplateToProjectCommand`'s documented precondition, which is that `nextTemplateVersion` guarantees the key is free. The command was right; the arm now calls that function as the one production caller does |
-| 5 | Epoch-mask coverage for **every command type** | **DEMONSTRATED** *(was `VACUOUS`)* | The **command-type** limb was always covered; the **epoch-mask** limb is covered as of `38167ec`. `epoch_mask_test.dart` now snapshots `buildEquipmentList` and `computeRackRollups` alongside the persisted maps, under a `derived:` prefix, so all twenty-odd per-command tests gained derived coverage with no call-site change. `device_loads` rides in through `EquipmentRow.loads`, which resolves it per device. §4.5 row 5 is paid |
+| 4a | *…"including `templates.keys`: AC-015"* | **DEMONSTRATED** *(was `VACUOUS`)* | `command_roundtrip_test.dart` gained a `saveTemplateToProject` arm on 2026-08-27 (`0d4ce0c`). Its first draft **failed**, on seed `20260724` step 2, with `"templates"` returning `{}` where a snapshot had been: the generator drew a version from a literal range and broke `SaveTemplateToProjectCommand`'s documented precondition, which is that `nextTemplateVersion` guarantees the key is free. The command was right; the arm now calls that function as the one production caller does |
+| 5 | Epoch-mask coverage for **every command type** | **DEMONSTRATED** *(was `VACUOUS`)* | The **command-type** limb was always covered; the **epoch-mask** limb is covered as of `97a4d4b`. `epoch_mask_test.dart` now snapshots `buildEquipmentList` and `computeRackRollups` alongside the persisted maps, under a `derived:` prefix, so all twenty-odd per-command tests gained derived coverage with no call-site change. `device_loads` rides in through `EquipmentRow.loads`, which resolves it per device. §4.5 row 5 is paid |
 | 6 | One v0→v1 migration fixture in the golden corpus | **DEMONSTRATED: exceeded** | `packages/rackpal_core/test/migration_corpus_test.dart` covers v0→v1 synthetically **and** a real v1→v2 file fixture, `packages/rackpal_core/test/fixtures/v1_templates_and_power.rackpal.json` |
 | 7 | Zero Flutter imports, enforced by a test that fails the build | **DEMONSTRATED** | `packages/rackpal_core/test/no_flutter_import_test.dart` scans whole import/export directives (not a naive prefix match) and carries a **vacuity guard** counting files scanned, the guard is the thing that makes it a real gate rather than a test that passes on an empty glob |
 
 **Package layout** matches CR-083's five-member list exactly: `pubspec.yaml`'s workspace at
 `:7-12` lists `rackpal_core`, `rackpal_text`, `rackpal_export`, `rackpal_ui`, `apps/rackpal`.
 **The demonstration of the six discharged clauses is recorded in the closing commit** per roadmap
-§8.1: `b94bd60`, *"feat(core): implement rackpal_core through M0's command/undo system"*.
+§8.1: `83988f2`, *"feat(core): implement rackpal_core through M0's command/undo system"*.
 
 ### 2.3 Why M0 WAS `PARTIAL`, and what the unbuilt checklist had to do with it: nothing
 
@@ -259,7 +259,7 @@ rather than deleted because it is the exact failure mode the table at the top of
 catalogues. The same `VACUOUS` mark unseats M5's clause 3 (§5.4) and the roadmap's global
 *"goldens pass"* limb, which §4.3 calls *"vacuous for every milestone to date"*, an exemption
 granted to one milestone and to no other is a preference, not a finding. M0's six discharged
-clauses are still discharged and the work behind them is still good; `b94bd60` still records their
+clauses are still discharged and the work behind them is still good; `83988f2` still records their
 demonstration. What changed is the headline, which is the only thing a reader skimming §1 sees.
 
 Separately and unchanged: **no gate in this project is mechanical**, and that is a project-level
@@ -273,12 +273,12 @@ touches the map and a pipeline to snapshot, neither of which existed when that a
 
 - **AC-015 / `templates.keys`**: wanted *"a command that touches `doc.templates`… the clause becomes
   real the day M4 or M1's copy-on-place lands, and not before."* **M4-S landed
-  `SaveTemplateToProjectCommand`**, and `8af36ed` (`#513`) put it in the fuzz. AC-015's template
+  `SaveTemplateToProjectCommand`**, and `0d4ce0c` (`#513`) put it in the fuzz. AC-015's template
   refcounting is still deferred and this does not speak to it: what is covered is the narrower thing
   the M0 criterion names, that a command touching `templates` leaves the map byte-identical across
   apply-revert.
 - **Epoch-mask letter (AC-014)**: wanted `epoch_mask_test.dart` extended to the derived outputs, and
-  called it *"cheap today and more expensive with every derived consumer added."* Paid at `38167ec`
+  called it *"cheap today and more expensive with every derived consumer added."* Paid at `97a4d4b`
   (`#507`), and the estimate held: the derived half folds into the existing changed-key set, so
   twenty-odd tests gained coverage without a call-site change. §4.5 row 5 is closed by the same
   commit.
@@ -327,7 +327,7 @@ Its **goal** line carries a clause the criterion does not: *"The smallest genuin
 |---|---|---|---|
 | 1 | A user opens the app | **DEMONSTRATED** | `flutter build windows --release` exit 0, `√ Built build\windows\x64\runner\Release\rackpal.exe`; `apps/rackpal/test/starters/starter_assets_test.dart` opens all four starters through the real store |
 | 2 | **…creates a 42U rack** | **DEMONSTRATED** | `AddRackCommand` and docs/04 §9's three-field dialog now exist, and the whole path is driven against the real screen: `packages/rackpal_ui/test/canvas/rack_creation_test.dart` presses `Ctrl+Alt+N`, types a name, commits with `Enter`, and asserts the header reads `RK-2` / `42U`, no pointer after the initial focus click. `packages/rackpal_core/test/rack_commands_test.dart` covers the command (designator allocation, order, preset-vs-typed height, undo/redo, byte round trip). **This is the CAPABILITY, not the drill.** The row it discharges is "creates a 42U rack"; the wall-clock, keyboard-only sequence is clause 3, which is **CONFIRMED** as of 2026-07-28, see there. *Was* **NOT BUILT**, on the grep for `AddRack`/`addRack`/`createRack` returning nothing; that grep now returns `packages/rackpal_core/lib/src/commands/rack_commands.dart:59`. `apps/rackpal/lib/src/session/blank_document.dart` still seeds `kBlankProjectRackHeightU = 42` for `Ctrl+N`, and `apps/rackpal/test/session/blank_document_test.dart` now pins that seeded rack field-for-field against what the dialog builds |
-| 3 | 20 devices **in under four minutes, keyboard only** | **CONFIRMED**: by the user, 2026-07-28 | **Performed and passed on 2026-07-28: under three minutes, keyboard only**, against the build carrying `616a301`. A ~25% margin under the criterion, and both halves, the speed and the keyboard-only constraint, now measured in the SAME run, which the 2026-07-27 attempt never managed. **THE OPERATOR'S CONDITIONS ARE PART OF THE MEASUREMENT AND ARE RECORDED RATHER THAN DROPPED:** the user types 140+ wpm and had already learned most of the shortcut names. That is a fast, trained operator, and it is volunteered here because the number means something different without it. The clause says "a user" and is satisfied literally, this reading is not a hedge on the mark. But **it does not establish the time for a first-run or a slower-typing operator**, and clause 3 is load-bearing for M7's accessibility criterion, where exactly that population is the subject. A run by someone who has not memorised the keymap is worth having before M7 leans on this number; see §3.4. **A CONFIRMED mark is not a gate**: no CI job re-runs this, and it does not survive a change to the keymap; the regression net named below is what guards the mechanism between drills., *Previous mark, kept because REFUTED records a measured fact and deleting it would erase why any of the remedy exists:* **the user timed it on 2026-07-27: under four minutes, but with mouse and keyboard combined, and reported no full keyboard path exists.** So the *speed* half is demonstrated and the *keyboard-only* half is refused, which matters, because the constraint is the point: it is what makes the tool faster than Visio for a populated rack, and it is load-bearing for M7's accessibility criterion. **The named fix has since been built, and building it does not discharge the clause.** REFUTED means the act was performed and failed; only the act being performed again can move it, and no agent can perform it. What landed: `Esc` now clears the selection (docs/04 §8's third limb, `rack_canvas_screen.dart`'s `_onEscape`); a quick-add that the loop itself is repeating keeps caret-targeting live (`_selectionIsLastQuickAdd`); a cycle whose caret lands on an occupied U falls back to lowest-free-U *and says so* rather than jamming; and a refused cycle hands focus back to the canvas instead of stranding it on the modal scope. The regression net is `packages/rackpal_ui/test/canvas/keyboard_only_placement_test.dart` (11 cases, each written to fail if one half of the fix is removed) and `rack_creation_test.dart`'s twenty-device drill, which drives the caret to U5 first so the caret path and the lowest-free-U fallback give different answers. The earlier citation in this row (`rack_canvas_screen.dart:2216-2229` for a gap the code documented *against itself*) is **dead**: that comment was replaced by the fix and no line range holds it any more. The user also reports the interface "feels quite good already though may need a bit of optimization". **THE FIRST ATTEMPT TO RE-RUN THE DRILL FOUND THE PATH STILL IMPOSSIBLE, FOR REASONS NOTHING ABOVE PREDICTED**: see §3.5. Neither of the two blockers was in the remedy list this row had been carrying, and both had been shipped since M1's earliest days; the drill could not have passed on any build before `616a301` |
+| 3 | 20 devices **in under four minutes, keyboard only** | **CONFIRMED**: by the user, 2026-07-28 | **Performed and passed on 2026-07-28: under three minutes, keyboard only**, against the build carrying `7d4a307`. A ~25% margin under the criterion, and both halves, the speed and the keyboard-only constraint, now measured in the SAME run, which the 2026-07-27 attempt never managed. **THE OPERATOR'S CONDITIONS ARE PART OF THE MEASUREMENT AND ARE RECORDED RATHER THAN DROPPED:** the user types 140+ wpm and had already learned most of the shortcut names. That is a fast, trained operator, and it is volunteered here because the number means something different without it. The clause says "a user" and is satisfied literally, this reading is not a hedge on the mark. But **it does not establish the time for a first-run or a slower-typing operator**, and clause 3 is load-bearing for M7's accessibility criterion, where exactly that population is the subject. A run by someone who has not memorised the keymap is worth having before M7 leans on this number; see §3.4. **A CONFIRMED mark is not a gate**: no CI job re-runs this, and it does not survive a change to the keymap; the regression net named below is what guards the mechanism between drills., *Previous mark, kept because REFUTED records a measured fact and deleting it would erase why any of the remedy exists:* **the user timed it on 2026-07-27: under four minutes, but with mouse and keyboard combined, and reported no full keyboard path exists.** So the *speed* half is demonstrated and the *keyboard-only* half is refused, which matters, because the constraint is the point: it is what makes the tool faster than Visio for a populated rack, and it is load-bearing for M7's accessibility criterion. **The named fix has since been built, and building it does not discharge the clause.** REFUTED means the act was performed and failed; only the act being performed again can move it, and no agent can perform it. What landed: `Esc` now clears the selection (docs/04 §8's third limb, `rack_canvas_screen.dart`'s `_onEscape`); a quick-add that the loop itself is repeating keeps caret-targeting live (`_selectionIsLastQuickAdd`); a cycle whose caret lands on an occupied U falls back to lowest-free-U *and says so* rather than jamming; and a refused cycle hands focus back to the canvas instead of stranding it on the modal scope. The regression net is `packages/rackpal_ui/test/canvas/keyboard_only_placement_test.dart` (11 cases, each written to fail if one half of the fix is removed) and `rack_creation_test.dart`'s twenty-device drill, which drives the caret to U5 first so the caret path and the lowest-free-U fallback give different answers. The earlier citation in this row (`rack_canvas_screen.dart:2216-2229` for a gap the code documented *against itself*) is **dead**: that comment was replaced by the fix and no line range holds it any more. The user also reports the interface "feels quite good already though may need a bit of optimization". **THE FIRST ATTEMPT TO RE-RUN THE DRILL FOUND THE PATH STILL IMPOSSIBLE, FOR REASONS NOTHING ABOVE PREDICTED**: see §3.5. Neither of the two blockers was in the remedy list this row had been carrying, and both had been shipped since M1's earliest days; the drill could not have passed on any build before `7d4a307` |
 | 4 | Exports a **three-sheet** PDF | **DEMONSTRATED** | `packages/rackpal_core/lib/src/draw/sheet/sheet_def.dart` declares exactly `SheetRole.rackElevationFront` / `rackElevationRear` / `equipmentList`, and its header names the 2N+1 trap; `packages/rackpal_export/test/scale_notice_test.dart:141` `expect(out.sheetCount, 3)` |
 | 5 | Elevations dimensionally correct **against a physical tape measure** at true scale | **CONFIRMED**: by the user, 2026-07-27 | The one clause of this criterion that no test could discharge, because it asks about *paper*. Verified by the user against a printed sheet this session and reported correct. The in-repo evidence remains `packages/rackpal_export/test/elevation_true_scale_test.dart`, which composes real `q`/`Q`/`cm` into PDF user space, derives every expectation from the literals `44_450_000` / `25_400_000` / `72.0` / `482_600_000` / `450_850_000`, regexes the ratio *n* back out of the sheet's own `SCALE` field, and takes its 0.01 pt tolerance from `PdfNum.precision = 5` rather than tuning it, but that test is titled, in `docs/m1-implementation-log.md:1434`, *"how dimensionally correct against a tape measure is proved **without a printer**"*, and the print chain (driver scaling, fit-to-page, media stretch) is exactly what it cannot reach. **Provenance is a human check, not a gate**: it is not re-run by CI and does not survive a change to the fit engine. AC-058 D13's full print matrix (ANSI B laser, ANSI D plotter, photocopy) is still scheduled at M6 and has not run |
 | 6 | Equipment list matches rack contents **exactly** | **DEMONSTRATED** | `packages/rackpal_export/test/starters_export_test.dart` asserts a **bijection in both directions** over all four real starter files: designator multiset equality against the document, **plus** every designator recovered as actual text from a `T6.30` content stream |
@@ -335,7 +335,7 @@ Its **goal** line carries a clause the criterion does not: *"The smallest genuin
 | 8 | Undo restores every operation in that sequence | **DEMONSTRATED** | `command_roundtrip_test.dart` at the core level, plus UI-level coverage in `packages/rackpal_ui/test/canvas/{rack_canvas_screen,rack_compaction,rack_resize_drag}_test.dart` and `test/inspector/{rack_inspector_panel,shrink_rack_dialog}_test.dart`, including *"Preset and Apply lands the preset AND the resize AND every displacement as ONE undo entry"* |
 | — | *Goal clause, not an exit clause:* **"and it ships to real users"** | **NOT BUILT** | No installer, no signing, no release artefact of any kind. See M8 and DR-006. §1 counts M1's exit clauses as eight, and this goal line is not one of them; board `#66` sits under M8 by DR-097, although its description still reads *"EXIT CLAUSE of M1"* |
 
-The exporter demonstration is recorded in the closing commit `0fa532d`.
+The exporter demonstration is recorded in the closing commit `6554187`.
 
 ### 3.3 Unbuilt M1 checklist items
 
@@ -388,7 +388,7 @@ In the order that makes each cheaper than the next:
 Recorded at length because the board's marks are only worth what the evidence behind them is
 worth, and this is the clearest measurement anyone has of the gap between "the suite is green"
 and "the thing works". Both defects predate every remedy clause 3 had been carrying. Both were
-found by a person opening the app, not by any of 2206 passing tests. Fixed in `616a301`.
+found by a person opening the app, not by any of 2206 passing tests. Fixed in `7d4a307`.
 
 **1. Every text field on the rack screen had its editing keys stolen.** `RackCanvasScreen` mounts
 its `Shortcuts` above the whole palette + canvas + inspector `Row`, so the palette filter and the
@@ -401,7 +401,7 @@ which made the palette unusable for the rest of the session, and the drill's inn
 `/ query ⏎`, so the drill was not merely slow, it was **impossible**. Worse and unreported:
 with a device selected, that same `Backspace` ran a real `RemoveDeviceCommand`.
 
-This was live from `5a2a2b6` (2026-07-18), which added the search field to a tree where `6bc5be0`
+This was live from `43e0b62` (2026-07-18), which added the search field to a tree where `bd55676`
 had already bound `Backspace`, nine days, spanning every M1 assessment in this document.
 
 **2. The insertion caret was drawn below the visible canvas.** `ViewportController` opens at
@@ -516,9 +516,9 @@ passes"*, has never been satisfiable for any milestone, M0 included, and becomes
 the day a pipeline run number can be written into this section.
 
 > **RESOLVED 2026-08-03 by DR-017 (canon §11.16): adopt `dart format` as a gate, keep the
-> analyzer's info ratchet.** Closed by three commits. `b6ff394` formatted the tree, **124** files rather than the 88
+> analyzer's info ratchet.** Closed by three commits. `1d2c622` formatted the tree, **124** files rather than the 88
 > recorded below, and lowered the info pin 194 to 173 because 21 of the 22 long-line infos existed
-> only because nobody had run the formatter. `ecdf3b2` added `dart format --set-exit-if-changed` to
+> only because nobody had run the formatter. `c1d22c8` added `dart format --set-exit-if-changed` to
 > `azure-pipelines.yml` and `tools/ci/run_local.ps1` as **gate 1b**, mutation-tested by planting a
 > formatting defect and watching it read FAIL (1) with the other eight fast gates green. The docs/11
 > §7 half of the choice was paid too: that section described a **GitHub Actions** workflow with a
@@ -576,8 +576,8 @@ coincidence than a pattern: M5 is where this project stops deciding against a pl
 
 ### 4.2 The M2 detour is reconciled in code, not in the documents
 
-**Eighteen** commits (`e433ae0` … `1eec6bf`) added a schematic canvas with **zero tests**:
-`git rev-list --count e433ae0^..1eec6bf` returns 18. `b560a50`
+**Eighteen** commits (`3a9e1a3` … `b29044e`) added a schematic canvas with **zero tests**:
+`git rev-list --count 3a9e1a3^..b29044e` returns 18. `c5669a9`
 salvaged the symbol geometry and hit-testing into `rackpal_core`, deleted `sugiyama.dart` outright,
 its commit message: *"It was dead (nothing constructed it) AND broken"*, naming a
 `ConcurrentModificationError` on any graph with an edge and a divide-by-zero for single-node
@@ -705,7 +705,7 @@ that write ports (`ConnectPortsCommand`, `BindEndpointCommand`, `MoveEndpointCom
 was found by the review; two mask defects were found by other means (`#932`, `#933`, §4.15), which is
 the argument for closing it rather than a reason to believe it is harmless.
 
-**CLOSED 2026-09-24 BY `#944` AT `56b37d1d`, AND THE COUNT ABOVE WAS LOW.** A census that follows
+**CLOSED 2026-09-24 BY `#944` AT `7485fff2`, AND THE COUNT ABOVE WAS LOW.** A census that follows
 `extends` through abstract bases finds **71** concrete document commands, and **52** had no case:
 two more than the review's 49, because a name grep counts a command covered when a comment mentions
 it (`SetMountNoteCommand`, `SetRoomEstimateCommand`). All 71 now have one, over `whole_house.rppj`,
@@ -746,7 +746,7 @@ whether Jost is too wide for a schedule column.
 The code is unambiguous. `apps/rackpal/pubspec.yaml` bundles **Jost Regular AND Jost Medium**,
 each twice (under `fonts:` at `:146-151` and under `assets:` at `:153-154`), with the reasoning
 inline at `:125-144`; commit `0545090`, *"style: swap the bundled font from IBM Plex Sans to Jost"*,
-made the swap and `875db98` added the second weight; every test fixture uses Jost, `apps/rackpal/test/baseline_parity_test.dart:81-82`
+made the swap and `3559a14` added the second weight; every test fixture uses Jost, `apps/rackpal/test/baseline_parity_test.dart:81-82`
 (`const String _kFamily = 'Jost'; const FontRef _kFont = FontRef(_kFamily);`) and a literal
 `const FontRef _font = FontRef('Jost')` in eight `packages/rackpal_export/test/` files, including
 `elevation_true_scale_test.dart:132` and `starters_export_test.dart:41`.
@@ -762,10 +762,10 @@ table), docs/11:236, docs/03:146's asset tree, docs/05:171, and canon:1203, :121
 > `:1203` and `:1211` are above the first insertion and did not move.
 
 Two consequences beyond the stale prose, **one of them now partly discharged**. The weights: this
-entry read *"only Regular is bundled"* until `875db98`, which added **Medium (500)** under DR-090
+entry read *"only Regular is bundled"* until `3559a14`, which added **Medium (500)** under DR-090
 §11.89.8 after an audit found **28 sites asking for `w600`/`w700`** against a single face and
 Flutter synthesising the difference. **`RackMono` now exists**: Space Mono (SIL OFL 1.1, no Reserved Font Name), Regular and Bold,
-bundled at `71b9bd1` and wired into the two call sites that were asking for a generic
+bundled at `aa304d5` and wired into the two call sites that were asking for a generic
 `fontFamily: 'monospace'` nothing provided. `drop_entry_panel.dart` places its caret by counting
 spaces, so a proportional fallback would have put it under the wrong character with nothing
 failing. **SemiBold and Condensed still do not exist**, nor does `RackMono` **Italic**, which
@@ -776,7 +776,7 @@ The second is **partly discharged and now gated**. The four codepoints, `U+2192`
 `U+2032` and `U+2033`, were absent from the bundled build and mapped to `.notdef`, which draws as
 NOTHING rather than as a box; two live schedule cells emit the first onto `T6.10` and `T6.11`, and
 no shipped starter does, which is why nothing ever failed. All four, plus seven more, are added at
-`b7b5ac2` by `tools/build_jost_glyphs.py`, built from the face's own contours with every constant
+`26c3832` by `tools/build_jost_glyphs.py`, built from the face's own contours with every constant
 measured per weight. **`tools/glyph_coverage_check.py` is now the fifteenth gate** and reads the
 font binary, which is the only place this class of defect is visible.
 
@@ -790,7 +790,7 @@ from the face's own material and checked by measurement.
 
 **A third consequence was found by the same audit and is not about weights at all.** `main.dart`
 set no `fontFamily`, so the application drew its **diagram in Jost and its chrome in Segoe UI**
-from M1 until `875db98`. Both faces render, so no gate could see it.
+from M1 until `3559a14`. Both faces render, so no gate could see it.
 
 ### 4.7 RE-OPENED 2026-10-17 (it read CLOSED 2026-08-25): the documents print a `kSchemaVersion` the code has moved past
 
@@ -862,7 +862,7 @@ Worse, the regression net has a hole on exactly the axis it was built to guard.
 `packages/rackpal_export/test/elevation_true_scale_test.dart` states in its own fixture commentary
 that *"the four starters contain no `Face.rear` and no partial-width placement whatsoever, so
 before this fixture nothing anywhere observed the rear reflection in emitted bytes"*, which is how
-the blank-rear-elevation defect named in `0fa532d` survived. It took a purpose-built synthetic
+the blank-rear-elevation defect named in `6554187` survived. It took a purpose-built synthetic
 fixture to find it.
 
 All four starters are authored by `apps/rackpal/tool/generate_starters.dart`, so growing them is a
@@ -871,7 +871,7 @@ generator edit, not hand-authoring.
 ### 4.10 The roadmap carries no status at all
 
 Zero ticked checkboxes against fifty-nine unticked ones. Roadmap §8.1 puts the demonstration in the
-milestone's **closing commit message**, and that part works, `b94bd60` for M0 and `0fa532d` for
+milestone's **closing commit message**, and that part works, `83988f2` for M0 and `6554187` for
 M1's exporter are both detailed and honest. What is missing is the **index from milestone to
 commit**, which is what this file is.
 
@@ -927,7 +927,7 @@ are referenced by nothing, and will rot silently, and
 `apps/rackpal/test/gitattributes_byte_exactness_test.dart:66` even lists `test/fixtures` as a path
 it cares about.
 
-### 4.13 Closed at `d8aedca`: 678 of 727 seed ports were in the wrong order
+### 4.13 Closed at `5ccb76b`: 678 of 727 seed ports were in the wrong order
 
 **Recorded because it was shipped, not because it is still open.** `PortBuilder._next` emitted
 `a0 … a9, a10 …` into a `FracIndex`, which is `extension type const FracIndex(String v)` with **no
@@ -970,7 +970,7 @@ carries `M8-A`…`M8-G`, M9 carries `M9-A`…`M9-F`, and not one of the thirteen
 wordmark, the window icon, the document icon or the trademark search. File-type registration
 survives only by accident, inside `#498` under the Store epic, because a Store listing needed it
 for its own reasons. `#768` is the row that should have existed since the decomposition and now
-does; `#769` is the wordmark inside it, closed at `28ba595`.
+does; `#769` is the wordmark inside it, closed at `509e88e`.
 
 **THE SHAPE, WHICH IS THE POINT OF RECORDING IT.** A ruling that accepts something into a milestone
 is not a task in that milestone. The only thing between the two is a decomposition that has to
@@ -1003,22 +1003,22 @@ candidates. Every behavioural claim below was **probed on a mounted screen or th
 path** before it was written down, and one was withdrawn when the probe was the author's own grep
 filter (see `#933`).
 
-**Baseline.** All nineteen local gates green on `main` at `f71ec40c` before any change.
+**Baseline.** All nineteen local gates green on `main` at `fff7aaa2` before any change.
 
 | Finding | Kind | Disposition |
 |---|---|---|
-| `wire_trace.dart` in `rackpal_ui`, so the exporter cannot draw a wire | layering | **MOVED**, `#931` at `0506ef5a`; `#98`'s one non-optional item |
-| The Rack view never listened to `wires`; the outlet chip and findings drawer went stale on a wires-only commit | gap between slices | **FIXED**, `#932` at `9bf8312b`. Masked in the app by a shell that rebuilds everything |
+| `wire_trace.dart` in `rackpal_ui`, so the exporter cannot draw a wire | layering | **MOVED**, `#931` at `4a306788`; `#98`'s one non-optional item |
+| The Rack view never listened to `wires`; the outlet chip and findings drawer went stale on a wires-only commit | gap between slices | **FIXED**, `#932` at `4d873ea3`. Masked in the app by a shell that rebuilds everything |
 | Two rack display toggles declared `style`, which only the Schematic hears; its DR-187 freeze wrote every symbol position into the file | gap between slices | **FIXED**, `#933`. A unit test asserted the defect |
 | Three comments describing code that had changed: no incremental path, a misplaced doc comment, a crash reporter "at M2" | stale claim | **FIXED**, `#934` |
 | `AddMediaTypeCommand` overwrote an occupied id and its undo deleted it; the header promised otherwise | stale claim, reachable | **FIXED**, `#935` |
 | One CSV import naming a cable in two spellings that slug alike offers two new types and makes one | UI | **FIXED** by DR-197, `#937`: one row per id, every spelling an alias |
 | Release builds report nothing anywhere, including a startup failure; the §12.4-safe storage log has no sink | release risk | **BUILT** by DR-194, which pulled §9.9's local half forward: the log (`#939`), the startup-failure window (`#940`), `Help ▸ Open diagnostics folder…` (`#941`). M8 keeps its exit clause |
-| AC-014's coverage | test drift | **CLOSED** by `#944` at `56b37d1d`: all 71 document commands have a case, and a census fails on the next one without. None was wrong. §4.5 |
+| AC-014's coverage | test drift | **CLOSED** by `#944` at `7485fff2`: all 71 document commands have a case, and a census fails on the next one without. None was wrong. §4.5 |
 | 210 of the analyzer's 233 infos were two lints, 116 of them catalogue facts | ratchet | **CLEARED** by DR-195, `#936`: 233 to 23, facts kept under a documented ignore, cascades swept. The first sweep also stripped 45 fixture values `#246` had argued are data, and was corrected in the same chapter (§11.194.3) |
 | `#98`'s refactor candidates | structure | **DECIDED** by DR-196: `wire_trace.dart` moved (`#931`), `json_codec.dart` left alone, the two canvas screens re-asked at M7 (`#942`) |
 | 42 public declarations nothing in `lib/` or `tool/` calls | dead code | **CLOSED** by `#945` (§4.19): 20 deleted, 20 kept with a reason, and two turned out to be evidence of live defects (a Structure named `'STR-1'` against CR-045; a settings row that governed nothing, DR-201). This cell once said *"Listed on `#97`"* and the list was never posted there |
-| `SemanticsService.announce` deprecated after Flutter 3.35 | deprecation | It is the channel M7's NVDA clause rests on. **FIXED** by `#946` at `49a2699b`: `sendAnnouncement` to the owner's view; analyzer pin 23 to 21 |
+| `SemanticsService.announce` deprecated after Flutter 3.35 | deprecation | It is the channel M7's NVDA clause rests on. **FIXED** by `#946` at `dfb01f9f`: `sendAnnouncement` to the owner's view; analyzer pin 23 to 21 |
 | The Plan view's clause table reads "0 of 7" and stops at `PLAN-F` | stale status | **FILED** as `PLAN-J/0` (`#943`), with PLAN-J/2's unperformable print step. See below |
 
 **THE MOST CONSEQUENTIAL FINDING IS NOT IN THE CODE.** The request that started this review said
@@ -1043,7 +1043,7 @@ persistence codec beyond its gates, or the 42 dead declarations one by one. It r
 pass over the thousand-sequence round-trip test. Those are real gaps and not implied clean, and
 `#947` owes the first, second and fourth of them; `#945` owes the third.
 
-### 4.16 The first line-coverage measurement · 2026-09-24 at `a6d29b02` · `#948`, `#947`, `DR-198`
+### 4.16 The first line-coverage measurement · 2026-09-24 at `a0e14532` · `#948`, `#947`, `DR-198`
 
 **Nobody had measured it.** No gate, no pipeline step and no line of this file mentions coverage.
 `flutter test --coverage` over the four suites, each package counting its own tests only:
@@ -1160,7 +1160,7 @@ explanation (DR-198, DR-200). Plus DR-199's refusal titles.
 ### 4.19 The declarations nothing calls · 2026-09-29 · `#945` · `DR-201`
 
 The census (a public top-level function or class named at most once in its own file and nowhere
-else in `lib/` or `tool/`) found **41** at `a13a2dcf`: 11 called by nothing at all, 30 called only
+else in `lib/` or `tool/`) found **41** at `0a965449`: 11 called by nothing at all, 30 called only
 by tests. **"Only tests call it" is not one finding but three**, so each was read before it was
 touched:
 
@@ -1201,7 +1201,7 @@ edits to the original template"* until the template is closed and reopened, and 
 
 **THE FIRST WAS DR-077 §11.76.3 UNDONE, AND ITS TESTS WERE GREEN THE WHOLE TIME.** The fix was right
 when made, because the builder was a dialog that built its wiring once per opening. `#778`
-(`e1ba9958`, 2026-08-26) made it a view, and from then the shell built `buildDeviceBuilderActions`
+(`02fc9cef`, 2026-08-26) made it a view, and from then the shell built `buildDeviceBuilderActions`
 inside `build`. The closure is the only record of a new template's minted
 id; a save is a document change, a document change is a shell rebuild, and the fresh closure had
 forgotten. Measured through the shell before the fix: two Saves wrote `tpl.zone_amp_8@1` and
@@ -2182,15 +2182,15 @@ driven by a person**, so the Epic stays open for that.
 
 Two small corrections the user settled in one message, each on a trade fact the census could only measure.
 
-**Built.** `#1010` at `1a6cf076`: the seeded binding post mated with banana plugs alone, and `CON-001` reads the
+**Built.** `#1010` at `d0e3920a`: the seeded binding post mated with banana plugs alone, and `CON-001` reads the
 source side, so every amplifier-to-speaker run sprang back; the commercial amps' 2-pole Euroblock did the
 same. Both now mate with every bare-wire termination (§11.236.1), the screw terminal and the pigtail list
-them back (§11.236.2), and an RCA into a binding post still fires. `#1002` at `78d7deda`: a cord with an end on an
+them back (§11.236.2), and an RCA into a binding post still fires. `#1002` at `87c3517f`: a cord with an end on an
 inlet-role `power.ac_branch` port is a captive cord (§11.237.2); T6.30's table and the footage note's
 "bought by the piece" both read one Schedule flag, and the note counts what it set aside (§11.237.3).
 
 **Not migrated, by precedent.** A document embeds its registries (DR-010), so a project saved before
-`1a6cf076` keeps the old binding-post list and still springs back on a speaker run. New projects and the
+`d0e3920a` keeps the old binding-post list and still springs back on a speaker run. New projects and the
 regenerated starters carry the fix. Every earlier catalogue correction has left saved projects the same way.
 
 **Refused by the gate, and corrected.** §11.236.2 first said the sink-side terminations keep their empty
@@ -2215,11 +2215,11 @@ could set it: the fourth instance of the `Placement.locked` shape. The user sett
 one about clearance came back with two answers: **rail clearance** is the depth inside the door and **door
 clearance** the swing space in front of it, so the model gained the field it was missing.
 
-**Built.** ENV-1 at `1b144999`: `frontRailClearance` and `rearRailClearance` beside the door (swing)
-clearances, absent read as unknown. ENV-2 at `7d967689`: ten `RackField` rows through the one property
-command, each field converted to an `@internal` setter. ENV-3 at `adaceec4`: the Enclosure section below
+**Built.** ENV-1 at `564b583b`: `frontRailClearance` and `rearRailClearance` beside the door (swing)
+clearances, absent read as unknown. ENV-2 at `5bf10711`: ten `RackField` rows through the one property
+command, each field converted to an `@internal` setter. ENV-3 at `c02b8cec`: the Enclosure section below
 Form factor, with a clearance disabled and its value kept while its door is unticked; own weight became a
-field, and the length and mass refusals stopped naming "Usable depth" for every field. ENV-4 at `7c84d8c9`:
+field, and the length and mass refusals stopped naming "Usable depth" for every field. ENV-4 at `b81b1b44`:
 one elevation line, `ENCLOSURE 600 W x 1000 D x 2000 H MM; FRONT DOOR 75 RAIL, 600 SWING`, each face with
 its own door.
 
@@ -2258,7 +2258,7 @@ six-line band and the "bond per local code" wording.
 
 **Built.** GB-1 at `78239478`: `kElevationHeaderBand` 56 to 66 pt, `kElevationNoteLines` naming the budget,
 and an assert on both columns where nothing had stopped a sixth line printing over the rack. An empty 56 U
-rack now lands at 1:10, pinned beside the M6-G1 boundary. GB-2 at `5fa04853`: `kGroundBarNote` on both faces
+rack now lands at 1:10, pinned beside the M6-G1 boundary. GB-2 at `45a040bb`: `kGroundBarNote` on both faces
 after the envelope line; unticked prints nothing, since `false` is also the default.
 
 **Looked at, not only asserted.** The small office set and a six-note 60 U rear sheet were rendered through
@@ -2289,8 +2289,8 @@ widest lines were measured through Jost: the `NOT DRAWN HERE` line was **already
 three-digit counts (331.7 pt). The user took 8 pt all round (an empty 55 U moves 1:8 to 1:10, nothing else) and
 a wrap after the line's dash onto the band's sixth row, amending DR-240 §11.239.2 (canon §12.52).
 
-**Built.** IN-1 at `076149a9`: `elevationBodyOf`, the drawing area less `kElevationInset` on every side, with the
-band, the rack's area and the scale bar hung from it. IN-2 at `f4750058`: `_wrapAfterDash` in `_band`, width
+**Built.** IN-1 at `1902eeef`: `elevationBodyOf`, the drawing area less `kElevationInset` on every side, with the
+band, the rack's area and the scale bar hung from it. IN-2 at `3862cd87`: `_wrapAfterDash` in `_band`, width
 tested first; the row-count assert moved into `_band`, where a wrap can overflow.
 
 **Found on the way, both in tests.** The band test excluded the rack's own labels from a page-coordinate filter
@@ -2320,9 +2320,9 @@ through the real grid and logged every stop.
 **What default traversal already did right.** Tab walks a row left to right, wraps to the next, never stops in
 a closed pack (it is not drawn), scrolls a 40-row grid with focus, and Shift+Tab reverses it. So
 `columnAfter`, `columnBefore` and `rowAbove` (which no key in docs/06 §4.6 reaches) were deleted (TAB-3 at
-`9c0c5e78`); their tests had asserted that Tab stops at a row's edge, which the product never did.
+`83e7bc73`); their tests had asserted that Tab stops at a row's edge, which the product never did.
 
-**What it did wrong, twice.** TAB-1 at `c04c05d5`: the SIGNAL cell took **two** presses of Tab, because
+**What it did wrong, twice.** TAB-1 at `123f4038`: the SIGNAL cell took **two** presses of Tab, because
 `FamilyPicker` wrapped its menu button in a focus node of its own. It is now a listener, which fixes all five
 places the picker is used. The existing Tab test compared stops against their sorted order and two stops at
 one x are still sorted, so it could not see this; the new one requires every stop strictly right of the last.
@@ -2356,11 +2356,11 @@ follows on the same evidence.
 
 **Reading the pages found two sentences false on every export since M6-K**: `T6.30` said *"CABLE AND POWER
 SCHEDULES NOT ISSUED IN THIS SET"* and `T2.02` *"PORT AND CONNECTION DETAIL NOT ISSUED IN THIS SET"*, beside
-`T6.10` and `T6.15`. DR-242 points them at those sheets (`bf15cdaf`). `starters_export_test` (7) had asserted
+`T6.10` and `T6.15`. DR-242 points them at those sheets (`38f1b23f`). `starters_export_test` (7) had asserted
 the false one on all four starters; it now requires every `SEE T…` in the ink to name a sheet the same file
 carries, after first requiring both notes on the page so it cannot pass by finding none.
 
-**Clause 2, the legend under simulation.** `tools/legend_cvd_check.py` (`5d3b97a4`) applies PAL-1's own test
+**Clause 2, the legend under simulation.** `tools/legend_cvd_check.py` (`d21e4e32`) applies PAL-1's own test
 after Machado 2009 simulation. Requirement 4's ten types pass under both deficiencies by line alone, and
 Whole House's `T0.01` rendered and simulated reads row by row. **Fourteen pairs among the other families fall
 into the band** once the deficiency shifts their lightness; all differ by glyph and tag, and the user filed
@@ -2378,7 +2378,7 @@ does not exist when CI runs cannot be CI-gated. So PAL-1 had to run in the app, 
 `rackpal_core`. **`tools/pal1_check.py`'s header had said since M0 that it "must be ported to
 `rackpal_core`"**, and `contrast.dart` carried a paragraph noting that the port did not exist. It now does.
 
-**A1 (`a4926a2d`), the port, held to the Python's own verdicts.** `lib/src/draw/pal1.dart` carries the five
+**A1 (`96664b10`), the port, held to the Python's own verdicts.** `lib/src/draw/pal1.dart` carries the five
 limbs. Before the Python's rules were deleted, it printed a dump of every family's triple and every
 cross-domain pair's verdict **limb by limb**, over three palettes, and `pal1_test.dart` compares the port
 with it. **The shipped palette alone would have proved nothing**, because it passes, so a comparison over
@@ -2386,7 +2386,7 @@ it could only show the port agreeing that nothing fails. The other two are canon
 their pre-correction values and §14.4's pre-floor control dash: 23 cross-domain collisions, 2 within-domain
 duplicates and 1 period failure between them.
 
-**A2 (`1de8417d`), the gate reads the port.** `pal1_check.py` keeps the palette DATA, which the two parity
+**A2 (`73a2df19`), the gate reads the port.** `pal1_check.py` keeps the palette DATA, which the two parity
 gates hold the docs and the seed to, and sends it to `tool/pal1_verdicts.dart`. Every run also sends the
 two failing palettes as **planted** cases and fails unless the core reports them. **Drilled**: setting the
 core's band to 0 failed the gate on the planted palette; putting `audio.spdif_coax` back to `6,3,1,3`
@@ -2395,7 +2395,7 @@ reproduced exactly §14.3's six S/PDIF collisions. `legend_cvd_check.py` (M6-J1)
 the same call, and its output, Board `#1031`'s fourteen pairs included, is **byte-identical**.
 `import_hardening_test`'s byte-reader census caught the tool's stdin on the first run.
 
-**A3 (`3eabe897`), headroom.** What a new family in a domain can still take, every option with the
+**A3 (`c77b1a6a`), headroom.** What a new family in a domain can still take, every option with the
 families that block it, and *"none left"* as a state of its own. The menu is **DR-243**'s, which the user
 chose: one dash per class at the shipped weights. **The per-domain free counts are a second
 differential**, computed by the Python's rules before they were deleted, and matched on the first run.
@@ -2419,10 +2419,10 @@ already accepts"* was accepted, and then withdrawn before anything was built: **
 Reading every reader of `defaultConnector` found more. **No validation rule reads a family at all**: they
 read the port, and the builder copies a family's defaults into each port it makes. So a wrong direction or
 topology does reach validation, through the copy, and a connector does not, because CON-001 judges a real
-catalog connector against the catalog's own mating table. DR-244 (`8f0625ae`) locks the first two and frees
+catalog connector against the catalog's own mating table. DR-244 (`6fa49684`) locks the first two and frees
 the third. `acceptedFamilies`, which SFE-B1's brief listed as inherited, is a port field.
 
-**B1, B2, B4 (`423c3d16`).** `buildCloneSignalFamily` keeps domain, direction, topology and glyph from the
+**B1, B2, B4 (`bb67d784`).** `buildCloneSignalFamily` keeps domain, direction, topology and glyph from the
 parent and takes a name, a tag, a DR-243 menu option and optionally any registry connector. The id is the
 spelling under the parent's prefix through `mediaSlugFor`: Vantage from Cresnet is `ctl.vantage_2`,
 because `ctl.vantage` ships. Ids and the PAL-1 palette are checked against the document **and** the seed,
@@ -2430,7 +2430,7 @@ since a file older than a shipped family does not carry it. A collision is refus
 every family involved; skipping the check turns four cases red. A document holding a clone round-trips
 byte-exact, with the clone's fields asserted present.
 
-**B3 (`54c49e3a`).** `refused_surfaces_test` banned four command names, and **the clone matched none of them**:
+**B3 (`f31d7f1e`).** `refused_surfaces_test` banned four command names, and **the clone matched none of them**:
 B1's commit passed it untouched. Its signal-family arm is replaced by a census of every source that
 constructs a `SignalFamilyDef`, which must be exactly the declaration, the seed, the codec and the clone.
 A planted site turned it red.
@@ -2443,7 +2443,7 @@ No version move: the DR-122 epic is not the current one.
 
 ### 4.56 SFE-C: the clone surface, and a family that travels inside the library · 2026-10-08 · `#820`, `#829`-`#832`, `#1033`-`#1036` · DR-122, DR-243, DR-244, `DR-245` · no version move
 
-**C1, C2 (`8ba2dec5`).** Project settings gains *Signal families*, the user's choice of host. The clone dialog
+**C1, C2 (`31df6036`).** Project settings gains *Signal families*, the user's choice of host. The clone dialog
 asks for the PARENT first and keeps it in a banner, saying what is kept from it (domain, direction,
 topology: DR-244's locks). DR-243's menu is a grid drawn in the grey a mono laser prints the domain hue at;
 taken lines are dimmed and still selectable, and selecting one shows the family it collides with. **Nothing
@@ -2454,19 +2454,19 @@ inside the scrolling list and was not even built after a tap, and the chosen hig
 identity against a headroom recomputed every build. A test of mine had also passed vacuously on "no reason
 shown" while the reason was off screen.
 
-**C3 (`892cc8bd`).** *"clone of Cresnet"* on the picker row and a *Clones only* filter, from an optional
+**C3 (`00a6c6f9`).** *"clone of Cresnet"* on the picker row and a *Clones only* filter, from an optional
 `clonedFrom` on the family; the three "cannot be created here" sentences now say where one can be.
 
-**C4 to C8, DR-245 (`0458abe0`).** The shelf could not hold a family. **The user chose to carry families
+**C4 to C8, DR-245 (`e4924cd3`).** The shelf could not hold a family. **The user chose to carry families
 inside device libraries** over a separate shelf file. Built as five chapters:
 
 | Chapter | Commit | What |
 |---|---|---|
-| C5 `#1033` | `7902d621` | `.rmda`/`.rmdx` carry the families their devices use, written at v4 only then, so an older build refuses rather than silently dropping them; family-free files stay byte-identical |
-| C6 `#1034` | `d2657b67` | Placing a library device brings its families in DR-103's three cases; families planned before the template, idempotent on re-placement; a PAL-1 clash placed and said |
-| C7 `#1035` | `15556a87` | *Change line* on a clone, judged as itself; never on a shipped family |
-| C8 `#1036` | `f1cf002f` | *From your libraries* in Signal families, through the same arrival rules |
-| C4 `#832` | `c63358fb` | A clone written to `My library.rpda`, not a Command, failure a notice, an unreadable file left byte-identical |
+| C5 `#1033` | `84999fc0` | `.rmda`/`.rmdx` carry the families their devices use, written at v4 only then, so an older build refuses rather than silently dropping them; family-free files stay byte-identical |
+| C6 `#1034` | `047935af` | Placing a library device brings its families in DR-103's three cases; families planned before the template, idempotent on re-placement; a PAL-1 clash placed and said |
+| C7 `#1035` | `46aaedc1` | *Change line* on a clone, judged as itself; never on a shipped family |
+| C8 `#1036` | `17eeb624` | *From your libraries* in Signal families, through the same arrival rules |
+| C4 `#832` | `83c00063` | A clone written to `My library.rpda`, not a Command, failure a notice, an unreadable file left byte-identical |
 
 **Two options were offered without a host and caught before code**: *"a connector the parent accepts"*
 (DR-244) and *"fix its line"* (DR-245 §11.244.4). Both were re-asked with prices. **Gates that earned their
@@ -2488,7 +2488,7 @@ embedder drives `onPointerPanZoom*` from DirectManipulation and passes DM's cont
 unedited: `scale` is its scale and `pan` its translation column. DM scales about a centre of its own, so a
 pinch with no finger travel arrives with `pan = (1 - scale) * centre`. The detector panned by that and then
 zoomed about the cursor as well: two pivots. Chromium's handler for the same API calls the translation
-"noise" during a pinch and latches the gesture; `b2b1d897` takes that rule. Once a gesture's scale leaves 1
+"noise" during a pinch and latches the gesture; `21f49201` takes that rule. Once a gesture's scale leaves 1
 by more than 0.1% it is a pinch until it ends, its `pan` is discarded, and the cursor is the only pivot.
 
 **The user's choice.** Pinch zooms about the cursor, not the viewport centre: the same rule as Ctrl+wheel,
@@ -2517,13 +2517,13 @@ and a committed `pubspec.lock`.
 
 | Commit | What |
 |---|---|
-| `bf5a3ef2` | DR-248 |
-| `5a372da1` | `pubspec.lock` committed; CI keys its pub cache on it and runs `pub get --enforce-lockfile` |
-| `c345a794` | The pin, and only what the SDK forced; `run_local.ps1` reads the pin instead of keeping a second copy |
-| `c933e83b` | **A correction**: a failed enforce run does not rewrite the lock; an IDE did |
-| `268e4114` | Nineteen packages to their newest qualifying versions; `archive` 4.5.0 and `image` 4.12.0 held |
-| `7b4be1a7` | very_good_analysis 11: package and versioned include; 82 new infos fixed |
-| `e492c0d3` | `ensure_flutter.ps1` replaces an SDK that is not the pin |
+| `06c60c1d` | DR-248 |
+| `1fed63e3` | `pubspec.lock` committed; CI keys its pub cache on it and runs `pub get --enforce-lockfile` |
+| `a341509f` | The pin, and only what the SDK forced; `run_local.ps1` reads the pin instead of keeping a second copy |
+| `1cf3be90` | **A correction**: a failed enforce run does not rewrite the lock; an IDE did |
+| `a8a99c29` | Nineteen packages to their newest qualifying versions; `archive` 4.5.0 and `image` 4.12.0 held |
+| `3ce7a884` | very_good_analysis 11: package and versioned include; 82 new infos fixed |
+| `1702bd99` | `ensure_flutter.ps1` replaces an SDK that is not the pin |
 
 **What went wrong, each found by a measurement.** Android Studio and VS Code, open on the tree, re-ran `pub get`
 on the global 3.44.4 SDK two seconds after any pubspec edit: it reverted an upgrade and produced a false finding
@@ -2532,7 +2532,7 @@ Dart 3.13's `use_named_constants` reports 18 false positives on `Len`/`Mass`/`Pe
 types, and following them does not compile. very_good_analysis 11 flipped `trailing_commas` to `automate`, kept
 at `preserve`. The info pin moved 21 to 38 to 138, every one accounted for in its baseline file. **CI build 463
 failed on the first run of the new pin**: the self-hosted agent keeps its tool directory, the SDK cache missed,
-and the stale 3.44.4 was accepted; `e492c0d3` replaces it, proven against a planted stale SDK before push.
+and the stale 3.44.4 was accepted; `1702bd99` replaces it, proven against a planted stale SDK before push.
 
 **Evidence.** All 20 local gates green on each commit, every suite exactly at its floor. CI: build 464 (PR 223)
 and build 465 (`main`, `33483474`) green on 3.47.5, the second taking the warm path (install verified in 6 s).
@@ -2550,10 +2550,10 @@ so a later census reads them as recorded.
 
 | Item | Closed by | What |
 |---|---|---|
-| `#77` | `f6928e94` | The OKF knowledge bundle, built 2026-07-28 |
-| `#114` (96-G) | `c4079d7c` (`#801`) | N03's 24 duplicate port labels: a symptom of the bank-collapse deferral, fixed when the canvas honoured collapse (DR-109; this file's `#801` entry, *"one argument that removes 47 of 48 ports"*) |
-| `#122` (96-H) | `4392846d` | The net-label comb bounded to a computed number of lanes |
-| `#1032` | `68b644d7`, `096a94f4` | docs/00 R7 and docs/21 describe the sheet set M6 ships |
+| `#77` | `8e1b796a` | The OKF knowledge bundle, built 2026-07-28 |
+| `#114` (96-G) | `0559c993` (`#801`) | N03's 24 duplicate port labels: a symptom of the bank-collapse deferral, fixed when the canvas honoured collapse (DR-109; this file's `#801` entry, *"one argument that removes 47 of 48 ports"*) |
+| `#122` (96-H) | `4bc325f0` | The net-label comb bounded to a computed number of lanes |
+| `#1032` | `265646f5`, `b268220c` | docs/00 R7 and docs/21 describe the sheet set M6 ships |
 
 ---
 
@@ -2567,7 +2567,7 @@ and §5.9 is the Plan view, an epic with no milestone number. The sections thems
 
 ### 5.1 M2, Wiring and the live schedule · `M` · CRITERION MET, weakest mark `CONFIRMED`
 
-> **Re-audited at `ea0af6d`, after M2-A…M2-F.** Everything below the exit criterion was rewritten
+> **Re-audited at `13758ff`, after M2-A…M2-F.** Everything below the exit criterion was rewritten
 > against the tree rather than edited: the previous revision of this section marked all five clauses
 > `NOT BUILT` and said *"no drag-to-connect gesture, no magnetic snap, no chain-draw"*, *"no schedule
 > tab and no schedule derivation"*, *"no perf test and no CI to run one in"*. Four of the five are
@@ -2575,7 +2575,7 @@ and §5.9 is the Plan view, an epic with no milestone number. The sections thems
 > one that says a claim stopped covering the thing it named** — so the old text is not softened
 > here, it is superseded, and what replaced each clause is cited.
 >
-> **Updated 2026-08-01 at `bc0c3d4`.** The fifth clause was performed by the user and passed, and
+> **Updated 2026-08-01 at `0807898`.** The fifth clause was performed by the user and passed, and
 > M2-G measured the half of clause 4 that `rackmate_core` structurally could not reach. **M2's
 > headline moves to CRITERION MET.**
 
@@ -2626,7 +2626,7 @@ nothing, so the mechanism it rests on is covered separately: the keyboard route
 (`schematic_keyboard_connect_test.dart`), drag-to-connect with the 12 screen-px magnetic snap
 (`schematic_drag_connect_test.dart`), chain-draw and DR-012.3's family-weighted magnet, and
 `atomicConnect` for the multi-conductor sets (`schematic_atomic_set_test.dart`). ~~**Multi-draw is
-the one gesture of RJ-001's four that is not built**~~, **built at `e078c0b`, board item #93**;
+the one gesture of RJ-001's four that is not built**~~, **built at `bcb19a4`, board item #93**;
 `multi_draw_test.dart`, `pin_selection_test.dart`, `schematic_pin_selection_test.dart` and
 `schematic_multi_draw_test.dart` are its four suites, the last of which is one group per claim in
 docs/05:484. All four of RJ-001's gestures now exist. **The drill passed WITHOUT it**, which is the
@@ -2664,14 +2664,14 @@ copies lied. The old text also called `symbol_layer.dart` *"a symbol renderer an
 screen consumes"*, `schematic_canvas_screen.dart` consumes both.
 
 **What M2 still carries, with its criterion met.** ~~Multi-draw (#93) and the portable build
-(#13).~~ **Both are done**: multi-draw at `e078c0b`, the portable build at `bee96bd`. Neither was
+(#13).~~ **Both are done**: multi-draw at `bcb19a4`, the portable build at `967fe3a`. Neither was
 named by the exit criterion, which is why neither held the headline, roadmap §8.1: *the exit
 criterion is the unit of truth*, and grading a milestone against work-in-the-milestone rather
 than against its criterion is the substitution §5.5 refuses for M6. The six tier-2 spring-back rules
 are **not** M2's at all, canon defers them to M5 (§11.12.5), and implementing one as a tier-1
 refusal would make the product unable to draw a mistake, which CR-017 and G2 exist to prevent.
 
-**#124 is built (`b128a42`), and it exposes a gap in CR-081 worth recording.** The pennant's family
+**#124 is built (`c5c3794`), and it exposes a gap in CR-081 worth recording.** The pennant's family
 glyph is drawn as GEOMETRY rather than as a character, because as a character it was measured by
 `PdfFontMeasurer` over Jost (which carries none of the four Unicode blocks these symbols live in,
 so it returned a near-zero advance) and painted on screen by a `TextPainter` that fell back to a
@@ -2683,11 +2683,11 @@ embeds the subset it measures with, so export was self-consistent and only the s
 parity claim stated over a shared component does not cover what is downstream of it. The fix's
 content is not the geometry but that the width is now COMPUTED from the type size and read by both
 the sizer and the emitter, so no font can put them out of step. Cost, stated: five ops per flag
-where a family resolves, up from four, and unlike `ff712d2`'s accidental fifth this one is
+where a family resolves, up from four, and unlike `e981272`'s accidental fifth this one is
 structural and does not come back.
 
 **DR-015 renamed the project file, and the rename found two silent-loss paths that had nothing to
-do with naming.** `.rmpj` ships at `dc22ddc`; `.rackpal` is still opened and still saved in place.
+do with naming.** `.rmpj` ships at `ac64fcf`; `.rackpal` is still opened and still saved in place.
 Both defects are the same mistake, **rebuilding a filename you already have**, and neither was
 found by a failing test. They were found by asking what the app's own files are called.
 
@@ -2713,7 +2713,7 @@ pin the back-compat promise and every one of them dies if the legacy spelling is
 `kDocumentExtensions`.
 
 **The `drawn`-mode router took six field reports in a row, and what they were all reports of is one
-decision.** `38baed1` … `5d53512`, against #96. A staircase is out of one pin, along a corridor,
+decision.** `0d0c3d7` … `83ce9b9`, against #96. A staircase is out of one pin, along a corridor,
 into the other; **where that corridor sits on its own axis is the only free variable in the router**,
 and five of the six reports were that variable being set wrong. docs/05 §10 phase 4 now carries
 the corrected rule; what belongs here is the evidence, and three things in it generalise.
@@ -2728,7 +2728,7 @@ contradiction inside one paragraph survived every review this corpus has had; it
 someone trying to write the code.
 
 **Second, two of the six fixes were in the wrong place, and both were *plausible* in the wrong
-place.** `ebee4c2` added a detour candidate that pushed the corridor out past both bodies, correct
+place.** `4cc2c87` added a detour candidate that pushed the corridor out past both bodies, correct
 behaviour, correct measurements, closed the report. It was later provably dead: the staircase's own
 corridor is never further out than that candidate, so it could never clear a pin column the
 staircase failed to clear. It had been compensating one layer late for a corridor placed wrong
@@ -2739,7 +2739,7 @@ in the form where the measurements agree with you.
 **Third, and the one worth carrying: a test that counts the mechanism will certify the defect it
 was written to forbid.** `wire_trace_layering_test.dart` group 1 asserted *distinct corridors per
 pin*, which is the mechanism. What the reader sees is *no two cables drawn along one line*, which is
-the artifact. `b48e96c` let the two halves of an edge reuse one set of comb heights, on the argument
+the artifact. `dcb1eec` let the two halves of an edge reuse one set of comb heights, on the argument
 that the detour sends them round opposite sides of the body, true of the detour, which is the last
 resort, and false of the ordinary staircase, which is what nearly every cable takes. The test
 counted corridors **per half**, passed, and the sheet drew 24 collinear pairs: **10885 units, a
@@ -2755,7 +2755,7 @@ defect left in: cable n and cable 47−n are mirror images in every quantity a p
 allowed to consult, so nothing this file may look at can separate them. That is channel allocation,
 §11.1.3 item 2, v1.2. Two links leaving *different* symbols can still share a corridor, unchanged.
 
-**DR-014 is built (#110, `acdae02` + `0e5c568`).** A wire drawn from an already-wired set member to
+**DR-014 is built (#110, `beedbe6` + `47c8a2b`).** A wire drawn from an already-wired set member to
 a **different device** now splits the set automatically, no modifier, no mode letter, no dialog,
 because #110's own costing found no free single modifier to bind one to (`Ctrl` is the magnet
 suppressor and additive selection, `Alt` is DR-001's hover, `Shift` is multi-draw's run-selection).
@@ -2768,7 +2768,7 @@ mean anything else, and the third, never lift the LAST conductor out of a link, 
 split from being a silent delete of a cable the user cannot see. The announcement names the
 conductor counts on both cables, per DR-012.2, and the Edit menu says `splitSet`.
 
-**DR-013 is built (#95, `48f1198`), and D7's gate is paid (#94, `7c2ac49`).**
+**DR-013 is built (#95, `d0cd0f9`), and D7's gate is paid (#94, `ccd6043`).**
 Deleting a wired device now cascades (its cables, its materialised ports and any net no survivor
 still carries) after a confirmation naming the count, with an undo that restores every one under
 its own id. The `TODO(post-M0)` that DR-011.1 turned from inert into a live defect is closed: a
@@ -2924,18 +2924,18 @@ Living Room), whose own comment at `:4026-4027` says *"the project Locations pan
 chip-strip `Outlets` label at `rack_metrics_row.dart:136`.
 
 The AC-018 clause is **unreachable by construction**: nothing schedules and nothing prints a `W`
-number. That M2 block, `Link` + `Endpoint` reaching the UI, is discharged as of `ea0af6d` (§5.1).
+number. That M2 block, `Link` + `Endpoint` reaching the UI, is discharged as of `13758ff` (§5.1).
 
-**M3-B is CLOSED as of `4ae5a54`** (board #84, six commits from `d1b5266`), and the paragraph above
+**M3-B is CLOSED as of `ca0a23c`** (board #84, six commits from `d21784f`), and the paragraph above
 is now stale in one detail rather than wrong in outline: **grepping `Location` across
 `packages/rackpal_ui/lib` no longer finds only the demo three.** There is a project-level Locations
 panel at `packages/rackpal_ui/lib/src/project/locations_panel.dart`, reached from a second
 top-level menu, and `Location` is creatable, renameable, movable and deletable through commands.
-The three hard-coded demo Locations **are gone as of `5f5bce5`** (#143), which was sequenced after
+The three hard-coded demo Locations **are gone as of `724abc1`** (#143), which was sequenced after
 the panel precisely so the dropdown did not go empty in between. That closes the last part of the
 M3-B paragraph above that was still describing the tree as of M0.
 
-**M3-A is CLOSED as of `6cb7e5a`** (board #83, eight tasks), and the criterion was demonstrated
+**M3-A is CLOSED as of `7ab1d05`** (board #83, eight tasks), and the criterion was demonstrated
 rather than inferred from the ticks. That issue opens *"AC-018 is currently unreachable BY
 CONSTRUCTION; M2-B's schedule already handles unbound ends correctly, so the work is producing the
 drops, not teaching the schedule."* Nothing joined the entry loop to `buildSchedule` until the
@@ -3030,7 +3030,7 @@ addition would be the one that moves it.
 repeat-entry loop, whose worked line is docs/07 §4.3's `Living Room: 4x Cat6, 2x RG6, 2x 16/4, 1x
 22/4`. Opening it turned up that **`Registries.mediaTypes` was `{}` in every document the product
 had ever written**, so `Cat6` had nowhere to resolve and no task owned filling it. #582 (M3-C/6) is
-that task, **closed at `acd63d5`**, and it is worth three notes beyond its own commit message.
+that task, **closed at `f2e1fea`**, and it is worth three notes beyond its own commit message.
 
 *The count is 38, not 34.* Canon §6.5 prints 34 rows and four of them carry two ids on one line
 joined by `·`. Reading the table as 34 types silently drops `media.14_4`, `media.22_2`, `media.om4`
@@ -3052,14 +3052,14 @@ the master as seeded Dart. The assertion now exists, transcribes the block from 
 reading it out of the code, and checks the converse too, that the seed invents no synonym the doc
 does not list.
 
-**M3-D/1 is closed at `b4b9115`, and it was held open for eleven days on purpose.** The two drop
+**M3-D/1 is closed at `584dc8b`, and it was held open for eleven days on purpose.** The two drop
 label formats had round-tripped since M0 with exactly one caller each, the codec, which is precisely
-where `netNameFormat` sat until M2-A wired it. `b4b9115` gave both an allocator through the one
+where `netNameFormat` sat until M2-A wired it. `584dc8b` gave both an allocator through the one
 format engine (CR-045, CR-049), so a project's customised pattern is honoured rather than bypassed.
 
 **It was not marked done then, and the reason is §8.1.** Nothing outside its own tests called either
 allocator, and done means demonstrated. The caller is **M3-C/1**: `drop_line_planner.dart` allocates
-every drop's field label through `allocateOutletFieldLabel` at `20c0801`, and the sixty drops in the
+every drop's field label through `allocateOutletFieldLabel` at `cd5dbae`, and the sixty drops in the
 keystroke measurement reach the document carrying labels this task produced. Recorded because the
 alternative was a green tick over a function nothing invoked, which is the shape of "checklist-
 ticked" §8.1 exists to refuse.
@@ -3072,9 +3072,9 @@ because `rackLabel` is optional (CR-044) and AC-018's fourteen unbound drops sim
 **M3-C/1 is closed, and the number it produced is 5.82.** #147's instruction was not "build a text
 field": *"write the loop first, drive it with a keyboard, and time ten drops on a stub UI. If ten
 drops are not on pace, no amount of table polish will make sixty."* Closed across four commits, the
-last at `bf43a38`, in three layers that can each be driven alone: a parser that takes text and needs
-no document (`73073dc`), a planner that takes a parsed line and a document and mutates neither
-(`20c0801`), and the surface (`64f8108`).
+last at `28b9115`, in three layers that can each be driven alone: a parser that takes text and needs
+no document (`e012515`), a planner that takes a parsed line and a document and mutates neither
+(`cd5dbae`), and the surface (`86b6a2f`).
 
 *The measurement, and what it is not.* Sixty drops across ten rooms cost **349 keystrokes, 5.82 per
 drop**, or **292 and 4.87** when the rooms are typed by code rather than by name. Both are gated.
@@ -3090,7 +3090,7 @@ written first as "use the modifier literally", which renders `EXT-CAMERA-1` wher
 prints `EXT-CAM-4`. `CAMERA` is not `CAM`: the modifier names an `OutletTemplate` exactly as step 2
 does, and differs only in how that template is chosen. **`EXT-CAM-4` was not reproducible until #150
 seeds the six templates**, because `outletTemplates` was `{}` in every document, and that was gated
-in both directions rather than left to be noticed. #150 closed at `5abb8b3` and the gate is now the
+in both directions rather than left to be noticed. #150 closed at `23ea288` and the gate is now the
 label itself; see below.
 
 *Two outcomes that are deliberately not refusals.* A missing room and a missing Structure device are
@@ -3108,7 +3108,7 @@ eight fields DR-010 §11.10.4 keeps out until something reads it. So a connect g
 pick a cable, and the reason has changed from *there is no id* to *there are 38 and nothing says
 which*.
 
-**M3-C/4 (#150) closed at `5abb8b3`, and the number that made it a real task is seventeen.**
+**M3-C/4 (#150) closed at `23ea288`, and the number that made it a real task is seventeen.**
 `registries.outletTemplates` was `{}` in every document the product has ever written. It was not,
 however, unreferenced: `whole_house.rmpj` carries **seventeen outlets** whose `outletTemplateId`
 reads `outlet.tv_location`, `outlet.ap`, `outlet.camera`, `outlet.data_only` or
@@ -3136,7 +3136,7 @@ it, so docs/08's `GR-CLG-1` is an outlet designation that wandered one column le
 fixture's `GR-AUD-1` is the third reading and it loses **on principle rather than on count**: `AUD`
 is `audio.analog`'s domain tag prefix, which is precisely the family-shaped answer DR-022 §11.21.5
 rejected, a word that never varies and never becomes anything else, stored forever by CR-048.
-docs/08's three labels were corrected at `88a1730`; the fixture's are hand-authored rather than
+docs/08's three labels were corrected at `8aa85ff`; the fixture's are hand-authored rather than
 template-generated and are a separate question.
 
 *Two absences that are G4 rather than oversights.* **The three grades carry no tag.** No label
@@ -3168,10 +3168,10 @@ into one `Outlet` and N `Link`s is the Structure editor's, not the catalog's. Th
 master.
 
 **Two of those three absences closed at M3-C/5, and the third is still open.** The field landed at
-`7516df4` and the gesture at `cc96e0d`/`7ea2e44`; AC-034/m24's template-driven inspector fields are
+`d78cf32` and the gesture at `56ac6df`/`f5e0cb7`; AC-034/m24's template-driven inspector fields are
 the one left, and DR-024 §11.23.4 keeps them out deliberately.
 
-**M3-C/5 (#151) closed at `7ea2e44`, and it was re-scoped before it was built.** #151 read
+**M3-C/5 (#151) closed at `f5e0cb7`, and it was re-scoped before it was built.** #151 read
 *"TIA-570-D presets"*, and #150 had already shipped all three of them: the task's data half was
 done by its neighbour, without either being wrong. Rather than open it, find it two thirds
 finished and re-scope in the dark, the change is **DR-024** (canon §11.23) under roadmap §8.3, with
@@ -3188,7 +3188,7 @@ carry the exact string the whole-house fixture already writes by hand, and a tes
 `String?` makes a divergent spelling of the same standard possible and silent.
 
 *CR-117 held, and it mattered more here than for `tag`.* Nine templates had shipped four commits
-earlier, so a document written between `5abb8b3` and `7516df4` carries the three grade entries with
+earlier, so a document written between `23ea288` and `d78cf32` carries the three grade entries with
 no `tia570Grade` key. Reading yields null, writing omits it, `write(read(bytes)) == bytes`. Gated in
 both directions.
 
@@ -3226,7 +3226,7 @@ postdates the decomposition that issue #70 performed, so the epic it added carri
 work items. That is the failure mode decomposing an epic before starting it exists to prevent, arriving on an
 epic nobody had started.
 
-*M3-J/1 (#583) closed at `f43406d` before the epic was decomposed, and is a task anyway.*
+*M3-J/1 (#583) closed at `436b55b` before the epic was decomposed, and is a task anyway.*
 `StructureOrigin.terminationField` was non-nullable while `derived/schedule.dart` calls it *"what the
 trim-out crew actually installs"* and prints it, so both entry surfaces had to write a decision they
 did not have. M3-A/6 had already changed the drop line from `keystone` to `unterminated` and its own
@@ -3243,7 +3243,7 @@ written carries it.
 *M3-J/4 (#586) is the boundary #569 asked to settle, and the answer is a census rather than a
 decision.* DR-020 §11.19.2(4) asks for *"a new `maxLength` on the media registry"*. `MediaTypeDef`
 has carried `maxRunLengthPassive` and `maxRunLengthActive` since M0, and **M3-C/6 seeded the first
-of them at `acd63d5`**: seven of the 38 types carry a length and thirty-one are deliberately null.
+of them at `f2e1fea`**: seven of the 38 types carry a length and thirty-one are deliberately null.
 So M3 owns the field, M3 has already shipped it, and M5 owes only the rule. **The hazard is that
 there are two fields**: `maxRunLengthActive` is null on all 38 and gated as such, so a `LEN-002`
 written against it would compile, pass a fixture pair, and never fire on a real document. Silent
@@ -3259,7 +3259,7 @@ exist and now name the one that does (docs/02 §5's `LEN-002` row, docs/09 §3 a
 docs/10's DR-020 row), and both `MediaTypeDef` fields carry the choice in their own doc comments,
 which is where M5's implementer will actually be standing.
 
-*M3-J/2 (#584) closed at `70a93f4`.* `Link.spliceCount: int?`, the second of DR-020's three v1
+*M3-J/2 (#584) closed at `71123d6`.* `Link.spliceCount: int?`, the second of DR-020's three v1
 items. The nullability is the task rather than a detail: a non-nullable `int` defaulting to `0`
 cannot tell *"nobody has looked"* from *"somebody looked and there are none"*, and four of the eight
 tests exist to keep those apart. `putIfNotNull` is the right writer precisely because it compares
@@ -3271,7 +3271,7 @@ held exactly one row since M3-A/7.
 whether `PathwayKind` gains `attic` and `crawlspace`, and says it is **"Owed at M3, when `Pathway`
 gets its editor"**. That editor is #156 (M3-E/1) and no item claimed the question; it is recorded
 there with the ruling's own framing on both sides, so it is decided rather than rediscovered.
-**Answered as DR-031 at `a9ecede`**: both values are in, because what a `PathwayKind` value carries
+**Answered as DR-031 at `303dc2e`**: both values are in, because what a `PathwayKind` value carries
 is a consequence an integrator acts on, and the "these are spaces and `Location` models spaces"
 objection fails on the fact that `fromLocationId`/`toLocationId` are ENDPOINTS, so a space in the
 middle of a run has no field to live in.
@@ -3328,7 +3328,7 @@ sixty rows for tested, dated and credited, each one `LabelKey.fillCells`, so bac
 them all tested" is one keystroke rather than sixty. The test drives the real controller and
 asserts the undo depth as well as the writes, because the depth is half the claim.
 
-*Closed at `f580c2a`.* The AC-013 retrofit lands on `terminatedLength`, `test`, `installedBy` and
+*Closed at `296d89a`.* The AC-013 retrofit lands on `terminatedLength`, `test`, `installedBy` and
 `terminatedAt`; `routedLength` and `cutLength` stay plain and read-only, and that asymmetry is a
 task boundary stated in three places rather than an oversight, since #153 (M3-D/2) owns them.
 
@@ -3423,8 +3423,8 @@ building a `StructureOrigin` command through `buildSetStructureOriginProperty<Ob
 and then throws at apply time**, with `(Link, String) => void is not a subtype of (Link, Object?)
 => void`, because `EntityField.set` is a typed closure, so each column names its concrete type.
 
-*Closed at `b0ab0d7` (the row model), `80778b0` (the columns), `6c839bf` (the surface), `9bee69c`
-(the route and the loop fix), `d302c7e` (inline editing) and `02c540e` (fill-down and paste).*
+*Closed at `d130be2` (the row model), `3e5cf70` (the columns), `0ede139` (the surface), `2527949`
+(the route and the loop fix), `7695100` (inline editing) and `48959ec` (fill-down and paste).*
 
 **M3-C/3 (#149) closed across four commits, and the claim it had to make good is arithmetic rather
 than architectural.** The task reads *"one editor, two views of the same rows"*, and "the same rows"
@@ -3497,12 +3497,12 @@ and tinting a column would claim CR-109 holds when it does not. It goes to **#15
 owns `Pathway.kind` and `containsLineVoltage` through to the UI. Until then the drop line and the
 matrix both make `Link`s out of `Office: 1x ENT`, which is a pre-existing CR-109 gap this task
 found rather than introduced, and both source comments now name the right task.
-**Discharged at `b093062` (the drop line) and `2618272` (the column)**, and the deferral was worth
+**Discharged at `14ae1e2` (the drop line) and `2618272` (the column)**, and the deferral was worth
 its cost: building the tint here would have shipped a cell that accepted a number and read back `0`,
 because a DR-032 pathway recorded neither its medium nor its room until **DR-035** said it must.
 
-*Closed at `30a3a6f` (the grid model), `096daf7` (the cell planner), `263f403` (the tab and the
-route) and `13c42a0` (the derived docs).* Core 1937, UI 785, app 765.
+*Closed at `98bfb85` (the grid model), `0bd5efe` (the cell planner), `b73c1a6` (the tab and the
+route) and `88543d7` (the derived docs).* Core 1937, UI 785, app 765.
 
 **And closing #149 surfaced a capability M3 promises, draws and has never had a task for: a
 structured run's service is `structure.undetermined` forever and no gesture can change it.** #587
@@ -3538,7 +3538,7 @@ value is a template handle. One word, two targets, and `@service=poe` names a fa
 carries. **M3-F cannot be written until this is settled**, because #159 has to know what a
 contractor's `Use` column becomes.
 
-**M3-D/2 (#153) closed at `36994ef`, and the ratification it was written to obtain had already been
+**M3-D/2 (#153) closed at `00c58d8`, and the ratification it was written to obtain had already been
 granted.** The task has two halves and only one of them was work. Its ruling half asks for
 `Outlet.nominalRunLength` to be *"ratified or overruled before anything reads it"*, on the ground
 that four sources of one number with three of them documented is how a schedule comes to disagree
@@ -3580,7 +3580,7 @@ and the plan-derived bound DR-020 §11.19.2(2) describes is not among them and w
 them when it lands. It does not touch `LEN-002`, which is M5's, and it does not give the two new
 columns a place on any rendered sheet, which is M6's under DR-027.
 
-**M3-D/3 (#154) closed at `8361c15`: `derived/cable_footage.dart`, AC-024's second change.** The
+**M3-D/3 (#154) closed at `2bc6d2d`: `derived/cable_footage.dart`, AC-024's second change.** The
 takeoff is a **third reader of the one schedule derivation** rather than a second scan over
 `doc.links`, and that is the design rather than convenience. `ScheduleGroup.footage` already sums a
 ROOM for the person walking the house; this sums a MEDIA TYPE for the person at a counter deciding
@@ -3633,7 +3633,7 @@ materials rollup belongs to `T6.30`, DR-027 §11.26.2 puts every rendered sheet 
 names the derivation as the load-bearing half M3 owes. Recorded so the next reader does not mistake
 one for the other.
 
-**M3-D/4 (#155) closed at `59ea14a`, and its decision half was already made: the seam is DR-027.**
+**M3-D/4 (#155) closed at `50cdd23`, and its decision half was already made: the seam is DR-027.**
 The task asks
 to *"decide the seam"* between M3's exit criterion, which says a rough-in *"exports a Pull Sheet"*,
 and `sheet_def.dart:15-20`, which assigns that sheet to M6. **DR-027 §11.26.2 ratified exactly the
@@ -3671,12 +3671,12 @@ docs/08 §3.2 gives the sheet one length column, `LEN`, which is the cut length;
 `TERM. LEN` are Structure-editor columns under `⚙ Columns` and were never sheet columns. M3-D/2
 made both enterable without adding either to any sheet.
 
-**M3-D IS CLOSED as of `59ea14a`** (board #86, four tasks). Its own one-line brief was *"the same
+**M3-D IS CLOSED as of `50cdd23`** (board #86, four tasks). Its own one-line brief was *"the same
 gap the net names had"*, and all four halves of it are discharged: both drop labels allocate through
-the one format engine (M3-D/1 at `b4b9115`, demonstrated by M3-C/1's caller), all three of AC-024's
-lengths are Command-backed and enterable (M3-D/2 at `36994ef`), the footage rollup by media applies
-its waste factor at the rollup and reports null rather than zero (M3-D/3 at `8361c15`), and clause
-3's derivation is demonstrated on one rough-in (M3-D/4 at `59ea14a`).
+the one format engine (M3-D/1 at `584dc8b`, demonstrated by M3-C/1's caller), all three of AC-024's
+lengths are Command-backed and enterable (M3-D/2 at `00c58d8`), the footage rollup by media applies
+its waste factor at the rollup and reports null rather than zero (M3-D/3 at `2bc6d2d`), and clause
+3's derivation is demonstrated on one rough-in (M3-D/4 at `50cdd23`).
 
 **Two of its four tasks turned out to be already-answered questions, and that is the pattern worth
 carrying into M3-E.** #153 asked for a ratification DR-026 §11.25.2 had granted, and #155 asked to
@@ -3706,7 +3706,7 @@ port"*, and it was found the same way: by censusing before pricing.
 *Filed as #591 rather than absorbed into #156.* A decomposition gap and not a scope change (§8.3),
 on #587's precedent: CR-016 makes the pathway first-class, docs/07 §4 draws a `[ Pathways ]` tab,
 docs/08 §3.2 prints the column. The capability was promised and no task owned the gesture. Closed at
-`bcb1b31` with the four fields retrofitted, a `PathwayField` table, an add and a remove.
+`8eaee44` with the four fields retrofitted, a `PathwayField` table, an add and a remove.
 
 *The delete is deliberately not a cascade, and the distinction is the design.* DR-021 makes deleting
 a `Location` take its subtree and clear nine references **because a location contains things**.
@@ -3737,9 +3737,9 @@ scope has not been asked for.
 **#156 is closed, and it took five commits because it was four obligations wearing one title.** The
 title names two fields reaching a UI; the task's own comments added CR-109's
 `MediaTypeDef.isPathwayOnly` and DR-020 §11.19.4's open enum question, and §4.2's tinted `EMT`
-column was routed here by this board (above). Closed at `719fa34` (the flag), `a9ecede` (DR-031's
-`attic` and `crawlspace`), `b093062` (DR-032, a conduit drop line builds a `Pathway`), `d5d36b8`
-`b3facd5` `620aa8e` (the `[ Pathways ]` tab) and `2618272` (the `EMT` column). Core 1948 → 2013,
+column was routed here by this board (above). Closed at `fc07fb3` (the flag), `303dc2e` (DR-031's
+`attic` and `crawlspace`), `14ae1e2` (DR-032, a conduit drop line builds a `Pathway`), `dc0ed68`
+`dfc80b1` `e3199a1` (the `[ Pathways ]` tab) and `2618272` (the `EMT` column). Core 1948 → 2013,
 UI 791 → 807, app 766 → 784.
 
 *The tab is a list and an editor, and that cap is the user's.* Seven columns, the whole of `Pathway`
@@ -3777,7 +3777,7 @@ time to find, and neither would have been visible from the suite: 2206 tests wer
 that #163 quotes, and this milestone's are green over both holes.
 
 *The criterion, clause by clause. **Rows carry the ruling that last touched them, not the
-commit this section was written at.** The earlier form of this caption read `against 01c698d`,
+commit this section was written at.** The earlier form of this caption read `against ca8384f`,
 which is 2026-08-10. **DR-040 superseded two of these rows on 2026-08-11, the following day.** The
 caption was still accurate the moment it was written and stopped being so before anyone read it
 again; DR-095 §11.94.8 took it as current on 2026-08-26 and built a ruling on it.*
@@ -3841,7 +3841,7 @@ gesture created a `Pathway`) and #587, and all three were found the same way. **
 what it costs**: four tasks arriving at an exit criterion have the same effect on a calendar as a
 growth would, and §5.2 already read M3 as `M`-at-its-ceiling before them.
 
-**M3-K CLOSED the same day it opened, four tasks, `175ec74` `a662283` `9e68bda` `7fb2ffe`.** Each is
+**M3-K CLOSED the same day it opened, four tasks, `8d7bd37` `677337a` `78841e1` `61d7594`.** Each is
 worth one line beyond its commit message:
 
 *#663 was the cheapest and it unblocked the other three.* Two controls on a panel that already had
@@ -3883,8 +3883,8 @@ that the two defects which refuted that drill were invisible to 2206 passing tes
 a person opening the app.
 
 **M3-H opened and closed on 2026-08-11, three tasks, #166 to #168, five commits.** The low-voltage
-box's internal geometry: `ee593c8` (DR-041), `00df1d7` (the model), `74b6734` (the four gestures),
-`eccbc6a` (the plate geometry), `3358cdd` (the arrange planner), `7623c34` (the Outlets tab).
+box's internal geometry: `6410f2f` (DR-041), `87d5257` (the model), `85a86f7` (the four gestures),
+`774801f` (the plate geometry), `87aae71` (the arrange planner), `fbaf06e` (the Outlets tab).
 
 *It cost a ruling before it could start, and the ruling is most of what this entry is for.* DR-007
 §11.7.8 change 3 forbade **any dimensioned rendering** until a caliper had been put on real parts.
@@ -3951,7 +3951,7 @@ codec, a golden fixture and a derived rollup before it had a writer. It has four
 would have erased a cell**, a destructive cancel, and the kind of thing found by accident three
 weeks later. It returns a record now and a case drives the dismissal.
 
-**M3-H/4 closed the same day, `bed4639`, and it is DR-041's own mechanism paying out.** The two
+**M3-H/4 closed the same day, `79ddf6a`, and it is DR-041's own mechanism paying out.** The two
 things the entry above listed as open, the plate outline and the unmeasured gang pitch, were both
 measured within the day: **2.75 × 4.5 in** and **1.8125 in**, DR-042 (§11.41).
 
@@ -3991,7 +3991,7 @@ states outright: a 60-drop rough-in schedules and prints without knowing which c
 occupies. This is the milestone growth that ruling booked in advance, delivered.
 
 **M3-L opened and closed on 2026-08-11, three tasks, #671 to #673, plus two rulings.** The field
-termination gets entry paths: `4561baf` (DR-043), `a644a07` (multi-select), `17905dd` (the template
+termination gets entry paths: `eebaba8` (DR-043), `f30f81f` (multi-select), `f699331` (the template
 field and the item grammar, with DR-044).
 
 *Why it exists.* M3-H's `Arrange` reads DR-007 §11.7.2.1's cell-count table, which keys on
@@ -4044,7 +4044,7 @@ the community-catalog work. §11.43.5 records it as a live cap on DR-043 §11.42
 than a discharged one. The batch bar also offers only the columns the table is SHOWING, so `FIELD
 TERM` must be switched on through `⚙ Columns` before it can be bulk-set.
 
-**M3-H/5 (#674) closed 2026-08-12 at `f8c4481`, and it is a defect M3-H shipped.** Nothing deleted a
+**M3-H/5 (#674) closed 2026-08-12 at `ba1aecd`, and it is a defect M3-H shipped.** Nothing deleted a
 gang. `RemoveGangCommand` was built and tested including undo, `OutletsActions.onRemoveGang` was
 declared, and `buildOutletsActions` implemented it with its bounds check and refusal sentence.
 **No widget invoked it**, so the only ways to remove a gang were `Ctrl+Z` and a full destructive
@@ -4085,7 +4085,7 @@ passed**: it built a FRESH `RemoveGangCommand` to revert one already applied, wh
 out of range on an empty gang list and no-ops. The harness now hands back the command it actually
 ran, which is the only version of that assertion that means anything.
 
-**M3-M opened and closed on 2026-08-12, two tasks, #676 and #677, one commit `bda1276` plus DR-045.**
+**M3-M opened and closed on 2026-08-12, two tasks, #676 and #677, one commit `75b11e6` plus DR-045.**
 Requested from the field rather than from the model: AVoIP and HDBaseT vendors recommend against a
 keystone plus a patch cable, and access points mount straight to the box with no plate at all.
 
@@ -4121,7 +4121,7 @@ strap from a cover plate; this is a **third** object with no strap behind it, an
 plateless outlet has zero gangs by construction. Nothing is wrong today; the materials sheet simply
 does not know about a part that gets bought.
 
-**M3-N closed 2026-08-12, one commit `422e2e6` plus DR-046.** Reported as *"the rack termination
+**M3-N closed 2026-08-12, one commit `f4888e4` plus DR-046.** Reported as *"the rack termination
 shouldn't be automatically set by the field termination"*.
 
 ***IT WAS WORSE THAN AUTOMATIC: THERE WAS ONLY ONE FIELD.***
@@ -4182,7 +4182,7 @@ when `_valueFor` already maps that to `''`, so it never fired; a test harness mi
 but not `rackTerm`; and three column tests that pinned the old default set. **Every one of the four
 was caught by a test rather than by review.**
 
-**#678 closed 2026-08-12 at `911258f`, ruling `8f673cb`, and the ruling is the interesting half.**
+**#678 closed 2026-08-12 at `1f62388`, ruling `e9fec60`, and the ruling is the interesting half.**
 The task and canon §11.44.6 both frame it as *"is the pass-through plate a property of the OUTLET or
 of the DROP"*. **It is neither**, and a census before pricing is what said so.
 
@@ -4238,8 +4238,8 @@ an untouched document and passed**, and now decodes, injects and re-encodes inst
 `verify_tracked_sources` named exactly, on the barrel export it had already been added to.
 
 **#587 closed 2026-08-13, DR-025 delivered whole.** The task named three things: the Command
-(`515d61e`), the modifier (`48ae15b`) and the picker (`80fd007`, on `a1c5a8e`, `379a9cd` and
-`22aa6d6`). Until the last of them the SERVICE column was read-only, so `@signal=` on a drop line
+(`cc9fac9`), the modifier (`a442280`) and the picker (`829a5d3`, on `07415d5`, `91fc520` and
+`9913ee3`). Until the last of them the SERVICE column was read-only, so `@signal=` on a drop line
 was the only way to state a family and **a run created before the ruling could never be corrected**.
 §11.24.5's *"the DRC validates RETROACTIVELY when a `Service` later assigns a real family"* now has
 its later.
@@ -4271,7 +4271,7 @@ not cover this because it is a third thing rather than a corner of the second. `
 builds `SignalFamilyId(family)` from a raw string and `AtomicConnectCommand` carries it onto both the
 `Service` and the `Net` with nothing in between to object. Measured before the test was written: 48
 parts name 34 distinct families and all 34 resolve, **which is a fact about this catalog on this date
-and not an invariant**. `379a9cd` makes it one, and proves the check by mutation rather than by
+and not an invariant**. `91fc520` makes it one, and proves the check by mutation rather than by
 reading.
 
 *Two defects in the in-flight work are recorded because both are instances of named practices.* The
@@ -4287,8 +4287,8 @@ stricter than the product tests a product that does not exist"**.
 reachable. If a second surface ever wants domains in trade-frequency order, that is a change to both
 lists or to neither.
 
-**DR-074 IS BUILT (`#720`, phases `#721`–`#725`, `af79813`, `229fde2`, `c967d8b`, `fb50f67`,
-`fb7811d`).** A drop punched into the wrong port can be moved, and either end can be taken back off
+**DR-074 IS BUILT (`#720`, phases `#721`–`#725`, `3428cdc`, `3963d7c`, `71dcc93`, `4b032da`,
+`3c916a1`).** A drop punched into the wrong port can be moved, and either end can be taken back off
 its jack. This closes the gap DR-040 §11.39.6 opened and which DR-071 §11.70.4 and DR-073 §11.72.7
 each recorded as still owed; both keep their own words and carry a pointer, because each is that
 ruling's record of what was true on the day.
@@ -4380,7 +4380,7 @@ than re-judged.
 
 | # | Clause | Mark | Evidence |
 |---|---|---|---|
-| 1 | A 16×16 matrix template authored from scratch in under three minutes by a user who has seen the tool once | **CONFIRMED**: by the user, 2026-08-15 | §5.3.7: **93 seconds** on the build carrying `ce5f70f`, checked in the footer at 68 ports across 6 banks. The archetype path (`#250`) took 46 seconds on 2026-09-01 (§5.3.30) |
+| 1 | A 16×16 matrix template authored from scratch in under three minutes by a user who has seen the tool once | **CONFIRMED**: by the user, 2026-08-15 | §5.3.7: **93 seconds** on the build carrying `3f69297`, checked in the footer at 68 ports across 6 banks. The archetype path (`#250`) took 46 seconds on 2026-09-01 (§5.3.30) |
 | 2 | A template saved with exactly three fields plus ports places into a rack and appears in the equipment list with `—` in every unknown column and an accurate unknown count | **CONFIRMED**: by the user, 2026-09-01 | §5.3.30, `#251`: a dash in every unknown column, each stated as unknown, read off a printed sheet. `clause2_drill_expectations_test.dart` checks the drill's script and says in terms that it does not discharge the clause |
 
 **M4 IS CLOSED. BOTH CLAUSES OF THE CRITERION ARE CONFIRMED**, each by a drill a person ran, the
@@ -4411,7 +4411,7 @@ found §4.5's column table names **nine columns with no model field** while the 
 **eight fields no column names**. **Four for four, the first useful hour went into reading, not
 typing.**
 
-#### 5.3.1 M4-A, `Command` goes generic · CLOSED · `e964e28`, `881cdbe`
+#### 5.3.1 M4-A, `Command` goes generic · CLOSED · `340749b`, `c8cc45b`
 
 **Four tasks, two commits, and the arithmetic is the finding.** #189 (the interface), #190 (the
 stack) and #191 (the migration) are one commit, because Dart will not let them be three. An
@@ -4487,7 +4487,7 @@ assumed a reader parses `Generic` as a product claim, and the trade does not. Re
 as the third overrule of that class, and the generalisation is *put trade objections as questions,
 not findings*. `model` stays undefaulted and still prints `—`.
 
-#### 5.3.2 M4-B, the two registry fields · CLOSED · `b7f3534`
+#### 5.3.2 M4-B, the two registry fields · CLOSED · `0a9e1ab`
 
 **`ConnectorTypeDef.pitch` and `.genderApplies` exist, are encoded and are authored.** Both were
 documented from M0 and declared by neither the Dart nor the codec, which `json_codec.dart`'s own
@@ -4529,7 +4529,7 @@ not folded in.
 (`#182`) owns the algorithm, the gutter constant and the no-cutout skip. `pitch` therefore has no
 reader in `lib/` yet, exactly as `footprintWidth` has had none since M1, and both files say so.
 
-#### 5.3.3 M4-C, `derivedFrom` and the change class · CLOSED · `b841643`, `55a89c2`, `92c6a3b`
+#### 5.3.3 M4-C, `derivedFrom` and the change class · CLOSED · `4319d6a`, `6c326aa`, `613173c`
 
 **Three tasks, three commits, and the estimate held for the first time this milestone.** #196 the
 model field and its codec, #197 the change-class computer, #198 CR-062's stale-fork rule. Nothing in
@@ -4607,7 +4607,7 @@ library. `builder/fork_status.dart` and `builder/template_change_class.dart` say
 headers rather than leaving it to be discovered, per `a modelled field is not a reachable one`. The
 `rackpal_ui` paragraph below still holds unchanged.
 
-#### 5.3.4 M4-D, the builder shell and the metadata form · CLOSED · `27bf82f`, `3d153c0`, `56c052a`, `f105481`, `675292b`
+#### 5.3.4 M4-D, the builder shell and the metadata form · CLOSED · `c5a0f5e`, `141a030`, `2685dbd`, `61778e8`, `43de700`
 
 **THE FIRST M4 TASK A PERSON CAN OPEN.** `Project ▸ New device template…` opens a full-window
 editor over M4-A's `TemplateEditSession`, with four sections, real commands, real undo, and a Save
@@ -4648,7 +4648,7 @@ to `Rack`: a NAME collision the grep's own header already documents. `src/builde
 exempt directories, because CR-106 makes `template_commands.dart` a command file that simply does
 not live in `commands/`, its aggregate being a `TemplateBody`.
 
-**DR-059 came out of this task's census and is a §8.3 amendment in its own commit** (`27bf82f`,
+**DR-059 came out of this task's census and is a §8.3 amendment in its own commit** (`c5a0f5e`,
 canon §11.58). docs/06 §3.4 promised *"a glyph from a built-in icon set"* in one derived,
 priority-3 sentence with no ruling behind it; put to the user as a scope question with a
 recommendation to drop it, and ruled IN. The census had already found the better argument:
@@ -4767,8 +4767,8 @@ algorithm, *flow left → right at `ConnectorTypeDef.pitch`*, cannot be written 
 A third, smaller one: `derivedFrom` appears nowhere in `packages/`, though the fork chain, CR-062's
 stale-fork badge and `.rmdx`'s own worked example all reference it (`#174`).
 
-**All three findings are now closed** (§8.8): `#172` at `e964e28`/`881cdbe`, `#173` at `b7f3534`,
-`#174` at `b841643`/`55a89c2`/`92c6a3b`. The paragraphs above are the decomposition's record of what
+**All three findings are now closed** (§8.8): `#172` at `340749b`/`c8cc45b`, `#173` at `0a9e1ab`,
+`#174` at `4319d6a`/`6c326aa`/`613173c`. The paragraphs above are the decomposition's record of what
 it found on 2026-08-02, not a live claim about the tree.
 
 **The number that was NOT adopted, recorded because hiding it would make the adopted one look
@@ -4805,7 +4805,7 @@ was rejected, which is the builder's genre; lifting prose from it is how a proje
 specification with screenshots pasted in.
 
 
-#### 5.3.5 M4-E, the port grid · CLOSED · `f372a8d`, `3e19c7d`, `6c1cda4`, `a36b964`, `77d7b72`, `c9dc527`, `fdf56c7`
+#### 5.3.5 M4-E, the port grid · CLOSED · `d6e9949`, `b5bcf5d`, `26e0b50`, `2ffb839`, `988805c`, `400c86d`, `cc70830`
 
 **The first clause of the exit criterion is now reachable, and only the first.** A 16×16 matrix can
 be authored in this grid; whether it takes under three minutes is M4-Q's drill (`#188`) and depends
@@ -4852,7 +4852,7 @@ fields, M4-C's change-class table, now this). **Four for four counting M4-B.**
 than a re-sort of it, so the grid's reading and `PORT_SEQ`'s reading are the same reading. That is
 also why `AddPortCommand` only appends: `PortDef.order` is a `FracIndex` compared as a raw string,
 nothing in this package mints one BETWEEN two others, and inserting mid-list is a reorder, which is
-M4-F4 (`#211`). **Closed: `orderBetween` exists as of `5a0d922`** (§5.3.11), and `AddPortCommand`
+M4-F4 (`#211`). **Closed: `orderBetween` exists as of `5b03d05`** (§5.3.11), and `AddPortCommand`
 still appends, because appending is what an add means.
 
 **THE DESIG COLUMN GOES THROUGH `allocatePortDesignator`.** CR-042 rules that the template supplies
@@ -4945,7 +4945,7 @@ panel layout, no previews, no batch inspector. Enter commits and stays rather th
 because moving down is spreadsheet ergonomics and belongs with M4-F's fill-down; Tab already moves
 right, and a test drives real Tab events rather than finding the next cell.
 
-#### 5.3.6 M4-G and M4-H, Quick Add and the pattern language · CLOSED · `0d60b80`, `a16bc73`, `158a60f`, `70d4fc5`, `34e4c3b`, `06cf577`, `3947192`, `c57c6b1`, `560fc98`, `438e268`, `34091b5`, `2a8180c`
+#### 5.3.6 M4-G and M4-H, Quick Add and the pattern language · CLOSED · `edd5e68`, `e0838ae`, `3adadf8`, `5d521a4`, `1315797`, `18f30c3`, `3947192`, `e804201`, `03df777`, `d3c8a02`, `f7150e0`, `c01ccba`
 
 **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED FOR THE FIRST TIME, AND ONLY ITS SHAPE.** A test types
 docs/06 §9.1's eight commands into the bar and asserts **68 ports across 6 banks with focus still in
@@ -5115,12 +5115,12 @@ asserted absent by a test so its arrival is a visible diff. No `poe:`, `z:`, `dt
 modifiers: §9.1's thirteen steps exercise none of them, and the grid's column packs already author
 all four.
 
-#### 5.3.7 M4-Q1, the drill · CLAUSE 1 CONFIRMED · **93 seconds** · `da0ac86`
+#### 5.3.7 M4-Q1, the drill · CLAUSE 1 CONFIRMED · **93 seconds** · `55f7edc`
 
 > **The clause.** *A 16×16 matrix template is authored from scratch in under three minutes by a
 > user who has seen the tool once.*
 
-**Performed by the user on 2026-08-15 against the build carrying `ce5f70f`. 93 SECONDS, a 48%
+**Performed by the user on 2026-08-15 against the build carrying `3f69297`. 93 SECONDS, a 48%
 margin under the criterion.** Full scope: named, RU height set, the eight Quick Add commands typed,
 `Ctrl+S`. **The result was checked rather than assumed**, in the footer M4-E5 built: **68 ports
 across 6 banks.** Typed DSL throughout, not the field-mode controls.
@@ -5137,7 +5137,7 @@ specification promises and nobody wrote. **This is the second time a drill has f
 test suite could not**, after M1's clause 3 (§3.5), and it is the entire argument for M4-Q existing
 as a human act rather than a job.
 
-Built in `da0ac86`, with the deliberate departure that it does **not** gate on the required fields
+Built in `55f7edc`, with the deliberate departure that it does **not** gate on the required fields
 being satisfied, despite §9.1's parenthetical: AC-049 took the metadata form off the critical path,
 and a jump refused because a field is blank would put back the gate that ruling removed, on the one
 surface a stopwatch is pointed at.
@@ -5248,7 +5248,7 @@ priced against §4.6's own table rather than against its *"integrators live in E
 rows want whole rows, three name their own columns inside their own definitions, one wants a single
 column, one is a single cell. **A rectangle would have been read by `Fill down` alone.**
 
-**Closed the same day** by `9239849`, `81cd430`, `2b65402` and `9969ded`, fourteen gates green on
+**Closed the same day** by `9239849`, `22cbeee`, `87e8aab` and `5b4e238`, fourteen gates green on
 each. 41 cases: 33 in core over the algebra, 8 widget cases over the gestures.
 
 **THE PART WORTH KEEPING IS HOW THE ONE DEFECT WAS FOUND.** Enter's move down was written into
@@ -5265,8 +5265,8 @@ keyboard, not the finder` stated as a positive rule: to test a route, name only 
 
 #### 5.3.10 M4-F2, and the two things `docs/06` §4.6 said that could not both be true
 
-**Closed 2026-08-15/16** by `e48f2ec` (DR-063), `fdb14ee` (core), `a855589` (the grid), `f17645f`
-(the widget cases) and `6d16e5b` (the dock). 29 cases: 16 in core, 13 widget.
+**Closed 2026-08-15/16** by `412124d` (DR-063), `f372ed2` (core), `260ea88` (the grid), `2dfba12`
+(the widget cases) and `d429659` (the dock). 29 cases: 16 in core, 13 widget.
 
 **§4.6's multi-row row asked for a `—` that already meant something else.** *"Mixed values render
 `—` and are left untouched unless explicitly set."* The second half is the safety property and is
@@ -5314,7 +5314,7 @@ would make multi-row edit impossible to start. The test was wrong and the ruling
 
 #### 5.3.11 M4-F4, and the character `nextOrder` had been extending with since M0
 
-**Closed 2026-08-16** by `5a0d922` (the index generator), `4572d49` (the planner) and `bc09185` (the
+**Closed 2026-08-16** by `5b03d05` (the index generator), `02e1600` (the planner) and `3552387` (the
 handle and the chords). 46 cases: 15 on the generator, 22 on the planner, 9 widget.
 
 **THE DEFECT IS THE FINDING, and it was in code that had been correct for four milestones.**
@@ -5369,7 +5369,7 @@ every grid binds and this one will want it.
 
 #### 5.3.12 M4-F5, the one place in the grid where the obvious behaviour is wrong
 
-**Closed 2026-08-16** by `83bed51` (core) and `a695bc8` (the headers, the badge and the confirm).
+**Closed 2026-08-16** by `d819116` (core) and `718eb1f` (the headers, the badge and the confirm).
 33 cases: 23 core, 10 widget.
 
 **EVERY SPREADSHEET SORTS BY WRITING THE ROWS, and here that is the wrong answer.** In a spreadsheet
@@ -5409,7 +5409,7 @@ matched the band header's own row count, which reads `3 ports`. Unscoped, the as
 the wrong widget in one arrangement and failed in another. Every count assertion in this grid now
 has two candidates by construction, because the bands count rows too.
 
-#### 5.3.13 M4-S, the template that could not reach a rack · CLOSED · `60b2b33`, `90a015f`, `b131dcd`, `4904be8`, `e224cbc`, `94a6e01`
+#### 5.3.13 M4-S, the template that could not reach a rack · CLOSED · `bdcbb2f`, `db289b8`, `9ca74e2`, `f7e32d4`, `98c403e`, `823c9da`
 
 **Closed 2026-08-19**, six commits, fourteen gates green on each. 42 cases: 15 core, 7 app, 20
 widget. Settled by the user as **DR-077** (canon §11.76) before any code, because three of the four
@@ -5494,7 +5494,7 @@ output. M4-D built a save, gated it, tested it, and nothing read what it saved, 
 placeable immediately"* from the day it shipped. **Seventeen issues, sixty-three tasks and fourteen
 green gates could not see it.**
 
-#### 5.3.14 M4-F6 through M4-F11, the five orphans and the refactor · CLOSED · `0ed6e71`, `bba3102`, `c0f657c`, `3c76f76`, `98ebc99`, `25d57aa`, `9c8efdb`
+#### 5.3.14 M4-F6 through M4-F11, the five orphans and the refactor · CLOSED · `e410ef4`, `8bc124b`, `710dc85`, `cb1ecd6`, `90860a7`, `8031f4a`, `19789c1`
 
 **Closed 2026-08-19**, seven commits, fourteen gates green on each. 96 cases: 72 in core, 24 widget.
 **M4-F (`#177`) is now CLOSED**, twelve tasks, and every operation `docs/06` §4.6 tabulates exists.
@@ -5550,7 +5550,7 @@ implementation. A mixed control cannot express *"set them all to unknown"*, whic
 row in the grid and is written down in three places rather than discovered. `LABEL` and `DESIG` have
 no dock control at all, by DR-063.
 
-#### 5.3.15 M4-T, the three rulings M4 owed · CLOSED · `b119a1b`, `d7cc706`, `7bef94f`
+#### 5.3.15 M4-T, the three rulings M4 owed · CLOSED · `89a18a7`, `48e1b92`, `f4d73e9`
 
 **Closed 2026-08-21**, three commits, fourteen gates green on each. **There is no code in any of
 them**: the deliverable is canon §11.79 through §11.81 and three concepts in the bundle.
@@ -5606,7 +5606,7 @@ multi-select cell, neither dropdown exists, and `device_layer.dart` still fills 
 `palette.deviceFill`. **These rulings are what that work will cite. The work itself is unstarted**,
 and this section is not evidence that any of it is built.
 
-#### 5.3.16 M4-R, the seventeen marks and the accent that ships with them · CLOSED · DRILL CONFIRMED 2026-08-28 · `a915a04`, `95be9e6`, `64b953c`, `e58a922`, `365b3b7`, `77e9cf1`, `e356866`, `42f3391`, `811c5c6`
+#### 5.3.16 M4-R, the seventeen marks and the accent that ships with them · CLOSED · DRILL CONFIRMED 2026-08-28 · `784849c`, `d172a91`, `8a7723a`, `8e2b5b0`, `77234ca`, `87050f4`, `cb99156`, `3960a8e`, `01875d1`
 
 **Nine commits, 2026-08-21, fourteen gates green on each. `#694` had ZERO tasks that morning** and
 now has nine, of which eight are closed and `#757`'s printed half is not. `rackpal_core` went
@@ -5693,7 +5693,7 @@ copy coverage needs a copier that takes ANSI B, which is M6's machine.
 **WHAT M4-R STILL DOES NOT DELIVER.** The previews M4-K owns are unbuilt, so the builder picker is
 the only surface besides the elevation that draws a mark.
 
-#### 5.3.17 M4-J1, the bank tree, and the field that has never had a reader · CLOSED · `dbd7d19`, `6a4e41c`, `817acfd`, `ab7eeb8`
+#### 5.3.17 M4-J1, the bank tree, and the field that has never had a reader · CLOSED · `3fc4d34`, `104f192`, `87e8034`, `9c9c31d`
 
 **Four commits, fourteen gates green on each.** `rackpal_core` **3,197 → 3,224**, `rackpal_ui`
 **1,117 → 1,139**. `#760` is DR-085 (§11.84); `#223` is the CRUD, the tree, the menu and the mirror.
@@ -5763,7 +5763,7 @@ producer (`#225`), which the census above makes the larger half of `#181`. No ba
 the reason `BankDef.order` is recorded above. A mirror does **not** pair the two banks: a matrix's
 mirrored output is a second output, not a passthrough (DR-085 §11.84.6).
 
-#### 5.3.18 M4-J2, the port set's missing producer and the role column that could spell `+` four ways · CLOSED · `109d5e6`, `a02eeef`
+#### 5.3.18 M4-J2, the port set's missing producer and the role column that could spell `+` four ways · CLOSED · `17bfc72`, `52e8916`
 
 **Two commits, fourteen gates green on each.** `rackpal_core` **3,224 → 3,245**, `rackpal_ui`
 **1,139 → 1,151**. `#761` is DR-086 (§11.85); `#224` is the gesture, the closed role list and the
@@ -5837,7 +5837,7 @@ symbol or in the panel layout, both of which are banks' work (CR-055). And **no 
 downstream of the builder**: it opens a role vocabulary and nothing in a drawing, schedule or rule
 consults it yet.
 
-#### 5.3.19 M4-J3, the pair with no creator, and the panel the model cannot describe · CLOSED · `b73e1f4`, `9cb1f51`
+#### 5.3.19 M4-J3, the pair with no creator, and the panel the model cannot describe · CLOSED · `a9b4d42`, `d60e961`
 
 **Two commits, fourteen gates green on each.** `rackpal_core` **3,245 → 3,263**, `rackpal_ui`
 **1,151 → 1,162**. `#762` is DR-087 (§11.86); `#225` is the action, the editable cell and the
@@ -5922,7 +5922,7 @@ reads this, and what would it do differently if the value changed?"** Both are n
 practice.
 
 **THE `rackpal_core` FIGURES IN FOUR COMMIT MESSAGES ARE THREE TOO HIGH, and the corpus is corrected
-rather than the history.** `ab7eeb8` states the suite going `3,221 → 3,227` when the three cases it
+rather than the history.** `9c9c31d` states the suite going `3,221 → 3,227` when the three cases it
 added took it to **3,224**, and the next two commits and the merge did arithmetic on that base. The
 true chain, measured file by file after the merge, is
 **3,213 → 3,221 → 3,224 → 3,245 → 3,263**: the three new core files hold 27, 21 and 18 cases and
@@ -5939,7 +5939,7 @@ tasks, of which **63** are `Done` once `#225` and `#762` close. By arithmetic fr
 `v0.4.49` plus M4-R's **8** closed tasks (`#751`-`#756`, `#758`, `#759`; `#757` is the unrun printed
 drill and is still open) plus M4-J's **6** (`#760`, `#223`, `#761`, `#224`, `#762`, `#225`) is **63**.
 
-#### 5.3.21 M4-I, the three generators, and the spec that was already in the repository · CLOSED · `8c5d502`, `1910f84`, `3660b81`, `8f664fc`, `5d26036`, `84bb162`
+#### 5.3.21 M4-I, the three generators, and the spec that was already in the repository · CLOSED · `514d9b1`, `bc89069`, `350c411`, `3b6e3b8`, `c20e6c0`, `97af90c`
 
 **`#180` IS CLOSED** with `#220`, `#221` and `#222` all Done, six commits, fifteen gates green on
 each. Three rulings: **DR-092** (§11.91), **DR-093** (§11.92), **DR-094** (§11.93). **77 core cases
@@ -6034,7 +6034,7 @@ M4-I's **3** closed tasks (`#220`, `#221`, `#222`) is **66**. The issue count mo
 §5.3.20 was written and the task count did not, which is a decomposition item added with no tasks
 under it and does not touch the patch number.
 
-#### 5.3.22 M4-L, the three doors and the fourth that needed a resolver first · CLOSED · `e58562f`, `c426060`, `76bcd5d`, `da750e0`, `b484241`, `e62c229`, `148d10e`, `a994a95`, `5631c8f`, `5b594ed`, `a33a71f`, `70d2cbe`
+#### 5.3.22 M4-L, the three doors and the fourth that needed a resolver first · CLOSED · `b4174d5`, `bca7e26`, `dd6b4ef`, `de1dd9c`, `60f7d16`, `3463277`, `1656eec`, `36d0bd6`, `c7a1a81`, `5b38f95`, `ee124b6`, `d7e7a8c`
 
 **Written on 2026-08-29, four days after the fact, and the delay is the finding.** M4-L closed at
 `v0.4.73` on 2026-08-25 and this section did not exist until M4-M was already three chapters in.
@@ -6052,7 +6052,7 @@ Every `overrides` block in the shipped corpus was empty: four starters and six f
 grepping a field name, because `displayName` also lives inside every `TemplateBody` and the naive
 grep returns 847.
 
-**THE MODEL CHANGE IS TRI-STATE AND THE THIRD STATE IS A PRESENT KEY** (`c426060`). CR-114 rules
+**THE MODEL CHANGE IS TRI-STATE AND THE THIRD STATE IS A PRESENT KEY** (`bca7e26`). CR-114 rules
 that an unknown serializes as an **absent** key; on this type an absent key already meant "inherit
 the template's value", so `null` was carrying two different statements. Spelling unknown as
 `"weight": null` would have given two states one spelling and the file could not tell them apart.
@@ -6067,7 +6067,7 @@ different bytes.
 was checked: removing them broke nothing, because nothing had ever asserted them. The same absence
 the ruling's census found in the shipped corpus, arriving from the other direction.
 
-**DOOR 1's WIDGET TEST FOUND THE ONE PATH IT COULD NOT REACH** (`da750e0`), and it is the part
+**DOOR 1's WIDGET TEST FOUND THE ONE PATH IT COULD NOT REACH** (`de1dd9c`), and it is the part
 worth keeping. The first draft of the `Value` segment seeded its box from the template and bailed
 out when there was nothing to seed from. **No demo template states a mass**, so tapping `Value` on
 the demo rack did nothing at all: no box, no state change, no feedback. Stating a value for a fact
@@ -6076,7 +6076,7 @@ The assertion that now guards it is the **rollup**, not the field: DR-098 exists
 subtotal could total a figure the user had no way to disown, so the unknown case drives the real
 screen and reads `computeRackRollups`, asserting both halves.
 
-**DOOR 2 IS A ROUTE AND A REFUSAL** (`148d10e`, `a994a95`), and DR-099 is why it refuses rather
+**DOOR 2 IS A ROUTE AND A REFUSAL** (`1656eec`, `36d0bd6`), and DR-099 is why it refuses rather
 than offers. `TemplateEditSession` is `late final` inside the builder's `State`, so handing that
 screen a different template is ignored; loading one means a new `key`, which destroys the `State`
 and the draft with it. **That is not recoverable in any sense**: the session is an in-memory deep
@@ -6084,12 +6084,12 @@ copy, so there is nothing for `Ctrl+Z` to reach and nothing on disk to reopen. T
 taken to the Device Manager, because *"finish it first"* is useless without showing them what "it"
 is.
 
-**DOOR 3 GAVE `derivedFrom` ITS FIRST PRODUCER** (`5631c8f`). `fork_status.dart` had carried
+**DOOR 3 GAVE `derivedFrom` ITS FIRST PRODUCER** (`c7a1a81`). `fork_status.dart` had carried
 CR-062's stale-fork rule since M4-C and said in its own header that *"nothing writes a `derivedFrom`
 yet"*: **the badge had a rule and nothing to badge.** A forked template now answers
 `resolveForkStatus` against the source it was copied from.
 
-**M4-L4 OWED A RESOLVER BEFORE A FORM, AND GOT ONE** (`5b594ed`, `a33a71f`), which DR-098 §11.97.6
+**M4-L4 OWED A RESOLVER BEFORE A FORM, AND GOT ONE** (`5b38f95`, `ee124b6`), which DR-098 §11.97.6
 ruled in advance. `PortOverrides` had **no reader anywhere in the tree**: three fields, codec-covered
 since M0, under CR-117's gate, consumed by nothing. An editor written against that is §5.3.8's
 finding one level down, a save that changes nothing a person can see. So `derived/port_facts.dart`
@@ -6111,7 +6111,7 @@ The section is mounted directly over a document that has ports instead.
 
 ##### THE PIPELINE'S FIRST RED, and it caught something the local gate structurally cannot
 
-`70d2cbe`. `run_local.ps1` passed all fifteen gates on that tree, and build `20260829.7` failed the
+`d7e7a8c`. `run_local.ps1` passed all fifteen gates on that tree, and build `20260829.7` failed the
 analyzer gate on `refs/pull/5/merge` with *"info count rose by 2 (173 → 175)"*. **Both were telling
 the truth about different trees**: the local gate analyses the WORKING TREE and the service checks
 out the COMMIT. Two `cascade_invocations` had been fixed and the fix was never committed, because
@@ -6141,7 +6141,7 @@ error. Counting by parentage rather than by type is what survives the migration.
 had its rule since M4-C, door 3 now gives it something to badge, and **a widget is still nobody's**
 (§11.98.5). Nothing here touches the exit criterion.
 
-#### 5.3.23 M4-M, the `.rmdx` file format and every path that reads one · CLOSED · `v0.4.78` · `106d195`, `13299bb`, `acb1952`, `6712bbe`, `1440cfa`, `bacc610`, `b74e1c8`, `7957313`, `aab6744`, `1059296`, `fa7f8ed`, `1e64e28`, `e389df3`
+#### 5.3.23 M4-M, the `.rmdx` file format and every path that reads one · CLOSED · `v0.4.78` · `d290cec`, `5d3e821`, `239438e`, `931ebb1`, `8d266ea`, `c745a2b`, `6719fb0`, `7957313`, `4aa62f3`, `1059296`, `91bd24a`, `1e64e28`, `87c31ec`
 
 **Five chapters, two rulings, and four PRs, all green on the service before completing.** M4-M is
 the first story in this milestone to land entirely through the branch policy CI made blocking
@@ -6152,11 +6152,11 @@ header records the pattern across M4-A through M4-E: *"Four for four, the first 
 into reading, not typing."* M4-M makes it nine for nine, and the two places the reading was skipped
 are the two that had to be corrected afterwards.
 
-##### M4-M1: the task asked for work another task had finished (`#234`, `106d195`, `13299bb`)
+##### M4-M1: the task asked for work another task had finished (`#234`, `d290cec`, `5d3e821`)
 
 `#234` reads *"`file_dialog_channel.cpp` holds ONE hardcoded `COMDLG_FILTERSPEC` array shared by
 Open and Save. Filter and default extension become parameters of the method call."* All of that was
-true once and none of it still was: **`2180a35` (M3-F/4, `#162`) made the filter a named KIND on the
+true once and none of it still was: **`5c5f68f` (M3-F/4, `#162`) made the filter a named KIND on the
 wire before M4 opened**, and said *"closing D13 before D2"* in its own subject line.
 
 **The stale document was `docs/13`'s D13 row, and the board item is a transcription of it.** That
@@ -6178,7 +6178,7 @@ and does not open an empty dialog, it falls back to the project filter, so an
 un-taught runner. **Two assertions it replaced were mechanism assertions** pinned to the exact
 source text of a ternary, which the third kind broke on contact.
 
-##### M4-M2: DR-100, and a worked example with 21 holes in it (`#235`, `acb1952`, `6712bbe`)
+##### M4-M2: DR-100, and a worked example with 21 holes in it (`#235`, `239438e`, `931ebb1`)
 
 Censused over `_encodeTemplateBody` rather than over the prose, and counted from the function
 because `putIfNotNull` and three bare `json[...] =` assignments do not match the pattern the
@@ -6208,7 +6208,7 @@ defect DR-100 prevents is silent: an unclaimed key does not throw, does not warn
 to encode. A hand-written fixture asserts the fields its author remembered, which is the same set
 that would have been partitioned.
 
-##### M4-M3: DR-101, and the first answer that had to be overturned (`#236`, `bacc610`, `b74e1c8`, `7957313`)
+##### M4-M3: DR-101, and the first answer that had to be overturned (`#236`, `c745a2b`, `6719fb0`, `7957313`)
 
 **`templateIdFor` derives the id FROM THE DISPLAY NAME**, identically on every machine, which was
 `#232`'s deliberate call so a person diffing two `.rmpj` files reads what the device is instead of a
@@ -6234,7 +6234,7 @@ a slab of C++ with no `NSOpenPanel` equivalent for D2 to inherit. So Import gain
 step the ruling did not ask for. It earns the click by printing the file's real contents before they
 enter the document.
 
-##### M4-M2/1: the hash was the easy half (`#795`, `1059296`, `fa7f8ed`)
+##### M4-M2/1: the hash was the easy half (`#795`, `1059296`, `91bd24a`)
 
 **The census found something the task's own description did not claim: `contentHash` had NO
 VERIFYING READER ANYWHERE.** It was written, round-tripped through the codec and never compared, so
@@ -6265,7 +6265,7 @@ filter that needs the same justification as a query.**
 **A test was pinning the placeholder** as intended behaviour, and it was honest when written: that
 WAS the behaviour and the label was deliberate. It failed on this change, which is the good case.
 
-##### M4-M4: the caps existed and ran too late (`#237`, `1e64e28`, `e389df3`)
+##### M4-M4: the caps existed and ran too late (`#237`, `1e64e28`, `87c31ec`)
 
 Three paths refused an oversized file only after `readBytes` had pulled it entirely into memory,
 which is the cap doing its paperwork and none of its job, and **the CSV import had no cap at all**.
@@ -6312,7 +6312,7 @@ only** and does not appear in another job. The stale-fork badge still has no sur
 here touches the exit criterion**: clause 2 is demonstrated by a person, and the drill is deferred
 to the end of the milestone by the user's decision.
 
-#### 5.3.24 M4-N, the library subsystem, and the palette that lists what it can place · CLOSED · `v0.4.83` · `2180a35`, `3c04f52`, `a6c972c`, `aab5900`, `cd252e8`, `99d5f5d`
+#### 5.3.24 M4-N, the library subsystem, and the palette that lists what it can place · CLOSED · `v0.4.83` · `5c5f68f`, `1d05a65`, `abea0ff`, `3fc3a4a`, `9a5b42c`, `267f609`
 
 **Five chapters, `#238` through `#242`, and the milestone's whole remaining library scope.** DR-015
 §11.15.5 named four absences in 2026: *"no library directory service, no import/export surface, no
@@ -6416,7 +6416,7 @@ only thing that writes to it, and the file manager is the only thing that can ta
 deferred to the end of the milestone by the user's decision. This is the fourth story in a row to
 close without moving it.
 
-#### 5.3.25 M4-O, the browser, and the menu item a doc comment invented · CLOSED · `v0.4.86` · `75f922a`, `5fffd24`, `9a9b27a`, `d9024f2`, `8e26df8`
+#### 5.3.25 M4-O, the browser, and the menu item a doc comment invented · CLOSED · `v0.4.86` · `e46f0bf`, `b20233a`, `bfbb7a6`, `b440a2d`, `d1c6e51`
 
 **Three chapters, `#243` through `#245`, and the last of DR-015 §11.15.5's four named absences.**
 The `Device Manager` tab has carried that name since DR-091 and rendered `DeviceBuilderScreen`
@@ -6515,7 +6515,7 @@ switching tabs mid-gesture and choosing a rack the user cannot see. No ruling gr
 **And nothing here touches the exit criterion.** Clause 2 is demonstrated by a person. That is now
 **five stories in a row** to close without moving it, and `#251` is the only work left on it.
 
-#### 5.3.26 M4-K, the rear panel that is derived, and four assumptions the tests refused · CLOSED · `v0.4.89` · `0a37a27`, `9e4be83`, `711330b`, `d1905d1`, `6938d17`, `a075c18`
+#### 5.3.26 M4-K, the rear panel that is derived, and four assumptions the tests refused · CLOSED · `v0.4.89` · `522bb19`, `4bef0a8`, `e6b779d`, `bf50465`, `f0ca4d5`, `ff5fd40`
 
 **Three of four chapters. `#227` is parked by ruling, not dropped.** DR-105 §11.104.6 defers the
 nudge canvas and names the milestone it stays under; §8.9's discharge rule is satisfied by a park
@@ -6648,7 +6648,7 @@ to forbid.
 
 ---
 
-#### 5.3.27 The nudge canvas, un-parked, and a twelfth that meant two things · CLOSED · `v0.4.90` · `b82cbe1`, `2761ce4`, `7981669`
+#### 5.3.27 The nudge canvas, un-parked, and a twelfth that meant two things · CLOSED · `v0.4.90` · `fa032ac`, `ed47a47`, `7981669`
 
 **`#227` was parked and is now built.** DR-105 §11.104.6 deferred it; M4-K closed without it at §5.3.26;
 DR-106 §11.105.1 lifts the park. **M4-K stays closed and the chapter was re-parented to `#804`**, because
@@ -6739,7 +6739,7 @@ on it.
 
 ---
 
-#### 5.3.28 M4-P, three chapters that were each something else underneath · CLOSED · `v0.4.93` · `6649cf1`, `bcb89bf`, `6cff4dc`, `7b2c098`, `60d45b9`
+#### 5.3.28 M4-P, three chapters that were each something else underneath · CLOSED · `v0.4.93` · `3dc77be`, `7e7a48c`, `4eadd36`, `98dec94`, `d908b73`
 
 **M4's last buildable story.** Three chapters, and **all three were smaller in the part their board
 item described and larger in what a census found**. That is the pattern this milestone has been
@@ -6849,7 +6849,7 @@ document to read. Clause 2 has now survived **eight stories** closing without mo
 
 ---
 
-#### 5.3.29 Four debt chapters, three of which were filed against the wrong thing · CLOSED · `v0.4.93` · `67c9a68`, `8259526`, `2f20c5a`, `c4079d7`
+#### 5.3.29 Four debt chapters, three of which were filed against the wrong thing · CLOSED · `v0.4.93` · `8b687ab`, `8259526`, `c1938ab`, `0559c99`
 
 Story `#800` held M4-K's three findings and `#805` produced a fourth. **The version does not move**:
 all four sit under epic `786`, DR-097's cross-cutting debt epic, and docs/14 §14.0 counts Done
@@ -7036,7 +7036,7 @@ criterion the unit of truth and a criterion edited in place is a criterion nobod
 correction sits beside it instead.
 
 **THE SIGN-OFF CLAUSE IS A DIFFERENT MATTER AND THE 28 THERE IS CORRECT.** The review was signed at
-03:08 on 2026-09-06 (`605c05d`) and `ELE-005` shipped at 15:22 the same day (`a74e7f8`), so **the
+03:08 on 2026-09-06 (`7660740`) and `ELE-005` shipped at 15:22 the same day (`b248477`), so **the
 systematic read covered 28 rules and not this one**. It is not unreviewed: DR-132 records the same
 reviewer's explicit judgement on it, *"I feel like having a warning for that is important to prevent
 blowing speakers out"*, which is domain-expert input on that rule specifically. **What it has not had
@@ -7073,7 +7073,7 @@ outstanding M5 work**: it was re-parented to M9 (epic 27) because it can only be
 product a team has used, which §5.4.11.3 argued before anybody needed the answer. **The remaining
 cost is zero**, which is a measurement and not a shrug.
 
-#### 5.4.1 M5-0a, the catalogue corrected before the engine exists · CLOSED · `bd71eef`, `91ac48f`, `31eac36`, `6f2ad64`, `4933588`, `aa25cba`
+#### 5.4.1 M5-0a, the catalogue corrected before the engine exists · CLOSED · `cd967a9`, `20994ce`, `f403790`, `eeb745f`, `4933588`, `4530bf6`
 
 **Closed 2026-08-19** (`#740`, DR-079 §11.78), six commits, fourteen gates green on each. 21 core
 cases. **The user reviewed the corpus against NEC and US practice and returned four findings**, three
@@ -7179,7 +7179,7 @@ milestone belongs in that milestone's section: this is where somebody looks when
 
 Nothing about M5's own scope depends on it. It is an M6 input that M5 unblocks.
 
-#### 5.4.4 M5-A and M5-B, the whole mechanism and not one rule · CLOSED · `11028a8`, `bd158a1`, `d17d614`, `d6500b8`, `d6356db`
+#### 5.4.4 M5-A and M5-B, the whole mechanism and not one rule · CLOSED · `2640cb3`, `e2b8035`, `7807433`, `2e49399`, `3f991ca`
 
 **Closed 2026-09-02** (`#252`, `#257`), five commits, fifteen gates green on each. The core floor in
 `tools/ci/run_suite.ps1` moved 3672 to 3751 across them, re-measured at every commit.
@@ -7376,7 +7376,7 @@ M5-A/B and M5-C/D pairs record. M5's three clauses are the fixture pairs, the si
 Twenty-eight rules and two tiers of surface exist underneath all three rather than being any of them.
 **A milestone can be nearly all built and still `0/28`.**
 
-#### 5.4.5 ARCH-A, a question that had two answers, and the third recorded number to stop tracking · CLOSED · `962dfa7`, `63e5850`, `33f4708`, `789cfec`
+#### 5.4.5 ARCH-A, a question that had two answers, and the third recorded number to stop tracking · CLOSED · `f1323af`, `a1207b6`, `511a1b1`, `49efda1`
 
 **It began as a question, not a task.** *"What state management are we using and why?"* The corpus
 answered **Riverpod** in four places. The repository answered **nothing** in every place.
@@ -7439,7 +7439,7 @@ was watched failing in all three plus the anti-vacuity case that would otherwise
 Ruled at **DR-088** (canon §11.87, §12.27). **No version bump**: `#764` is parentless, so its tasks
 are not under M5's epic, and docs/14 §14.0 counts Done tasks under the **current** milestone's epic.
 
-#### 5.4.6 M5-F, the surface, and a viewer promised over a field nobody had built · CLOSED · `v0.5.50` · `cc37461`, `a3ab151`, `cbf1625`, `0772946`
+#### 5.4.6 M5-F, the surface, and a viewer promised over a field nobody had built · CLOSED · `v0.5.50` · `690b51d`, `139b99f`, `8a87bb7`, `0772946`
 
 **Closed 2026-09-04, four chapters, `#294`-`#297`.** §5.4.4 ended on the sentence that this story
 exists to falsify: *"a user of this build cannot tell that fourteen rules exist."*
@@ -7562,7 +7562,7 @@ both empty-state tests would have passed with the two constants equal, so a test
 **Floors re-measured in the commits that added the tests**, per `run_suite.ps1`'s own instruction:
 core 3909 to 3932, ui 1444 to 1483.
 
-#### 5.4.7 M5-G, one corpus, and a gate whose subject is the catalogue · CLOSED · `v0.5.54` · `b890154`
+#### 5.4.7 M5-G, one corpus, and a gate whose subject is the catalogue · CLOSED · `v0.5.54` · `8911a1e`
 
 **Closed 2026-09-04, four chapters, `#299`-`#302`, in one commit** because the four are one artifact.
 This is the story M5's first exit clause actually rests on.
@@ -7632,7 +7632,7 @@ floor moved 3932 to 3935.
 sixteen. **The number was removed rather than updated**, on that file's own rule about a second copy
 of a moving number, which it had already broken twice in the same paragraph about test floors.
 
-#### 5.4.8 M5-I, the clause that was `VACUOUS` and is now a type · CLOSED · `v0.5.57` · `c500cf5`
+#### 5.4.8 M5-I, the clause that was `VACUOUS` and is now a type · CLOSED · `v0.5.57` · `14c7679`
 
 **Closed 2026-09-04, three chapters, `#308`-`#310`.** Canon gains §11.118 (DR-119).
 
@@ -7677,7 +7677,7 @@ the case somebody would most expect to be refused.** Export's floor moved 189 to
 this file is where that tightening lands. **M5's clause is discharged either way**, because CR-022/G3
 is about a rule blocking an export and a stamp is not a rule.
 
-#### 5.4.9 M5-H1, the pack that is generated, and the two chapters that need a person · `68c87a7`
+#### 5.4.9 M5-H1, the pack that is generated, and the two chapters that need a person · `056fb4f`
 
 **Landed 2026-09-04, `#304`, and the census half of `#692`.** No version bump was taken at the time;
 see §5.4.10, which is where that decision is corrected rather than left implicit.
@@ -7790,7 +7790,7 @@ that list; `#844` carries the shelf model, parked on the same evidence.
 
 #### 5.4.10 The version was one behind, and the reason is worth more than the digit
 
-**`v0.5.57` was current while the board held 58 Done Chapters under epic 23.** `68c87a7` closed
+**`v0.5.57` was current while the board held 58 Done Chapters under epic 23.** `056fb4f` closed
 `#304` and declined the bump, reasoning that `#305` and `#306` are the review itself and cannot be
 done by an agent, **so the pack shipped rather than the sign-off**. That is true about the STORY and
 not about the rule: docs/14 §14.0 counts Done **Chapters**, and `#304` is one.
@@ -7815,8 +7815,8 @@ with it, and **both readings now return the same number**, so the choice this pa
 them no longer has to be remembered. The mechanical reading is still the rule; it simply no longer
 disagrees with anything.
 
-**This is the second time an unpaid bump has been paid in a later commit**, after `7d61656` which
-records that `94a8f2c` said *"no version bump"* for the wrong reason. **The parity gate cannot see
+**This is the second time an unpaid bump has been paid in a later commit**, after `d9064f7` which
+records that `349e76c` said *"no version bump"* for the wrong reason. **The parity gate cannot see
 this class of error**: `version_parity_test.dart` compares the six files against each other and is
 structurally blind to all six being stale together, which is how `v0.2.0` sat through thirty M3 tasks
 and `v0.3.30` through forty-six M4 ones.
@@ -7956,7 +7956,7 @@ reusing DR-128's `ShelfPlacement` would have **unparked `#844` by accident**, si
 was parked.
 
 **5.4.14.2 BUILT IN THREE COMMITS, EACH ONE A LAYER**, because the milestone has now twice shipped a
-layer and described the next one as done. `55c4146` the writer, `a346742` the sheet, `d90a590` the
+layer and described the next one as done. `7ae86f8` the writer, `d37892f` the sheet, `6bc239d` the
 control. **The last is where `#847`'s lesson was spent**: seven of that commit's eight tests mount
 `InspectorPanel` themselves, which is exactly how `DrcPanel` passes its own suite while nothing in
 the product mounts it. The eighth mounts `RackCanvasScreen` and asserts **the screen hands over the
@@ -8117,7 +8117,7 @@ whole chain is reachable:
 Run rather than read: `signal_modifier_test.dart` and `signal_family_command_test.dart` are twenty
 tests and pass, and `structure_editor_route_test.dart` is forty one including *"a bulk SERVICE set is
 one undo, and both fields come back"*, which is the end to end path through the real shell. **The
-closing commit is `8756c79`** (§8.8), over `b4cf8e7`, `48ae15b`, `515d61e`, `80fd007` and `ecb015c`.
+closing commit is `3a09c17`** (§8.8), over `b8ad447`, `a442280`, `cc9fac9`, `829a5d3` and `b845e4c`.
 
 **5.4.17.2 THE FINDING IS A NEW SHAPE OF THE MILESTONE'S OWN THEME.** M5 found ten fields that were
 modelled and unreachable, and one panel. This is the same defect one level up: **a work item that
@@ -8478,7 +8478,7 @@ decomposition: `PLAN-E`'s canvas row rests on the claim that the viewport, selec
 drag-preview machinery are reusable, and **that claim has not been tested by anything except a
 read**.
 
-#### 5.9.1 PLAN-A, the amendment spent, and a defect ten minutes old · CLOSED · `v0.6.5` · `10dc11e`, `5e11575`
+#### 5.9.1 PLAN-A, the amendment spent, and a defect ten minutes old · CLOSED · `v0.6.5` · `ddebbd5`, `dc23df8`
 
 **Closed 2026-09-07** (`#597`, five Chapters `#607`–`#611`, DR-029 §11.28.6). **No exit clause moves**:
 this is the root every other issue in the epic consumes, and the criterion is about a printed `T1.01`
@@ -8641,7 +8641,7 @@ size, because a zero-byte underlay is a corrupt import rather than an absent one
 **10**; and `v0.6.5` plus this issue's five Chapters is 10. Floors re-measured: core 4109 to 4144, app
 916 to 930.
 
-#### 5.9.3 PLAN-C, the plan model, and a protection DR-019 bought that could never have worked · CLOSED · `v0.6.16` · `da8087e`, `e620e68`
+#### 5.9.3 PLAN-C, the plan model, and a protection DR-019 bought that could never have worked · CLOSED · `v0.6.16` · `c73f142`, `4503876`
 
 **Closed 2026-09-07** (`#599`, six Chapters `#617`–`#622`, DR-037, and **DR-136 §11.135**, which this
 issue produced). **No exit clause moves**, and one becomes measurable: `CR-117 on the zip path` is
@@ -8729,7 +8729,7 @@ deliberate edit with a sentence attached.
 **5.9.3.9 THE VERSION IS `v0.6.16`.** The board query for `Done` Chapters under epic 588 returns
 **16**; and `v0.6.10` plus this issue's six Chapters is 16. Floors re-measured: core 4152 to 4203.
 
-#### 5.9.4 PLAN-D, three chapters of five, and the two that need a real architectural page · PARTIAL · `v0.6.19` · `9ea401b`, `f71265d`
+#### 5.9.4 PLAN-D, three chapters of five, and the two that need a real architectural page · PARTIAL · `v0.6.19` · `cdf8a69`, `fc1258d`
 
 **`PLAN-D/1`, `/2` and `/4` closed 2026-09-07.** `PLAN-D/3` (PDF rasterisation and the page picker)
 and `PLAN-D/5` (what a plan costs a `.rmpj`) are **open and blocked**, and the block is named below
@@ -9042,7 +9042,7 @@ this display list under this viewport"**, so the spike declares a third, and so 
 
 This is not an accident and the second copy says so in its own header: it is *"a deliberate copy of
 `render_rack_canvas.dart`'s shape"*, made deliberately because the schematic canvas that was deleted
-at `b560a50` invented a second pattern and got all three of its load-bearing details wrong. **The
+at `c5669a9` invented a second pattern and got all three of its load-bearing details wrong. **The
 copying was the right call twice and it is now a countable cost**, and the honest read is that the
 shared part (clip layer, transform layer, `LayerHandle` lifecycle, the viewport listener, the paint
 offset composition) is the same in all three while the typed part (what is replayed, and whether
@@ -9053,7 +9053,7 @@ rather than generalise it under deadline; a fourth would be the moment to extrac
 ASSUMED.** The spike's transform composes the render object's paint offset with the viewport, exactly
 as both shipped canvases do. **Deleting that offset term leaves all six cases green.**
 
-That is `b560a50`'s defect reproduced inside the spike on the first attempt: a canvas at the window's
+That is `c5669a9`'s defect reproduced inside the spike on the first attempt: a canvas at the window's
 origin makes screen, local and scene coordinates agree, and a widget test does not composite.
 `render_schematic_canvas.dart` carries a `debugSceneToScreen` field for precisely this reason and
 says so. **`PLAN-E/2`'s render object owes the same escape hatch and a case that places the canvas
@@ -9296,8 +9296,8 @@ another one at a point the user was pointing at for a different reason. There is
 
 #### 5.9.10 PLAN-E/4: the unpinned strip, and a defect its own question found · `DR-142` · `v0.6.25`
 
-Closed `2026-09-08`. Commits `228bc79` (the ruling), `c065cb2` (the fix), `87cc2a5` (the
-derivation), `b484117` (the strip and the drag). Four commits, each gated green.
+Closed `2026-09-08`. Commits `571f9df` (the ruling), `3868840` (the fix), `46a2e34` (the
+derivation), `ec2b4c0` (the strip and the drag). Four commits, each gated green.
 
 ##### 5.9.10.1 One sentence, and a decision hiding in every clause
 
@@ -9396,8 +9396,8 @@ with two gestures, an arm mode with a chip, a drop-table producer, and a strip.*
 
 #### 5.9.11 PLAN-E/5: the shell home, and the importer that had no caller · `DR-143` · `v0.6.26`
 
-Closed `2026-09-08`. Commits `b1b3c45` (the ruling), `96126c0` (the importer's caller), `c70b6a4`
-(`Esc` and `KeyScope.plan`), `68e9a51` (the tab and the layout), `f3ce8cb` (the drop-table producer
+Closed `2026-09-08`. Commits `d37a0e0` (the ruling), `0bfc267` (the importer's caller), `55ec59d`
+(`Esc` and `KeyScope.plan`), `713ceb0` (the tab and the layout), `8e6024f` (the drop-table producer
 and a widened gate). Five commits, each gated green.
 
 ##### 5.9.11.1 The census found a fifth unreachable surface, upstream of the other four
@@ -9494,8 +9494,8 @@ Owed: the inspector column (§5.9.11.3), calibration (`PLAN-F`), `planLowerBound
 
 #### 5.9.12 PLAN-E/6: one marquee, on all three canvases · `DR-139` · `v0.6.27`
 
-Closed `2026-09-08`. Commits `e3e0388` (the geometry), `10cad2f` (the rack and the plan),
-`341c84c` (the schematic). Three commits, each gated green.
+Closed `2026-09-08`. Commits `b7bf2c9` (the geometry), `ba6a0e5` (the rack and the plan),
+`cf05aab` (the schematic). Three commits, each gated green.
 
 ##### 5.9.12.1 What was actually missing, and how PLAN-E/1 saw it
 
@@ -9637,8 +9637,8 @@ Floor: `rackpal_ui` 1632 to 1636. No analyzer movement; the pin stays at 233.
 
 #### 5.9.14 PLAN-F/1: the two-point pick, and the model that had neither a reader nor a writer · `DR-144` · `v0.6.29`
 
-Closed `2026-09-08`, `#633`. Commits `e40fcda` (the ruling), `f5e0f46` (the chapter), over
-`9538fa1` (`PLAN-F/0`). **No exit clause moves**, and the reason is worth stating: the criterion is a
+Closed `2026-09-08`, `#633`. Commits `8923477` (the ruling), `04732f7` (the chapter), over
+`5a00f59` (`PLAN-F/0`). **No exit clause moves**, and the reason is worth stating: the criterion is a
 printed `T1.01` a stranger can use, and calibration is a prerequisite for a length rather than for a
 locator. What moves is that `PLAN-G` now has an input it can derive from.
 
@@ -9896,8 +9896,8 @@ the line is now richer. The updated assertions name the whole string, which is w
 
 #### 5.9.17 PLAN-F/3: uncalibrated as a fact, and a count nothing read · `DR-146` · `v0.6.32`
 
-Closed `2026-09-08`, `#635`. Commits `ac2c6f6` (the ruling), `7c24d3b` (the derivation), `2ca74c6` (the
-row), `fa2a1cb` (the placement proof). **No exit clause moves**, for `PLAN-F/1`'s reason exactly: the
+Closed `2026-09-08`, `#635`. Commits `3a39579` (the ruling), `98cf6b6` (the derivation), `9bb982c` (the
+row), `a77ee9f` (the placement proof). **No exit clause moves**, for `PLAN-F/1`'s reason exactly: the
 criterion is a printed `T1.01` a stranger can use, and a calibration is a prerequisite for a length
 rather than for a locator. What closes is roadmap §2's calibration bullet, whose own text said it
 stayed open on this chapter's half.
@@ -9999,9 +9999,9 @@ string the row prints.
 
 #### 5.9.18 PLAN-G: the plan yields a length, and two of its four briefs had expired · `DR-147` · `v0.6.36`
 
-Closed `2026-09-08`, `#603` and all four Chapters `#636`–`#639`. Commits `1f2a97f` (the ruling),
-`2b133e8` (`PLAN-G/1`, the tier), `70d03f1` (`PLAN-G/2` and `PLAN-G/4`, the derivation and the
-rules), `263bec1` (the DR-050 scope), `2acdfe2` (`PLAN-G/3`, the column and both rollups).
+Closed `2026-09-08`, `#603` and all four Chapters `#636`–`#639`. Commits `deecf48` (the ruling),
+`4e60a71` (`PLAN-G/1`, the tier), `dda2459` (`PLAN-G/2` and `PLAN-G/4`, the derivation and the
+rules), `1194666` (the DR-050 scope), `40a70c3` (`PLAN-G/3`, the column and both rollups).
 **No exit clause moves**, for `PLAN-F`'s reason exactly: the criterion is a printed `T1.01` a
 stranger can use, and a length is not a locator. What closes is roadmap §4's `planLowerBound`
 bullet, which was the last unticked line of the length model.
@@ -10140,8 +10140,8 @@ DRC**. Owed: `T1.01` (`PLAN-H`), the `PLN-*` advisories (`PLAN-I`), and the prin
 (`PLAN-J`).
 #### 5.9.19 PLAN-H/1 and PLAN-H/2: the twelfth slot, and the export path that could not reach an underlay · `DR-148`, `DR-149` · `v0.6.38`
 
-Closed `2026-09-09`, `#640` and `#641`. Commits `3c9c458` (the rasteriser review), `9c48af0` (the
-sheet's ruling), `a54a216` (the slot, the resolver, the screening and the sheet). **No exit clause
+Closed `2026-09-09`, `#640` and `#641`. Commits `1cf9ef6` (the rasteriser review), `54aed04` (the
+sheet's ruling), `77a7bc3` (the slot, the resolver, the screening and the sheet). **No exit clause
 moves**: the `T1.01` clause needs a callout per pinned drop printing its Pull Sheet designator, and
 this chapter draws a marker per pin and no designator at all. What it discharges is the slot the
 clause sits in.
@@ -10257,7 +10257,7 @@ document under a tenth of its raw 360,000 bytes. *"Already-compressed rasters do
 of photographs and false of line art, and DR-137 already ruled that a floorplan is line art.
 #### 5.9.20 PLAN-H/3: a pin has no domain, and PAL-1's open obligation becomes a number · `DR-150` · `v0.6.39`
 
-Closed `2026-09-09`, `#642`. Commits `7bf4674` (the ruling), `0e3cb78` (the chapter). **No exit clause
+Closed `2026-09-09`, `#642`. Commits `f29b395` (the ruling), `5cac2dc` (the chapter). **No exit clause
 moves**, and it is the nearest miss so far: the `T1.01` clause wants *"a callout for every pinned
 drop, each printing the designator its Pull Sheet row prints"*, and that is now built. What it still
 needs is `PLAN-J`'s stranger holding the print, which is the clause's own second sentence.
@@ -10354,7 +10354,7 @@ Six of the twenty new cases are load-bearing and every one is about the two ways
 stranger: it covers the thing it labels, or it names the wrong wall.
 #### 5.9.21 PLAN-H/4: the drawn bar, and a placeholder that reached a deliverable · `DR-151` · `v0.6.40`
 
-Closed `2026-09-09`, `#643`. Commits `5338190` (the ruling), `c1604e8` (the chapter). **No exit clause
+Closed `2026-09-09`, `#643`. Commits `5338190` (the ruling), `f69a950` (the chapter). **No exit clause
 moves.**
 
 ##### 5.9.21.1 A placeholder reached a client deliverable
@@ -10425,7 +10425,7 @@ the strongest form those two refusals could take.
 
 #### 5.9.22 PLAN-H/5: the schedule projects the plan, and a cap drafted at three times its size · `DR-152` · `v0.6.41`
 
-Closed `2026-09-09`, `#644`. Commits `6456064` (the ruling), `dc3b98f` (the amendment), `9b9511a`
+Closed `2026-09-09`, `#644`. Commits `6456064` (the ruling), `f69dfb4` (the amendment), `a9aff52`
 (the chapter). **No exit clause moves**, and `T1.01` is complete: the slot and the screening at
 `PLAN-H/1`, the callouts at `PLAN-H/3`, the bar at `PLAN-H/4`, the schedule here.
 
@@ -10509,8 +10509,8 @@ because an absent notice proves nothing about a sheet that was never drawn.
 
 #### 5.9.23 PLAN-K: the CAD plot imports, and a deferral ends on the population all three rulings said they lacked · `DR-153` · `v0.6.45`
 
-Closed `2026-09-10`, `#851` with `#852` to `#855`. Commits `e39676e` (the ruling), `161bdb0` (the
-binary and the binding), `7a5d1ff` (the resolution rule), `4156d5a` (the source), `dd19140` (the
+Closed `2026-09-10`, `#851` with `#852` to `#855`. Commits `6217c14` (the ruling), `6496d2d` (the
+binary and the binding), `83e022b` (the resolution rule), `e41beac` (the source), `cbf8d6f` (the
 flow). **No exit clause moves by itself, and one becomes reachable**: DR-148 §11.147.3 bound
 `PLAN-J`'s drill to the DR-145 CAD plot, which the shipped importer refused, so `PLAN-J` could not
 run at all until this landed.
@@ -10749,9 +10749,9 @@ the sentence, one of them in work this epic had nothing to do with.
 
 Floors: `rackpal_core` 4480 to 4528 (+48), `rackpal_export` 222 to 227 (+5). Gates: 17.
 
-**Commits** (§8.8). `PLAN-I/1`: `21e2315` the ruling, `2e8f512` the rules and the count sweep.
-`PLAN-I/2`: `e3c8f76` the six locus types, `5c8d1f3` the acknowledgement path, `90ae086` the
-export proof, `da9501d` the three amendments and this record, `826cfc2` `v0.6.48`.
+**Commits** (§8.8). `PLAN-I/1`: `d958ed3` the ruling, `ff19e4d` the rules and the count sweep.
+`PLAN-I/2`: `fab6326` the six locus types, `d8535ba` the acknowledgement path, `8fb2d92` the
+export proof, `ab526a6` the three amendments and this record, `5123ad3` `v0.6.48`.
 
 **A COMPLETE SHEET SET IS READ OFF THE PAGE.** Four blank pages satisfy a `sheetCount` of four, and
 `T1.01` is the sheet these four rules are about: a plan whose advisories held it back would still
@@ -10871,9 +10871,9 @@ chapter.
 Floors: `rackpal_core` 4528 to 4599, `rackpal_ui` 1677 to 1723, `rackpal_export` unchanged.
 Gates: 17.
 
-**Commits** (§8.8). `#857` `265ee42`, `67b3bbf`. `#858` `9a4b4e4`, `e371269`. `#859` `d7c8d94`,
-`159fbf1`, `e442ce9`. `#860` `610a62b`, `7413225`, `dce5e45`. `#861` `73c1889`, `0eb1806`,
-`38047bd`, `c43cf2d`.
+**Commits** (§8.8). `#857` `d45975d`, `07335db`. `#858` `47e7d8c`, `2fc5d80`. `#859` `3872984`,
+`e1d678d`, `9d19e9d`. `#860` `042d370`, `7413225`, `9367156`. `#861` `aabcb6c`, `4e2c627`,
+`12987fb`, `14c5f2b`.
 
 **THE LOAD-BEARING TEST IN THE TOOL PRESSES THE REAL BUTTON AND THEN CLICKS THE REAL CANVAS.**
 Everything else in `#860` passes against a mode nobody can start, and this epic has shipped that
@@ -10884,7 +10884,7 @@ dead until `PLAN-F/0` because the canvas tests predated the band and passed null
 through `v0.6.51` each wrote their first derivation as *"Done Chapters whose title carries `PLAN-`"*,
 which returns 48: LEN-A's chapters are titled `LEN-A/n` and were never in it. The numbers were right
 because the second derivation carried them, which is what a second derivation is for. Corrected at
-`dce5e45`, naming both title families and confirmed against the epic's story list.
+`9367156`, naming both title families and confirmed against the epic's story list.
 
 #### 5.9.26 `#864`: the outline does not print, and the answer was on the architect's drawing · `DR-050` · `v0.6.55`
 
@@ -10939,7 +10939,7 @@ different one, about printing the room's NAME rather than its boundary, and it n
 Floors unchanged, no test added: there is no behaviour here to assert, and a test that pinned *"the
 scene has no outline op"* would pin the absence of a parameter nobody wrote. Gates: 17.
 
-**Commits** (§8.8). `#864` `dfe99c9`, `86c4802`.
+**Commits** (§8.8). `#864` `99f71ec`, `5ee2e0e`.
 
 #### 5.9.27 `#865`: a corner drags, in a mode, and one defect `LEN-A/4` shipped · `DR-050` · `v0.6.56`
 
@@ -11019,7 +11019,7 @@ twice. It is a line to reverse, and §11.49.10 records it as the task's call rat
 
 Floors: `rackpal_ui` 1723 to 1753, +30. Gates: 17.
 
-**Commits** (§8.8). `#865` `50006b3`, `886b73d`, `61cf595`.
+**Commits** (§8.8). `#865` `1801248`, `ddddf96`, `5f717bb`.
 
 **LEN-A closed with this**, at `v0.6.56`, on its criterion rather than on its children running
 out (§8.1): DR-050's deliverable is that plan geometry fills the room estimate, and it does.
@@ -11099,7 +11099,7 @@ implements.
 
 **NO VERSION BUMP, AND THAT IS THE RULE RATHER THAN AN OMISSION.** docs/14 §14.0 makes the patch
 *"major tasks completed within that epic"*, and the epic under development is the Plan view. These
-close under `#786`, the cross-cutting debt epic. The precedent is in the tree: `477bc2e` closed
+close under `#786`, the cross-cutting debt epic. The precedent is in the tree: `a953772` closed
 `PERF-G` under the same epic and touched no `pubspec.yaml` and no `kAppVersion`.
 
 ##### 5.9.29.1 The compiler was the census, and that was the point of the choice
@@ -11186,7 +11186,7 @@ artifact and not the mechanism; here the mechanism was asserted and the artifact
 
 Floors: `rackpal_core` 4599 to 4605. Gates: 17. Analyzer pin unmoved at 233.
 
-**Commits** (§8.8). The ruling `60fbc99`. `#867` `c4c314d`. `#868` `48b32f7`.
+**Commits** (§8.8). The ruling `2663e37`. `#867` `c27f993`. `#868` `6fc4bea`.
 
 ---
 
@@ -11238,8 +11238,8 @@ Floors: `rackpal_core` 4612 to 4615, `rackpal_ui` 1758 to 1764. Gates: 17. Analy
 233. Three mutations on `#870`, three kills, the first being the Remove button wired to nothing,
 which kills five cases.
 
-**Commits** (§8.8). `#869`'s refusal `1feb958`, its builder half `7e9b662`. `#870` `ff0707e`. The
-version `55c837b`.
+**Commits** (§8.8). `#869`'s refusal `a4d5fc4`, its builder half `c571db6`. `#870` `1470482`. The
+version `93283c5`.
 
 **THE VERSION RULE NEEDED RESTATING TO COVER `#870`.** `#865`'s bump counted *"Done Chapters under
 `#588`"* and got 56, which was correct and is not general: `#870` is a leaf **Story** under the Plan
@@ -11257,7 +11257,7 @@ check that makes this a clarification rather than a change.
 no way to delete device templates"*; `#873` was found while building it.
 
 **NO VERSION BUMP.** Both close under `#786`, the cross-cutting debt epic, which is not the epic
-under development. The precedent is `477bc2e` and the reasoning is §5.9.29's.
+under development. The precedent is `a953772` and the reasoning is §5.9.29's.
 
 ##### 5.9.31.1 `#873`: the dialog said six and the delete removed three
 
@@ -11348,7 +11348,7 @@ Mutations: three on `#873` with three kills, six on `#871` with six kills. `#871
 ones the item exists for: the control wired to nothing kills five cases, and a row that skips the
 project-authored check kills four.
 
-**Commits** (§8.8). The ruling `77ff3bc`. `#873` `cd75b69`. `#871` `d81ef0b`.
+**Commits** (§8.8). The ruling `744ac41`. `#873` `ecb54ec`. `#871` `47bbf3f`.
 
 ---
 
@@ -11452,7 +11452,7 @@ stays and only the path from a person to the builder is removed**, which is the 
 killed: un-wiring `#870` again, a stale exemption, an exemption naming no board item, and the
 splitter regaining its indented-method bug.
 
-**Commits** (§8.8). `#872` `5f9f7c9`.
+**Commits** (§8.8). `#872` `5b479a1`.
 
 ---
 
@@ -11575,7 +11575,7 @@ Floors: `rackpal_ui` 1781 to 1790, `rackpal_app` 996 to 1015. Gates: 17. Analyze
 Six mutations, six kills. The first is the defect itself put back, the binding returning to
 `KeyScope.rack`, and four tabs go red.
 
-**Commits** (§8.8). `#874` `241222a`.
+**Commits** (§8.8). `#874` `b0b0414`.
 
 ---
 
@@ -11674,7 +11674,7 @@ Floors: `rackpal_ui` 1790 to 1799, `rackpal_app` 1015 to 1020. Gates: 17. Analyz
 Six mutations, six kills. The first is the defect itself put back: the mount stops supplying the three
 callbacks and six cases go red across two packages.
 
-**Commits** (§8.8). `#875` `ccde720b`.
+**Commits** (§8.8). `#875` `29d1a533`.
 
 ---
 
@@ -11742,7 +11742,7 @@ Analyzer pin unmoved at 233.
 
 Six mutations, six kills. `#872`'s exemption list loses another row, its third retirement in two days.
 
-**Commits** (§8.8). `#879` `56d96565`.
+**Commits** (§8.8). `#879` `fbc2d6c8`.
 
 ---
 
@@ -11759,12 +11759,12 @@ exist, not because it is ungated, and the *Gated on* column says which.
 | # | Work | Gated on | Why it is first |
 |---|---|---|---|
 | 1 | **Stand up CI at all**: **WRITTEN, NOT RUN** · **scheduled M5** | Nothing blocks it; it is **deferred by choice**, not gated | `azure-pipelines.yml` and `tools/ci/run_local.ps1` are **fourteen gates** in the same order (`DR-017`), so green locally and green on the agent would mean the same thing. **The row does not close**, by this section's own standard: no Azure DevOps service has executed the YAML, so nothing yet rejects a push. **The user scheduled run 1 for M5, 2026-08-03.** Distinguish the two words carefully: this work is *unblocked* and *unscheduled-until-M5*, which is not the same as gated, and it does not belong in §6.2. Closes when a run number can be cited here (§4.1). Board #567 |
-| 2 | ~~**Decide the two failing gates** (format the files and clear the infos, **or** amend docs/11 §7~~) **DECIDED 2026-08-03, `DR-017`** | Nothing; it was a **user decision**, not an engineering one | **Both, split by gate.** `dart format` adopted absolutely (`b6ff394` formatted 124 files, `ecdf3b2` gated it); the analyzer kept its ratchet, pin lowered 194 → 173; docs/11 §7 amended, having described a GitHub Actions workflow the project does not use. The predicted failure did not occur: main was never red (§4.1). Board #566 |
+| 2 | ~~**Decide the two failing gates** (format the files and clear the infos, **or** amend docs/11 §7~~) **DECIDED 2026-08-03, `DR-017`** | Nothing; it was a **user decision**, not an engineering one | **Both, split by gate.** `dart format` adopted absolutely (`1d2c622` formatted 124 files, `c1d22c8` gated it); the analyzer kept its ratchet, pin lowered 194 → 173; docs/11 §7 amended, having described a GitHub Actions workflow the project does not use. The predicted failure did not occur: main was never red (§4.1). Board #566 |
 | 3 | **First goldens + `flutter_test_config.dart` registering Jost** | Nothing | Makes *"goldens pass"* stop being a clause with nothing behind it (§4.3) |
 | 4 | **Mechanise the `sources.md` provenance gate** | Nothing | AC-052 is prose today; `RISK-04`'s early warning is unmeasurable (§4.4) |
-| 5 | ~~**Extend `epoch_mask_test.dart` to the derived pipeline**~~ **PAID `38167ec`, 2026-08-27** | Nothing | Was *"live and grows with every derived consumer"*. Closed with M0's clause 5 (`#507`): the derived outputs fold into the same changed-key set, and a source-reading field count stops the projection falling behind the classes it reads |
+| 5 | ~~**Extend `epoch_mask_test.dart` to the derived pipeline**~~ **PAID `97a4d4b`, 2026-08-27** | Nothing | Was *"live and grows with every derived consumer"*. Closed with M0's clause 5 (`#507`): the derived outputs fold into the same changed-key set, and a source-reading field count stops the projection falling behind the classes it reads |
 | 6 | **Propagate the Jost and `kSchemaVersion`-2 drift** into docs/08, docs/11, docs/02, docs/03 and canon; amend CR-080 | Nothing | Roadmap §8.3 requires an amendment for a ruling change; CR-080 has none (§4.6, §4.7) |
-| 7 | ~~**Propagate DR-006 into docs/09, docs/11, docs/10 and docs/00**~~, **PAID `e0941f6`** | Nothing | Was **nine** sites, the five signing sites plus four decision-count sites, listed in §4.11 and canon §12.9. The decision-count class recurred within days and was paid again at `69aa82d`, which found six more stale counts including a docs/09 §8.7 sentence listing four already-closed questions as open. **A count in prose is a maintenance liability**, and this is now the second sweep for it |
+| 7 | ~~**Propagate DR-006 into docs/09, docs/11, docs/10 and docs/00**~~, **PAID `8ba9a49`** | Nothing | Was **nine** sites, the five signing sites plus four decision-count sites, listed in §4.11 and canon §12.9. The decision-count class recurred within days and was paid again at `d0d608b`, which found six more stale counts including a docs/09 §8.7 sentence listing four already-closed questions as open. **A count in prose is a maintenance liability**, and this is now the second sweep for it |
 | 7a | **Delete the three root `test/fixtures/` copies** | Nothing | Five seconds (§4.12) |
 | 8 | **Finish M1**: ~~`AddRackCommand` + New-rack dialog~~ (built); ~~keyboard deselect~~ (built) **but time the drill**; ~~print a sheet~~ (done 2026-07-27); the outline tree | Nothing | One exit clause and one goal clause, and the exit clause needs a **person with a stopwatch**, not code (§3.4) |
 | 9 | **M4, the device builder** | **M1: a hard block (roadmap §5), DISCHARGED 2026-07-28** | Its inputs were all present long before its gate opened: the arrow's named artifact (*"devices exist"*) is there, and clause 3's keyboard-only drill was never a device-builder input (§5.3). The gate is now clear on the criterion, which is the only thing §8.1 lets a gate depend on. It still sits below M2 here on ordering grounds, not blocking ones |
@@ -11792,7 +11792,7 @@ saving DR-006 buys.**
   │  outline tree owed to M7                │                  inputs all PRESENT (§5.3);
   ▼                                         │                  DR-003 keeps it in v1
  M2 ○ not started                           │ DiagramCanvas IR + both backends
-  │  router deleted b560a50; needs          │ + parity gate GREEN  ──► makes M6 cheap
+  │  router deleted c5669a9; needs          │ + parity gate GREEN  ──► makes M6 cheap
   │  derivation + router + perf harness     │
   │  BEFORE the canvas                      │
   ├──────────────► M3 ○  (Link + Endpoint in the UI)
@@ -12032,7 +12032,7 @@ Gates: 17. Analyzer pin unmoved at 233.
 
 `#872`'s exemption list loses two rows, its fourth and fifth retirements in three days.
 
-**Commits** (§8.8). `#877` `80fd95e0` (DR-160) and `7baabc98` (the feature).
+**Commits** (§8.8). `#877` `86f2aa0c` (DR-160) and `fd3592dc` (the feature).
 
 #### 5.9.37 `#880` and `#881`: two of the reachability gate's twelve rows were about the gate · `DR-161` · no version move
 
@@ -12114,7 +12114,7 @@ shell. Floors: `rackpal_app` 1029 to 1031. Gates: 17. Analyzer pin unmoved at 23
 Nothing was deleted. The marker file stays: it names what building the class would need, and that
 record is worth more than the tidiness of removing it.
 
-**Commits** (§8.8). `#880` and `#881` `2460d462` (DR-161) and `4878134f` (the gate).
+**Commits** (§8.8). `#880` and `#881` `b0404cad` (DR-161) and `87d8dc9d` (the gate).
 
 #### 5.9.38 `#878`: the two commands that UNDO a placement, and a canvas that never took focus · `DR-162` · no version move
 
@@ -12199,7 +12199,7 @@ reason beside the number.
 
 `#872`'s exemption list loses both rows.
 
-**Commits** (§8.8). `#878` `199131c4` (DR-162) and `fb4544be` (the feature).
+**Commits** (§8.8). `#878` `caa387b2` (DR-162) and `72794efe` (the feature).
 
 #### 5.9.39 `#876`: AC-044's inspector half, a channel that started at U 0, and a surface that could not be opened · `DR-163`, `CR-025` · no version move
 
@@ -12299,7 +12299,7 @@ SIGNS the move from the session, which is `#879`'s surviving mutation exactly.
 **`#872`'s exemption list is now EMPTY.** Every `Command` in the tree is reachable from a person, for
 the first time since that gate filed twelve.
 
-**Commits** (§8.8). `#876` `c95224d2` (the CR-025 fix), `9a0186a1` (DR-163) and `33d7a2b6` (the
+**Commits** (§8.8). `#876` `da608842` (the CR-025 fix), `82a7c190` (DR-163) and `d6cb9b41` (the
 inspector). **Twelve mutations, twelve kills.**
 
 #### 5.9.40 `#884` and `#882`: the producer that 0U list never had, and a ticket that measured a harness · `DR-164` · no version move
@@ -12401,8 +12401,8 @@ assert an artifact. **Not covered, and measured rather than omitted**: the `Cata
 arm and the stale-channel guard are defensive. With a template the picker offered and an offset of
 zero inside a resolved channel, no refusal `PLC-003` can return is reachable through this surface.
 
-**Commits** (§8.8). `#884` `f04392a4` (DR-164) and `d688d0d7` (the producer, carrying §11.163.4's
-correction). `#882` `868bbcdf`.
+**Commits** (§8.8). `#884` `5cafc4dd` (DR-164) and `d6026dff` (the producer, carrying §11.163.4's
+correction). `#882` `6ffaa374`.
 
 #### 5.9.41 `#885`: the palette moves to the shell, and three findings about hiding a widget · `DR-165` · no version move
 
@@ -12494,7 +12494,7 @@ are questions only the real `AppShell` answers.
 
 **Seven mutations, seven killed**, two of them only after the case defending them was rewritten.
 
-**Commits** (§8.8). `#885` `72f22723` (DR-165) and `a1bdc029` (the move, carrying §11.164.1, .3 and
+**Commits** (§8.8). `#885` `56ae07b8` (DR-165) and `a51e6794` (the move, carrying §11.164.1, .3 and
 .5's corrections).
 
 #### 5.9.42 `#883`: AC-044's plain bar, the model field it needed, and a field erased by every rebuilder · `DR-166` · no version move
@@ -12573,7 +12573,7 @@ the device, which the inspector shows by swapping off the rack panel.
 devices, mirroring ignored, an unknown span drawn full height, a move erasing the span, and
 `PLC-003` back to treating the occupant as a point.
 
-**Commits** (§8.8). `#883` `6fc22a29` (DR-166) and `6fe267d6` (the bar, the field and the widened
+**Commits** (§8.8). `#883` `e74558b8` (DR-166) and `de4b3680` (the bar, the field and the widened
 rule).
 
 #### 5.9.43 `#887`: the 0U occupant's fields move to the device inspector, once the reason for moving them away expired · `DR-167` · no version move
@@ -12627,7 +12627,7 @@ Floor: `rackpal_ui` 1874 to 1875. Gates: 17. Analyzer pin unmoved at 233.
 the bar, which is `#883`'s gesture doing real work in three more places rather than being asserted
 once and left alone.
 
-**Commits** (§8.8). `#887` `e077860c`.
+**Commits** (§8.8). `#887` `b552ea35`.
 
 #### 5.9.44 `#889` and `#888`: the Location and Plan views become one, and a phrase repeated eighteen times reads as vocabulary · `DR-168` · no version move
 
@@ -12710,7 +12710,7 @@ window this product supports.
 
 ##### 5.9.44.6 Two private classes that reference each other are not dead to the analyzer
 
-`45d4d058`'s message says *"The `_RoomList` is gone."* **It was not.** The class was still in
+`8e461bd4`'s message says *"The `_RoomList` is gone."* **It was not.** The class was still in
 `plan_editor_screen.dart`, 183 lines of it with `_RoomRow` and `kPlanNoRoomsDetail`, and nothing
 built it: the rail stopped constructing it when `#891` moved the outline acts, and the declaration
 stayed.
@@ -12750,8 +12750,8 @@ and `Ctrl+3` is still bound to nothing (CR-071's Rear Panel).
 
 17 gates green. Analyzer pin unmoved at 233.
 
-**Commits** (§8.8). `#890` `bb39e122`. `#891`, `#892` `45d4d058`. `#893`, `#888` `f00d6c46`.
-`#894` `8058825c` and `12f63883`, the second being §5.9.44.6's deletion. Merged as `0264b5e9`.
+**Commits** (§8.8). `#890` `956f6a11`. `#891`, `#892` `8e461bd4`. `#893`, `#888` `af2bf0f3`.
+`#894` `9b4ee3fc` and `a533333d`, the second being §5.9.44.6's deletion. Merged as `e2f49952`.
 
 
 #### 5.9.45 `#895` and `#896`: a draw that could not cross a pin, and a mark nobody could read · `DR-169` · no version move
@@ -12863,8 +12863,8 @@ pin unmoved at 233.
 lines. **The op-count baselines in `schematic_perf_test.dart` did not move**, which is the check that
 matters, because a key on a template body is not a drawing op.
 
-**Commits** (§8.8). `#895` `31442e90`. `#896` the ruling `1023e53e`. `#897`, `#898` `8eb783fa`.
-`#899` `a47ff9df`. `#900` `392578d`. `#901` `ffc9169`. `#902` `51d9ad32`. `#903` `60893c0`, and see
+**Commits** (§8.8). `#895` `755985c9`. `#896` the ruling `6c5312f3`. `#897`, `#898` `03cd56a7`.
+`#899` `a71f79bb`. `#900` `cabe0a0`. `#901` `c782788`. `#902` `8010b5ba`. `#903` `7b43c95`, and see
 §5.9.46: `#897`'s clause was not met and this section said it was.
 
 #### 5.9.46 `#903`: the mark still grew with the zoom, and the test that said otherwise · `DR-169` · no version move
@@ -12948,7 +12948,7 @@ numbers. The `AND THE CLICKS AGREE AT 400%` case **passes under that mutation**,
 rather than a weak case: it documents the half that was never broken, and it is what would fail if a
 later change moved the gesture path to the built scene.
 
-**Commit** (§8.8): `#903` `60893c0`.
+**Commit** (§8.8): `#903` `7b43c95`.
 
 #### 5.9.47 `#904`: a printed mark is the round end of its pill, and the chapter that asked was wrong twice · `DR-169` · no version move
 
@@ -13030,7 +13030,7 @@ of different proportions print the same mark"* at `Expected: 5.1545 / Actual: 6.
 case at `5.25 / 6.8727`. Replacing the derived constant with a literal `5` puts the pill case red at
 `5.25 / 5.0` and leaves the proportions case green, which is correct, since a constant is constant.
 
-**Commit** (§8.8): `#904` `77eab81`.
+**Commit** (§8.8): `#904` `0cb32c8`.
 
 #### 5.9.48 `#905`: a mark's line weight is the drafting weight, and the zoom was in a layer the canvas could not see · `DR-169` · no version move
 
@@ -13109,13 +13109,13 @@ Analyzer pin unmoved at 233.
 | Option C on paper, a 1.5-point drop | the clearance case | ring inner edge at 3.75 points inside a corner at 4.27 |
 | Ring factor 1 | the paper ratio case, and *"a device reads apart from an outlet"* | 1.0 against 1.4 |
 
-**Commit** (§8.8): `#905` `222cf31`.
+**Commit** (§8.8): `#905` `6a27702`.
 
 #### 5.9.49 `#906`: the rack and the schematic zoomed in the same layer, and their chrome grew with it · `DR-170` · no version move
 
 **DEMONSTRATED** by the chrome-width groups in `render_schematic_canvas_test.dart` and
 `port_chip_test.dart`, and by `stroke_scaling_test.dart`'s *"outerScale takes BOTH decisions"*. The
-widths and the floor are the user's decisions, ruled as canon §11.169 (DR-170) in `fb63fab` and pushed
+widths and the floor are the user's decisions, ruled as canon §11.169 (DR-170) in `f6ec593` and pushed
 ahead of the code to claim the number.
 
 ##### 5.9.49.1 Found at `#905`, measured before it was ruled
@@ -13181,7 +13181,7 @@ record. Analyzer pin unmoved at 233.
 **The third row would have survived** without the zoomed-out rack case, which was added for that reason:
 the rings and the chip are drawn by the boxes, and no other case looked at the chassis canvas.
 
-**Commits** (§8.8): `#906` `d257104`, with the ruling in `fb63fab`.
+**Commits** (§8.8): `#906` `3beb2a9`, with the ruling in `f6ec593`.
 
 #### 5.9.50 `#907`: the gap DR-170 named was already ruled, and the band stays solid · `DR-170` · no version move
 
@@ -13212,10 +13212,10 @@ recorded as §11.169.6, because a dashed band on this canvas already means a rig
 
 ##### 5.9.50.4 Evidence
 
-Docs only. DR-170's scope note and docs/10's row are corrected in place in `46e3adb`, gated green on its
+Docs only. DR-170's scope note and docs/10's row are corrected in place in `0139fb6`, gated green on its
 own tree; docs/05 §7.5 item 5, this section and the OKF follow in the next commit.
 
-**Commit** (§8.8): `#907` `46e3adb`, the ruling and the correction.
+**Commit** (§8.8): `#907` `0139fb6`, the ruling and the correction.
 
 #### 5.9.51 `#558`: outlet counts are read off ports and cords, and the stored fields leave every format · `DR-171` · no version move
 
@@ -13233,7 +13233,7 @@ afterwards. The item's own text named the unwired design as open.
 
 ##### 5.9.51.2 Measured before anything was ruled
 
-Over the tree at `d4479d8`:
+Over the tree at `d5edc93`:
 
 | What | Found |
 |---|---|
@@ -13291,11 +13291,11 @@ Each starter rack's outlet chip, measured through `computeRackRollups` on the re
 The superscripts fall because a template with ports and no power port is now a measured zero rather than a silence; the port-less blanks, vents and shelves stay unknown. Consumed rises where a shipped template stated 0 against a real inlet. No starter drew a single cord, so every consumed figure is counted from ports, which the hover now says.
 
 - In each starter, the 35 template bodies that stated counts are re-hashed and the other 16 keep their
-  hashes. `v5_outlet_counts.rmpj.json` is `apartment.rmpj` as shipped at `de9a2f7`, captured before the
+  hashes. `v5_outlet_counts.rmpj.json` is `apartment.rmpj` as shipped at `67070b1`, captured before the
   regeneration.
-- 17 gates green on each of `355d553`, `de9a2f7` and `1f21c1f`, every suite exactly at its floor: rackpal_core 4709 -> 4724 -> 4734, rackpal_ui 1904 -> 1907. Analyzer pin unmoved at 233.
+- 17 gates green on each of `59d7d88`, `67070b1` and `560457a`, every suite exactly at its floor: rackpal_core 4709 -> 4724 -> 4734, rackpal_ui 1904 -> 1907. Analyzer pin unmoved at 233.
 
-**Commits** (§8.8): `#558` `355d553` (the ruling), `de9a2f7` (the derivation), `1f21c1f` (the
+**Commits** (§8.8): `#558` `59d7d88` (the ruling), `67070b1` (the derivation), `560457a` (the
 format).
 
 #### 5.9.52 `#560`: the undo depth is a per-machine preference, and a full history says so once · `DR-172` · no version move
@@ -13346,7 +13346,7 @@ one setting for the document and the Device Builder.
 
 - 17 gates green on the ruling alone and on the build, every suite exactly at its floor: rackpal_core 4734 -> 4742, rackpal_ui 1907 -> 1916, rackpal_app 1037 -> 1045. Analyzer pin unmoved at 233.
 
-**Commits** (§8.8): `#560` `7d10974` (the ruling), `7151178` (the build).
+**Commits** (§8.8): `#560` `bb4965c` (the ruling), `7151178` (the build).
 
 #### 5.9.53 `#112`: a matrix's zone audio is a stereo pair per zone · `DR-173` · no version move
 
@@ -13401,7 +13401,7 @@ the ruling's bound.
 - 17 gates green on the ruling alone and on the build, every suite exactly at its floor:
   rackpal_core 4742 -> 4747. Analyzer pin unmoved at 233.
 
-**Commits** (§8.8): `#112` `a7c412b` (the ruling), `1788e3e` (the build).
+**Commits** (§8.8): `#112` `0f101af` (the ruling), `0c7b1eb` (the build).
 
 #### 5.9.54 `#111`: a set on one cable draws one pennant on a bracket · `DR-174` · no version move
 
@@ -13448,7 +13448,7 @@ and the bracket in the leader's signal colour.
 - 17 gates green on the ruling alone, on the NUL fix alone, and on the build, every suite
   exactly at its floor: rackpal_core 4747 -> 4753. Analyzer pin unmoved at 233.
 
-**Commits** (§8.8): `#111` `4550282` (the ruling), `4c08f9c` (the NUL fix), `28e2d35` (the build).
+**Commits** (§8.8): `#111` `4550282` (the ruling), `1a99430` (the NUL fix), `bfa119c` (the build).
 
 #### 5.9.55 `#81`: registry parity holds the descriptive fields to the specification's family table · `DR-175` · no version move
 
@@ -13488,7 +13488,7 @@ user; the recommended one was chosen.
 - 17 gates green on the ruling alone and on the build, every suite exactly at its floor, with no
   test floor moved. Analyzer pin unmoved at 233.
 
-**Commits** (§8.8): `#81` `2dac125` (the ruling), `b50412c` (the build).
+**Commits** (§8.8): `#81` `cb6832e` (the ruling), `14739e6` (the build).
 
 #### 5.9.56 `#561`: your rack presets are saved from a rack, kept per machine, and sit beside seeded presets you can hide · `DR-016`, `DR-176` · no version move
 
@@ -13532,7 +13532,7 @@ as DR-176 §11.175.
   exactly at its floor: rackpal_core 4753 -> 4762, rackpal_app 1045 -> 1052, rackpal_ui 1916 -> 1932.
   Analyzer pin unmoved at 233.
 
-**Commits** (§8.8): `#561` `e09eda7` (the ruling), `07784cf` (core), `2331c05` (storage), `a1f70f7`
+**Commits** (§8.8): `#561` `d9b09a1` (the ruling), `54aeaf2` (core), `96c9fb1` (storage), `24f2af2`
 (the UI).
 
 #### 5.9.57 `#843`: a test that asserts a time runs in its own gate step, one test at a time · `DR-178` · no version move
@@ -13571,7 +13571,7 @@ user ruled the recommended option, recorded as DR-178 §11.177.
 - docs/12 §5.1's M2 rows now cite the timed tests and the op-count tests by their new lines, and say
   where each runs.
 
-**Commits** (§8.8): `#843` `8d97776` (the ruling), `4054b2f` (the tests), `f6f1b22` (the step).
+**Commits** (§8.8): `#843` `8a3cc73` (the ruling), `672b3bd` (the tests), `d4098f8` (the step).
 
 #### 5.9.58 `#92` and `#780`: the clause tables carry marks, and roadmap §8.9 is a gate · `DR-095` · no version move
 
@@ -13597,7 +13597,7 @@ the user ruled its remaining scope as unblocking the milestone gate:
 - **M3's four `BUILT` rows were already demonstrated, by a test the table never cited.**
   `drop_line_planner_test.dart`'s whole-drill test drives docs/16's ten lines through the real planner
   on one document and asserts every field the clauses name, at sixty. The table cited code lines and
-  a UI test named for sixty drops that types nine; that test is renamed (`927d935`).
+  a UI test named for sixty drops that types nine; that test is renamed (`e248618`).
 - **M3's clause 1 is `CONFIRMED` on a one-sentence record.** `#89` and `#163` to `#165` closed on
   2026-08-27 on the operator's confirmation that the drill was run and verified, and nothing records
   the run's date, its time or `verify_drill.dart`'s output. Asked on 2026-09-15, the operator does not
@@ -13629,7 +13629,7 @@ the user ruled its remaining scope as unblocking the milestone gate:
   at M2, and when M1's goal line lost its marker.
 - 18 gates green on the rename and on the marks, and 19 on the gate commit, which is the new gate counting itself. Every suite exactly at its floor: core 4759, text 1, export 229, pdfium 22, ui 1932, app 1052, and the timed step 5. Analyzer pin unmoved at 233.
 
-**Commits** (§8.8): `#92` `927d935` (the rename), `1a48354` (the marks); `#780` `1e75efc` (the
+**Commits** (§8.8): `#92` `e248618` (the rename), `cc10e75` (the marks); `#780` `16a0cbc` (the
 gate).
 
 #### 5.9.59 `#782`: the extensions are `.rppj`, `.rpdx` and `.rpda`, and every spelling a build wrote still opens · `DR-179` · no version move
@@ -13649,7 +13649,7 @@ a rename expensive. DR-179 §11.178.2 ruled the letters and the timing; this is 
 ##### 5.9.59.2 What the rename found, all of it the product rename's work
 
 - **The legacy project extension was a spelling nothing ever wrote.** DR-015 kept `.rackmate`
-  opening; `0e2c5bb` rewrote that constant to `.rackpal`. A project saved before 2026-08-02 was
+  opening; `3edc316` rewrote that constant to `.rackpal`. A project saved before 2026-08-02 was
   therefore missing from the Open dialog's filter, and `Ctrl+S` on one would have written a second
   file beside it. The accepted list is now `.rppj`, `.rmpj`, `.rackmate`.
 - **Two "no legacy sibling" claims had expired.** `save_paths.dart` and the native dialog both said a
@@ -13695,8 +13695,8 @@ a rename expensive. DR-179 §11.178.2 ruled the letters and the timing; this is 
 
 - 19 gates green on each of the three commits, every suite exactly at its floor, and the four starter goldens byte-identical after the rename: `generate_starters.dart --check` reports all four unchanged.
 
-**Commits** (§8.8): `#782` `04c8eb95` (the app and the native dialog), `2aef2906` (the derived
-documents), `05d60281` (these records), `9ce583ee` (the library comments).
+**Commits** (§8.8): `#782` `f3d7a418` (the app and the native dialog), `8a573b59` (the derived
+documents), `e2e5c43a` (these records), `3e211a03` (the library comments).
 
 #### 5.9.60 `#80`: a project states its wiring standard, and a cable may override it · `DR-180` · no version move
 
@@ -13792,8 +13792,8 @@ named in §11.179's own "what this does not rule" as owed with the build.
 - The file shape is gated in the same file as the rule: an unset project writes no `wiringStandard`
   key anywhere in the document, and a set one survives write, read and write again byte-identically.
 
-**Commits** (§8.8): `#80` `1445d547` (the model, the file, the commands and the settings row),
-`5ae8180f` (the printed cell and the `WIRING` column), `6b3ef339` (the derived documents and
+**Commits** (§8.8): `#80` `17387974` (the model, the file, the commands and the settings row),
+`91966c68` (the printed cell and the `WIRING` column), `29a1420b` (the derived documents and
 these records).
 
 #### 5.9.61 `#82`: a signal family may override its domain's glyph · `DR-181` · no version move
@@ -13877,8 +13877,8 @@ pennant to three scene tests, which would then count the wrong paths and still p
 - **The logical-flow direction is still owed a field**, and `topologyFree` is still absent from the
   Dart class. Both are named in §11.180.1 and neither is in this.
 
-**Commits** (§8.8): `#82` `adbd07af` (the field, the seed's 26, the geometry and the gate),
-`3f7bc1c7` (the derived documents and these records).
+**Commits** (§8.8): `#82` `4bfdc6e5` (the field, the seed's 26, the geometry and the gate),
+`7c029b10` (the derived documents and these records).
 
 #### 5.9.62 `#796`: the roadmap keeps its sizes and retires its week total · `DR-182` · no version move
 
@@ -13946,8 +13946,8 @@ rather than into an unruled change.
 - One count fixed in passing because it sits inside the paragraph lever 2 is about: docs/09 said "the
   50 seeded templates" against a catalogue of 51, and now names the test that holds the number.
 
-**Commits** (§8.8): `#796` `1f0c5bb1` (roadmap §6, §4's heading and scale, docs/00, the canon §12.7
-note), `1a00b064` (these records). `#797`, `#798` and `#799` close with it.
+**Commits** (§8.8): `#796` `dbb61751` (roadmap §6, §4's heading and scale, docs/00, the canon §12.7
+note), `56014fba` (these records). `#797`, `#798` and `#799` close with it.
 
 #### 5.9.63 `#91`: the competitive table, re-read against the vendors' own pages · `DR-036`, `DR-011` · no version move
 
@@ -14015,7 +14015,7 @@ Two cells contradicted the ruling that narrowed them, in the document a reader m
   unedited output, and a re-verification belongs beside the claim it corrects rather than inside the
   artifact it corrects.
 
-**Commits** (§8.8): `#91` `4547ad41` (docs/00 §1, §3, §5 and §7).
+**Commits** (§8.8): `#91` `a6b946a9` (docs/00 §1, §3, §5 and §7).
 
 #### 5.9.64 `#910`: the plan mark sticks at a floor and grows with the plan · `DR-183` · no version move
 
@@ -14182,7 +14182,7 @@ corrected, which is the second time this repository has paid for that.
   made redundant by another. Both fixed and those two gates re-run alone; the analyzer is back on its
   pin at 233.
 
-**Commits** (§8.8): the ruling `6cbebff1`, the implementation `a3375336`. These records and the
+**Commits** (§8.8): the ruling `67b5601e`, the implementation `5f51af9a`. These records and the
 version follow in their own commits.
 
 #### 5.9.66 `#912`: a floorplan page says its name and the place it shows, and a plan is the tenth location carrier · `DR-185` · `v0.6.59`
@@ -14228,8 +14228,8 @@ survives.
 - **Floors**: `rackpal_core` 4835 to 4841, `rackpal_ui` 1950 to 1954, `rackpal_app` 1054 to 1060,
   measured.
 
-**Commits** (§8.8): the ruling `0b43d4d4`, the implementation `64fc85b8`, the amendment to DR-021's
-census `201c9ed5`. These records and the version follow in their own commits.
+**Commits** (§8.8): the ruling `912e86e5`, the implementation `48cf294c`, the amendment to DR-021's
+census `f705a66e`. These records and the version follow in their own commits.
 
 #### 5.9.67 `#913`: `Ctrl+L` locks a rack device and pins a schematic symbol, five milestones after the keymap promised it · `DR-186` · no version move
 
@@ -14300,7 +14300,7 @@ rotation or rename, which bump the same epoch and have nothing to do with that c
   `rackpal_ui`, which AC-013's access control exists to stop; the analyzer gate reported it as a
   warning, and warnings are gated at zero rather than ratcheted. The fixture builds the device locked
   instead, which is what the product does.
-- **A CLAIM WAS WITHDRAWN AFTER IT WAS COMMITTED.** `2bbe532a`'s message says a pin would have moved
+- **A CLAIM WAS WITHDRAWN AFTER IT WAS COMMITTED.** `389fcc11`'s message says a pin would have moved
   its neighbours without the hold. The probe above says it would not, for the gesture that exists
   today; the numbers are in §5.9.67.3 and the corrected reason is in the code. The commit stands as
   written, because a message is a record of what was believed when it was written, and this is where
@@ -14311,7 +14311,7 @@ rotation or rename, which bump the same epoch and have nothing to do with that c
   scale the way `#906` requires, and neither has a case that would notice if that stopped.
 - **Floors**: `rackpal_core` 4841 to 4863, `rackpal_ui` 1954 to 1966, measured.
 
-**Commits** (§8.8): the ruling `4e944d20`, the implementation `2bbe532a`. These records follow.
+**Commits** (§8.8): the ruling `4724c984`, the implementation `389fcc11`. These records follow.
 
 #### 5.9.68 `#914` DR-187, the schematic holds its layout
 
@@ -14540,10 +14540,10 @@ coverage.
 
 **Floors**: `rackpal_core` 4884 to 4889, `rackpal_ui` 1988 to 1994, measured.
 
-**Commits** (§8.8): the ruling `1864a8c0`, SG-1 and SG-3 `a414bc73`, the `addConsequence` mechanism
-`a4719d4d`, the two commands `5e06d115`, the screen `a9e5f8c2`, the correction `f810d78c`, SG-6
-`df86e875`, the drag's ruling `7d5e9114`, its command `546e2eda`, the gesture `58c13b14`, SG-5
-`445388de`. **All six chapters are closed.**
+**Commits** (§8.8): the ruling `a84d5650`, SG-1 and SG-3 `27b517df`, the `addConsequence` mechanism
+`b0be7cb0`, the two commands `677b34a4`, the screen `1beb9b77`, the correction `9f991d25`, SG-6
+`8902f733`, the drag's ruling `b2def810`, its command `acc3ae4b`, the gesture `91822281`, SG-5
+`53e308ee`. **All six chapters are closed.**
 
 ---
 

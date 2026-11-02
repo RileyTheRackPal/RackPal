@@ -45,7 +45,7 @@ clears the plans that showed it and undo puts them back (canon §11.184.3, §12.
 
 # Built
 
-`#912` landed it on 2026-09-18 in `64fc85b8`: the command, the dialog, the pencil, the import's
+`#912` landed it on 2026-09-18 in `48cf294c`: the command, the dialog, the pencil, the import's
 proposal and the tenth carrier, with core +6, ui +4 and app +6. The import's two-page case reads the
 page into the name off a PDF assembled by hand, and the one mutation run (an import that asks and
 ignores the answer) was killed by exactly its case.

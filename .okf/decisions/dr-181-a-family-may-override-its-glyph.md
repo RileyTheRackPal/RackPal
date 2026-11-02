@@ -40,7 +40,7 @@ is drawn with the native one.
 
 # Built
 
-`#82` landed it on 2026-09-16 (``adbd07af``). The field, the seed's 26, the two missing shapes and
+`#82` landed it on 2026-09-16 (``4bfdc6e5``). The field, the seed's 26, the two missing shapes and
 the parity gate's glyph column.
 
 **THE ANSWER WAS NEVER A SELECTOR.** The renderer's own header has argued since M2 that no `tier`

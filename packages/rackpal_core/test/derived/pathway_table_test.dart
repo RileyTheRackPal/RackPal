@@ -109,7 +109,7 @@ void main() {
 
     test('orders by FracIndex, and breaks a tie on the id', () {
       // The planner allocated two pathways the same order before
-      // `b093062`. A comparator returning 0 here would leave the list to
+      // `14ae1e2`. A comparator returning 0 here would leave the list to
       // map iteration, so the tie-break is the assertion.
       final doc = _doc();
       _pathway(doc, 'pth-z', 'second', order: 'm');

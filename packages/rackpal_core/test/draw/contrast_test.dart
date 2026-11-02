@@ -85,7 +85,7 @@ void main() {
 
   group('contrastRatio, which the PAL-1 gate asks for the callout', () {
     // SFE-A2. Printed by `contrast()` in `tools/pal1_check.py` at
-    // a4926a2d, the last commit where the Python computed it. The first is
+    // 96664b10, the last commit where the Python computed it. The first is
     // the callout's own case: black ink on the darkest screened underlay
     // sample, 192, which the gate prints as 11.54:1.
     int grey(int v) => 0xFF000000 | (v << 16) | (v << 8) | v;

@@ -52,8 +52,8 @@ against.
 
 # Built, and what it cost
 
-M2-D shipped the render (`e13fa68`) and M2-E the canvas and domain filter
-(`219c0bf`). The measured delta against M2-C's symbol-only baseline:
+M2-D shipped the render (`e19664e`) and M2-E the canvas and domain filter
+(`e698877`). The measured delta against M2-C's symbol-only baseline:
 
 | | ops | best of 15 |
 |---|---|---|

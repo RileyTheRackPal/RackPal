@@ -67,12 +67,12 @@ Entry 141.
   user named a whole distribution route and said it may not be the one taken. DR-254 rules only the Store's parking
   and records the route with the facts that cut against it, rather than writing a hope down as a spec.
 * **Removed**: `docs/md_renderer.html`, a Markdown-to-PDF reader the user kept for quick review renders. It rode
-  into the tree inside an unrelated M2 commit (`f9e3d347`).
+  into the tree inside an unrelated M2 commit (`edeb4b83`).
 * **First entry under the ISO heading convention** `getting-started.md` set out in OKF-1i (`#1086`).
 
 ## 2026-10-17 (hundred-and-fortieth entry)
 
-* **Progress**: `#1060`, landed on 2026-10-16 in `9b62626c` and `c0748532`, which this log had not recorded.
+* **Progress**: `#1060`, landed on 2026-10-16 in `eb159021` and `31c764ce`, which this log had not recorded.
   [DR-117](decisions/dr-117-the-lockup-ships-arranging-supplied-art-is-not-generating.md) rules the manual a games
   manual and [DR-118](decisions/dr-118-the-visor-is-a-display-which-buys-the-manual.md) gives it a wordless narrator;
   this is the work that builds on both.
@@ -116,7 +116,7 @@ Entry 141.
 
 * **Correction**: entry 137 says the `VERIFY:` pass *"found a ruled refusal that was never built (`#1058`)"*. **It was
   built**: `kMaxExportSheets` and `ExportTooManySheets` refuse past 2000 sheets before a page is emitted, from
-  `efbba7ad` (`#352`), held by `export_sheet_cap_test.dart`. `#1058` closes as not a defect, and docs/08's two lines
+  `3ba307ac` (`#352`), held by `export_sheet_cap_test.dart`. `#1058` closes as not a defect, and docs/08's two lines
   are corrected.
 * **Note**: **A TRUNCATED GREP IS A SILENT CENSUS.** The census grep matched the right file and was piped through
   `head -10`; ten hits in `seed_registries.dart` filled the window and the real one was cut. The follow-up searched
@@ -161,7 +161,7 @@ Entry 141.
 ## 2026-10-11 (hundred-and-thirty-fifth entry)
 
 * **Progress**: `#1037` `CONFIRMED` on the hardware by the user (*"Pinch to zoom works!"*), closing the item that
-  waited in Needs You since `b2b1d897`. docs/12 §4.57 says so.
+  waited in Needs You since `21f49201`. docs/12 §4.57 says so.
 * **Note**: **A GREEN SUITE OVER A SYNTHETIC STREAM IS NOT THE HARDWARE.** The item stayed open after merge on
   purpose: the tests proved the arithmetic, and only the touchpad could prove the embedder sends what they model.
 
@@ -203,7 +203,7 @@ Entry 141.
 
 ## 2026-10-09 (hundred-and-thirty-first entry)
 
-* **Progress**: `#1037` fixed at `b2b1d897`: a Windows touchpad pinch zoomed about two pivots, because the
+* **Progress**: `#1037` fixed at `21f49201`: a Windows touchpad pinch zoomed about two pivots, because the
   embedder hands DirectManipulation's own zoom translation over as `pan`. A pinch now latches its gesture and
   zooms about the cursor only, on all three canvases. docs/12 §4.57. Waits on a person with the touchpad.
 * **Note**: **A SYNTHETIC EVENT IS ONE PLATFORM'S SHAPE.** The pinch test held `pan` constant, which is macOS,
@@ -212,9 +212,9 @@ Entry 141.
 
 ## 2026-10-08 (hundred-and-thirtieth entry)
 
-* **Progress**: SFE-C (`#820`) built in seven chapters on DR-245 (`0458abe0`): the clone dialog and grid
-  (`8ba2dec5`), provenance (`892cc8bd`), families inside device libraries (`7902d621`), arrival
-  (`d2657b67`), Change line (`15556a87`), From your libraries (`f1cf002f`), My library (`c63358fb`).
+* **Progress**: SFE-C (`#820`) built in seven chapters on DR-245 (`e4924cd3`): the clone dialog and grid
+  (`31df6036`), provenance (`00a6c6f9`), families inside device libraries (`84999fc0`), arrival
+  (`047935af`), Change line (`46aaedc1`), From your libraries (`17eeb624`), My library (`83c00063`).
   docs/12 §4.56. The DR-122 epic waits in Needs You for its exit criterion, which a person performs.
 * **Note**: **A WIDGET TEST CAN FIND A UX DEFECT.** The clone dialog's verdict sat below a thirteen-row grid
   and was not even built after a tap; a person would have read nothing either.
@@ -224,9 +224,9 @@ Entry 141.
 
 ## 2026-10-07 (hundred-and-twenty-ninth entry)
 
-* **Progress**: SFE-B (`#819`) built: the clone command and its refusal (`#825`, `#826`, `#828`, `423c3d16`),
-  and `refused_surfaces_test`'s signal-family arm replaced (`#827`, `54c49e3a`).
-  [DR-244](/decisions/dr-244-a-clone-may-change-its-default-connector.md) ruled first (`8f0625ae`).
+* **Progress**: SFE-B (`#819`) built: the clone command and its refusal (`#825`, `#826`, `#828`, `bb67d784`),
+  and `refused_surfaces_test`'s signal-family arm replaced (`#827`, `f31d7f1e`).
+  [DR-244](/decisions/dr-244-a-clone-may-change-its-default-connector.md) ruled first (`6fa49684`).
   docs/12 §4.55.
 * **Note**: **AN ACCEPTED RECOMMENDATION IS STILL A HYPOTHESIS.** "A connector the parent accepts" was
   approved and had no host. Reading the readers of the field before writing the ruling caught it, and found
@@ -237,7 +237,7 @@ Entry 141.
 ## 2026-10-07 (hundred-and-twenty-eighth entry)
 
 * **Progress**: SFE-A (`#818`) built in three chapters: PAL-1's arithmetic in `rackpal_core` (`#822`,
-  `a4926a2d`), the gate reading it (`#823`, `1de8417d`), the headroom query (`#824`, `3eabe897`).
+  `96664b10`), the gate reading it (`#823`, `73a2df19`), the headroom query (`#824`, `c77b1a6a`).
   [DR-243](/decisions/dr-243-a-clone-picks-one-dash-per-class.md) ruled. New gate concept:
   [PAL-1 conformance](/gates/pal1-conformance.md). docs/12 §4.54.
 * **Note**: **A DIFFERENTIAL OVER A PASSING INPUT PROVES ONLY AGREEMENT THAT NOTHING FAILS.** The shipped
@@ -252,7 +252,7 @@ Entry 141.
 
 * **Progress**: M6 re-marked `3 of 5`, `PARTIAL` (docs/12 §4.53): the complete-set, legend-simulation and
   requirement-7 clauses (`#46`, `#47`, `#50`, `#358`) are `DEMONSTRATED`; the two physical prints remain.
-  [DR-242](/decisions/dr-242-sheets-point-to-the-schedules.md) built at `bf15cdaf` (`#1030`). `#1031` filed.
+  [DR-242](/decisions/dr-242-sheets-point-to-the-schedules.md) built at `38f1b23f` (`#1030`). `#1031` filed.
   PLAN-J (`#606`) moved to Needs You.
 * **Note**: **A MILESTONE ROW DOES NOT RE-MARK ITSELF.** M6 read `0 of 5` with every slot shipped. Work
   landing moves no clause; running the clause does, and nobody had.
@@ -264,8 +264,8 @@ Entry 141.
 
 ## 2026-10-07 (hundred-and-twenty-sixth entry)
 
-* **Progress**: `#1029` (M8-H5) built in three commits: the font comments (`7f5bbde3`), the Jost name table
-  (`6ef51f89`), canon's built and superseded notes (`a912bbcb`).
+* **Progress**: `#1029` (M8-H5) built in three commits: the font comments (`26f8d7b7`), the Jost name table
+  (`8d702080`), canon's built and superseded notes (`3ce37708`).
   [DR-090](/decisions/dr-090-hue-is-never-the-only-cue.md) updated.
 * **Note**: **A FIXED GENERATOR IS NOT A FIXED ARTIFACT.** The rename corrected the script that writes the
   font's name and never re-ran it; the binary disagreed with its own source for six weeks.
@@ -276,9 +276,9 @@ Entry 141.
 
 ## 2026-10-07 (hundred-and-twenty-fifth entry)
 
-* **Progress**: PR 209 merged at `b0c4ff56`; `#1020` closed. `#783` gained a second identity (ADO's server-made
-  merge commits, 205 on `main`), recorded by count only. `#949` built in three chapters: `#1024` (`c04c05d5`),
-  `#1025` (`70483032`), `#1026` (`9c0c5e78`). docs/12 §4.52.
+* **Progress**: PR 209 merged at `f0b9bfe9`; `#1020` closed. `#783` gained a second identity (ADO's server-made
+  merge commits, 205 on `main`), recorded by count only. `#949` built in three chapters: `#1024` (`123f4038`),
+  `#1025` (`70483032`), `#1026` (`83e7bc73`). docs/12 §4.52.
 * **Note**: **ASK THE QUESTION THE TICKET ASKS BEFORE ANSWERING THE ONE IT SUGGESTS.** `#949` offered "wire the
   moves or delete them". The probe found default Tab already right, two real defects nobody had filed (a double
   stop, and Enter leaving the grid at every bank), and that three of the four moves had no job.
@@ -300,7 +300,7 @@ Entry 141.
 
 ## 2026-10-06 (hundred-and-twenty-third entry)
 
-* **Progress**: `#1020` built in two chapters, `#1021` (`076149a9`) and `#1022` (`f4750058`); DR-241 marked
+* **Progress**: `#1020` built in two chapters, `#1021` (`1902eeef`) and `#1022` (`3862cd87`); DR-241 marked
   built. docs/12 §4.51.
 * **Note**: **A PAGE-COORDINATE FILTER OVER A SPLICED SCENE PASSES BY LUCK.** The rack's labels sit inside a
   save/transform bracket in scene units; an 8 pt layout move let one in. Read the ops outside the bracket.
@@ -309,7 +309,7 @@ Entry 141.
 
 ## 2026-10-06 (hundred-and-twenty-second entry)
 
-* **Progress**: PR 208 merged at `ba27758c`; `#1016` closed. `#1020` taken, decomposed into `#1021` to `#1023`;
+* **Progress**: PR 208 merged at `9a47065a`; `#1016` closed. `#1020` taken, decomposed into `#1021` to `#1023`;
   branch `band-inset-1020`.
 * **Creation**: [DR-241](/decisions/dr-241-elevation-inside-its-frame.md), amending DR-240 §11.239.2.
 * **Note**: **PRICING A COSMETIC FIX FOUND A FACTUAL ONE.** Measuring how much an 8 pt inset narrows each
@@ -318,7 +318,7 @@ Entry 141.
 
 ## 2026-10-06 (hundred-and-twenty-first entry)
 
-* **Progress**: `#1016` built in two chapters, `#1017` (`78239478`) and `#1018` (`5fa04853`); DR-240 marked
+* **Progress**: `#1016` built in two chapters, `#1017` (`78239478`) and `#1018` (`45a040bb`); DR-240 marked
   built. docs/12 §4.50. `#1020` filed: the note band's text touches the drawing frame.
 * **Note**: **A TEST OF THE TEXT CANNOT SEE WHERE THE TEXT SITS.** Every band test asserted strings and the
   band's bottom edge; none could say the first letter of each note was fused to the frame. One pdfium render
@@ -326,7 +326,7 @@ Entry 141.
 
 ## 2026-10-06 (hundred-and-twentieth entry)
 
-* **Progress**: PR 207 merged at `dd7a8f17`. `#1016` taken, decomposed into `#1017` to `#1019`; branch
+* **Progress**: PR 207 merged at `dc54ee1e`. `#1016` taken, decomposed into `#1017` to `#1019`; branch
   `ground-bar-1016`.
 * **Creation**: [DR-240](/decisions/dr-240-ground-bar-note-prints.md).
 * **Note**: **A FULL BAND MAKES A ONE-LINE FEATURE A LAYOUT RULING.** The note was trivial; where it goes
@@ -342,7 +342,7 @@ Entry 141.
 
 ## 2026-10-06 (hundred-and-eighteenth entry)
 
-* **Progress**: PR 206 merged at `586fbd48`; `#1010` and `#1002` closed. `#923` taken, decomposed into
+* **Progress**: PR 206 merged at `e0e069d9`; `#1010` and `#1002` closed. `#923` taken, decomposed into
   `#1011` to `#1015`; branch `rack-envelope`. `#1016` filed: the ground bar note is not printed.
 * **Creation**: [DR-239](/decisions/dr-239-rack-envelope-typed-and-printed.md).
 * **Note**: **A QUESTION WITH TWO OPTIONS WAS ANSWERED WITH BOTH.** Rail clearance and door clearance are
@@ -350,7 +350,7 @@ Entry 141.
 
 ## 2026-10-06 (hundred-and-seventeenth entry)
 
-* **Progress**: `#1010` built at `1a6cf076` and `#1002` at `78d7deda`; DR-237 and DR-238 marked built. docs/12
+* **Progress**: `#1010` built at `d0e3920a` and `#1002` at `87c3517f`; DR-237 and DR-238 marked built. docs/12
   §4.48.
 * **Note**: **A CATALOGUE FIX DOES NOT REACH A SAVED PROJECT.** Registries are embedded per document, so the
   binding-post correction lands in new projects and the starters only; said to the user rather than
@@ -358,7 +358,7 @@ Entry 141.
 
 ## 2026-10-06 (hundred-and-sixteenth entry)
 
-* **Progress**: `brk-a` merged at `8496b4fd` (PR 205); `#1000` and `#1004` to `#1009` closed, Epic `#1003` left
+* **Progress**: `brk-a` merged at `39a3e66f` (PR 205); `#1000` and `#1004` to `#1009` closed, Epic `#1003` left
   open for a person-driven run. `#1010` and `#1002` ruled; branch `cords-and-posts`.
 * **Creation**: [DR-237](/decisions/dr-237-speaker-wire-is-bare-wire.md) and
   [DR-238](/decisions/dr-238-captive-cord-is-part-of-its-device.md).
@@ -368,8 +368,8 @@ Entry 141.
 
 ## 2026-10-06 (hundred-and-fifteenth entry)
 
-* **Progress**: BRK-A built on `brk-a`: `#1004` (`2d7bc795`), `#1005` (`c3befee4`), `#1006` (`d0435993`), `#1007`
-  (`dee64537`), `#1008` (`ea591673`). DR-236 marked built; docs/12 §4.47. `#1010` filed (CON-001 on every
+* **Progress**: BRK-A built on `brk-a`: `#1004` (`cb794383`), `#1005` (`c67541e0`), `#1006` (`652a075b`), `#1007`
+  (`d744a17d`), `#1008` (`14cad9cb`). DR-236 marked built; docs/12 §4.47. `#1010` filed (CON-001 on every
   amplifier-to-in-wall-speaker run).
 * **Note**: **A PAIRED-INDEX LOOP IS A TWO-ENDS ASSUMPTION IN DISGUISE.** The pill loop read `ends[i]` beside
   `pillAt[i]`, correct for every two-ended cable ever drawn and wrong for the first that branched. Census the
@@ -380,7 +380,7 @@ Entry 141.
 
 ## 2026-10-04 (hundred-and-fourteenth entry)
 
-* **Progress**: `adapters-1001` merged at `50dc9576` (PR 204); `#1001` closed. BRK-A opened on branch `brk-a`:
+* **Progress**: `adapters-1001` merged at `7713149d` (PR 204); `#1001` closed. BRK-A opened on branch `brk-a`:
   Epic `#1003` under the v1 Saga, `#1000` moved under it, decomposed into `#1004` to `#1009` before any code.
 * **Creation**: [DR-236](/decisions/dr-236-one-cable-several-sets-several-devices.md), a §8.3 amendment.
 * **Note**: **A COMMENT CAN CITE A RULING FOR ITS OPPOSITE.** Six readers take a cable's ends from its first
@@ -390,22 +390,22 @@ Entry 141.
 
 ## 2026-10-04 (hundred-and-thirteenth entry)
 
-* **Progress**: `debt-908-909` merged at `02f38325` (PR 203); `#908`, `#909`, `#999` closed. `#1002` filed (a
+* **Progress**: `debt-908-909` merged at `1d8fb417` (PR 203); `#908`, `#909`, `#999` closed. `#1002` filed (a
   captive cord counted as a cord to buy), with a census: all 13 captive inlets are `power.ac_branch` on a NEMA
   plug and every detachable one is IEC. `#1001` opened on branch `adapters-1001`.
 * **Creation**: [DR-235](/decisions/dr-235-a-declared-adapter-is-shown.md).
 * **Note**: **A DEAD SENTENCE CAN COVER A DEAD RULING.** `#1001` read as one line of copy pointing at a missing
   inspector field. Behind it, DR-128's own clause that an adapter reaches the BOM had no reader at all.
   Deleting the sentence was the cheap option, and it would have hidden the unkept ruling.
-* **Progress**: `#1001` built on `adapters-1001` in four slices (cable bar `ea58889b`, T6.30 `e8a28aa7`,
-  schedule notes `1017d60e`, the mark `485ba9ee`). DR-235 marked built; docs/12 §4.46.
+* **Progress**: `#1001` built on `adapters-1001` in four slices (cable bar `05ee309d`, T6.30 `f603a527`,
+  schedule notes `67a4d33a`, the mark `11dfb4c3`). DR-235 marked built; docs/12 §4.46.
 * **Note**: **A RULED SHAPE CAN ALREADY MEAN SOMETHING.** The lozenge was ruled from a preview with no
   family in it; four families already print a hollow diamond inside the pennant beside it. Census the glyph
   table before ruling a mark, the way a field is censused before it is added.
 
 ## 2026-10-04 (hundred-and-twelfth entry)
 
-* **Progress**: `#998` merged at `f6af1f9b` (PR 202). `#908` and `#909` opened on branch `debt-908-909`;
+* **Progress**: `#998` merged at `230e74af` (PR 202). `#908` and `#909` opened on branch `debt-908-909`;
   pricing `#909` filed `#999` (multi-draw has the same gap) and the user's 16/4 question filed `#1000`.
 * **Creation**: [DR-233](/decisions/dr-233-iec-or-nema-cord-is-a-power-cord.md), amending DR-008 §11.8.1.
 * **Creation**: [DR-234](/decisions/dr-234-sets-and-multi-draw-ask-tier-2.md).
@@ -414,7 +414,7 @@ Entry 141.
   family table answered what the ticket's sentence could not, and the user ruled from it.
 * **Note**: **A "FIXED IN COMMIT" LINK IS A MENTION.** Both items carried three each and neither was
   built: ADO links any commit that names the number.
-* **Progress**: built on `debt-908-909`: `#908` (`cb45506c`), `#909` (`14dca324`), `#999` (`d3c7a11c`).
+* **Progress**: built on `debt-908-909`: `#908` (`afb3c049`), `#909` (`f421f6c2`), `#999` (`4e4203f2`).
   DR-233 and DR-234 marked built; docs/12 §4.45. `#1001` filed: the pin path's adapter remedy names an
   inspector field that does not exist.
 * **Note**: **ELEVEN TESTS WERE BLESSING A TIER-2 CASE.** The schematic fixture's only set pairs are an
@@ -424,7 +424,7 @@ Entry 141.
 
 ## 2026-10-04 (hundred-and-eleventh entry)
 
-* **Progress**: `#973` and `#972` merged at `e071de1a` (PR 201). `#998` filed for the Network interconnect
+* **Progress**: `#973` and `#972` merged at `4161022d` (PR 201). `#998` filed for the Network interconnect
   sheet's legibility, on branch `net-legibility`.
 * **Creation**: [DR-232](/decisions/dr-232-interconnect-placed-by-own-ink.md), amending DR-225 §11.224.4.
 * **Note**: **LOOK AT THE PAGE BEFORE PRICING THE FIX.** M6-D's note blamed "the global node gap, sized for
@@ -439,7 +439,7 @@ Entry 141.
 
 ## 2026-10-04 (hundred-and-tenth entry)
 
-* **Progress**: M6-I merged at `97f6a83b` (PR 200); Story `#351` closed. `#973` and `#972` opened on
+* **Progress**: M6-I merged at `e9b5b961` (PR 200); Story `#351` closed. `#973` and `#972` opened on
   branch `m6-debt`.
 * **Creation**: [DR-231](/decisions/dr-231-crossover-hosts-and-polarity-reversed.md), a §8.3 amendment.
 * **Note**: **A TRADE REASON CAN NAME A VALUE THE MODEL LACKS.** The user chose "every choice on every
@@ -493,7 +493,7 @@ Entry 141.
 
 ## 2026-10-03 (hundred-and-seventh entry)
 
-* **Progress**: M6-D merged at `4ce4ee44` (PR 198). NET-A (`#681`) opened on branch `net-a`, decomposed into
+* **Progress**: M6-D merged at `1509d0dc` (PR 198). NET-A (`#681`) opened on branch `net-a`, decomposed into
   `#985` to `#995`, and ruled before any code. `#46` now links `#684`, so M6's sheet-set clause shows the
   T6.50 Story it waits on.
 * **Creation**: [DR-226](/decisions/dr-226-network-values-devices-view.md).
@@ -508,11 +508,11 @@ Entry 141.
 
 ## 2026-10-03 (hundred-and-sixth entry)
 
-* **Progress**: M6-M merged at `fa2e8d2d` (PR 197). M6-D (`#326`) opened on branch
+* **Progress**: M6-M merged at `a039527d` (PR 197). M6-D (`#326`) opened on branch
   `m6d-interconnect` and ruled before any code; `#984` filed for the legend rows DR-208 makes part of it.
 * **Creation**: [DR-225](/decisions/dr-225-interconnect-sheets.md).
-* **Progress**: M6-D built on the branch: D1 `499ea59d`, D2 `561133b5`, D3 `4a428856`, D5 (`#984`)
-  `f619470f`, D4 `3ab732f7`. docs/12 §4.40. Whole House prints two interconnect sheets.
+* **Progress**: M6-D built on the branch: D1 `9b611fb0`, D2 `16e1d1f3`, D3 `a37adc64`, D5 (`#984`)
+  `3c30b7e2`, D4 `c40509d5`. docs/12 §4.40. Whole House prints two interconnect sheets.
 * **Note**: **MEASURE A FALLBACK BEFORE TRUSTING IT TO RESCUE ANYTHING.** The ruled degradation to net
   labels shares its layout with what it degrades from, so on every real sheet measured it bought at most
   a fifth of a point. Writing "fall back only if that helps" into the ruling as an implementer's clause,
@@ -529,7 +529,7 @@ Entry 141.
 
 ## 2026-10-03 (hundred-and-fifth entry)
 
-* **Progress**: M6-K merged at `5cb0ff3c` (PR 195). M6-L (`#982`) filed, ruled and built: the
+* **Progress**: M6-K merged at `c4b0ce65` (PR 195). M6-L (`#982`) filed, ruled and built: the
   strip drops its repeats and steps a too-wide row to 7 pt; a pathway with no designator is named,
   and Whole House's trunks are T1 to T4. docs/12 §4.38. M6-M (`#983`) ruled and built: an export's
   notice count is a link to the notices, which no user had ever been able to read. docs/12 §4.39.
@@ -543,7 +543,7 @@ Entry 141.
 
 ## 2026-10-02 (hundred-and-fourth entry)
 
-* **Progress**: M6-E (`#331`) closed: PR 194 merged at `ea5f4ec8`. M6-K (`#977`) filed, ruled and
+* **Progress**: M6-E (`#331`) closed: PR 194 merged at `1d7e3478`. M6-K (`#977`) filed, ruled and
   built: DR-055's FIELD TERM / RACK TERM split (`#693`), then T6.10 and T6.15 on M3's own projection,
   with AC-018's PRINTS clause read off the PDF (`#574`). docs/12 §4.37.
 * **Note**: **A DECOMPOSITION CAN OMIT A SHEET THE EXIT CRITERION NEEDS.** Two pointer items (`#693`,
@@ -554,7 +554,7 @@ Entry 141.
 ## 2026-10-02 (hundred-and-third entry)
 
 * **Progress**: M6-E (`#331`) opened on branch `m6e-auto-sheets`. M6-E1 (`#332`) ruled before any
-  code, then built: T6.20, with M6-E3's T6.20 half (`#334`), merged at `1960d469` (PR 193). docs/12
+  code, then built: T6.20, with M6-E3's T6.20 half (`#334`), merged at `f879ca2d` (PR 193). docs/12
   §4.35. M6-E2 (`#333`) ruled, decomposed into `#974` to `#976` and built: the TERMINALS column, the
   trigger derivation and T5.01 itself, with M6-E3's second half. docs/12 §4.36. `#973` filed for the
   null-modem writer.
@@ -569,7 +569,7 @@ Entry 141.
 
 ## 2026-10-02 (hundred-and-second entry)
 
-* **Progress**: `#347` and `#971` merged at `3addd571` (PR 191); M6-H closed. M6-F (`#335`) built:
+* **Progress**: `#347` and `#971` merged at `557a57d0` (PR 191); M6-H closed. M6-F (`#335`) built:
   T6.30's four rollups as sections with their own headers, and `RCK-014`. docs/12 §4.34.
 * **Note**: **A GATE THAT SAYS "AMENDMENT" MEANS THE USER.** I recorded adding a rule as decided
   without a question; the catalogue test's own comment says the count is v1's rule scope. Read the
@@ -577,7 +577,7 @@ Entry 141.
 
 ## 2026-10-02 (hundred-and-first entry)
 
-* **Progress**: `#590` merged at `60389e4e` (PR 190); M6-G (`#341`) closed. M6-H (`#347`) built over
+* **Progress**: `#590` merged at `ab095e21` (PR 190); M6-G (`#341`) closed. M6-H (`#347`) built over
   an audit: the NCS pattern under `ncs` only, Small Office on `ncs`, the control in words. `#971`
   found and fixed on the way. docs/12 §4.33.
 * **Note**: **AN AUDIT THAT READS CODE CANNOT SEE INK.** G2 closed on existing evidence and missed a
@@ -587,7 +587,7 @@ Entry 141.
 
 ## 2026-10-01 (hundredth entry)
 
-* **Progress**: `#346` merged at `6fd35cde` (PR 189). G6 (`#590`) built: the integrator's logo from
+* **Progress**: `#346` merged at `7f4ecfd3` (PR 189). G6 (`#590`) built: the integrator's logo from
   PNG, JPEG, PDF or SVG, in a cell spanning the title block's upper band, previewed in Sheet set.
   docs/12 §4.32.
 * **Note**: **A PRICE GIVEN ON A PREMISE NOBODY CHECKED IS A GUESS WITH A NUMBER ON IT.** SVG was
@@ -597,7 +597,7 @@ Entry 141.
 
 ## 2026-10-01 (ninety-ninth entry)
 
-* **Progress**: `#342` merged at `ae480f04` (PR 188); G2 (`#343`) closed on existing evidence after
+* **Progress**: `#342` merged at `de394e00` (PR 188); G2 (`#343`) closed on existing evidence after
   an audit against docs/08 §5.2. G5 (`#346`) built: `File ▸ Export for construction…`, the stamp on
   every sheet, withheld over an open error with the reason on the status line. docs/12 §4.31.
 * **Note**: **A REASON FILED AS A NOTICE IS NEVER READ.** The status line counts notices and prints
@@ -607,7 +607,7 @@ Entry 141.
 
 ## 2026-10-01 (ninety-eighth entry)
 
-* **Progress**: `#322` merged at `fa8d3606` (PR 187); M6-C closed. M6-G (`#341`) begun at G1;
+* **Progress**: `#322` merged at `f4ca01ef` (PR 187); M6-C closed. M6-G (`#341`) begun at G1;
   G1 (`#342`) built: the zone band on the drawings. G3 and G4 parked on `#658` and `#660`. docs/12
   §4.30.
 * **Note**: **PRICE A LAYOUT CHANGE BY SWEEPING THE INPUT RANGE.** The band's cost was found by
@@ -617,7 +617,7 @@ Entry 141.
 
 ## 2026-10-01 (ninety-seventh entry)
 
-* **Progress**: `#970` merged at `68adde0d` (PR 186). M6-C (`#322`) built: T0.02, with its three
+* **Progress**: `#970` merged at `14297188` (PR 186). M6-C (`#322`) built: T0.02, with its three
   Chapters. docs/12 §4.29.
 * **Note**: **A TRIPWIRE THAT NAMES ITS OWN RETIREMENT IS A GIFT.** `findings_never_block_export_test`
   carried a test asserting T0.02's absence that said which change retires it and what to assert
@@ -626,7 +626,7 @@ Entry 141.
 
 ## 2026-10-01 (ninety-sixth entry)
 
-* **Progress**: `#315` merged at `48febf3a` (PR 185); Story `#311` (M6-A) closed. M6-F6 (`#970`)
+* **Progress**: `#315` merged at `67f11fa2` (PR 185); Story `#311` (M6-A) closed. M6-F6 (`#970`)
   built: T6.30's passives become MATERIALS. docs/12 §4.28.
 * **Creation**: [DR-213](/decisions/dr-213-t6-30-subtotals-and-materials.md).
 * **Note**: **"NEEDS NO RULINGS" WAS WRONG, AND READING THE CODE SAID SO.** `#970` was described to
@@ -634,13 +634,13 @@ Entry 141.
   strip by a test, so moving rows out forced a choice between agreeing with the other sheets and
   adding up. Read the code that consumes a change before promising it is mechanical.
 * **Note**: **A CHAINED COMMAND COMMITTED A HALF-RULING.** A generator's uniqueness assert fired and
-  the `;`-joined commands after it still staged and committed, so `bef8c94b` claimed DR-213 and
-  carried only two OKF lines; `e36484da` supplied the rest. Join steps that depend on each other with
+  the `;`-joined commands after it still staged and committed, so `209ae847` claimed DR-213 and
+  carried only two OKF lines; `12e7a4dc` supplied the rest. Join steps that depend on each other with
   `&&`, and look at `git show --stat` before pushing a docs commit.
 
 ## 2026-10-01 (ninety-fifth entry)
 
-* **Progress**: `#313` merged at `86f4372d` (PR 183). M6-A3 (`#314`) built: the drawing index.
+* **Progress**: `#313` merged at `41f780ae` (PR 183). M6-A3 (`#314`) built: the drawing index.
   docs/12 §4.27.
 * **Progress**: M6-A4 (`#315`) built; Story `#311` (M6-A) closed.
 * **Note**: **WHEN A TICKET NAMES A SHEET THAT DOES NOT EXIST, TEST THE CLASS.** `#315` asked that
@@ -653,7 +653,7 @@ Entry 141.
 
 ## 2026-10-01 (ninety-fourth entry)
 
-* **Progress**: `#312` merged at `d96b822c` (PR 182). M6-A2 (`#313`) built: the seed's passives
+* **Progress**: `#312` merged at `c1abfbc0` (PR 182). M6-A2 (`#313`) built: the seed's passives
   state 0 W / 0 VA, and the cover's rack strip. M6-F6 (`#970`) filed. docs/12 §4.27.
 * **Creation**: [DR-211](/decisions/dr-211-cover-rack-strip-and-passives.md).
 * **Note**: **MEASURE THE STARTERS BEFORE OFFERING A STRIP.** A probe of the four starters' rollups
@@ -663,7 +663,7 @@ Entry 141.
 
 ## 2026-10-01 (ninety-third entry)
 
-* **Progress**: `#969` merged at `7e7d745f` (PR 181); Story `#316` (M6-B) closed. M6-A (`#311`)
+* **Progress**: `#969` merged at `8deec3aa` (PR 181); Story `#316` (M6-B) closed. M6-A (`#311`)
   begun at M6-A1 (`#312`), whose description now names the ProjectInfo editor explicitly. A1
   built: `SetProjectInfoCommand` over `ProjectInfoFields`, the Title block and Cover sections of
   `File ▸ Sheet set…`, and `T0.00` first in every set. docs/12 §4.27.
@@ -675,7 +675,7 @@ Entry 141.
 
 ## 2026-09-30 (ninety-second entry)
 
-* **Progress**: M6-B3/B4/B5 merged at `637c93b0` (PR 180). M6-B6 (`#969`) built, the last open
+* **Progress**: M6-B3/B4/B5 merged at `8bb9315e` (PR 180). M6-B6 (`#969`) built, the last open
   Chapter under `#316`: `ProjectInfo.legendAbbreviations` / `legendNotes` (absent while seeded),
   `SetLegendNotesCommand`, and `File ▸ Sheet set…`. docs/12 §4.26.
 * **Creation**: [DR-209](/decisions/dr-209-sheet-set-dialog-and-legend-notes.md).
@@ -685,7 +685,7 @@ Entry 141.
 
 ## 2026-09-30 (ninety-first entry)
 
-* **Progress**: M6-B1/B2 merged at `fda24158` (PR 179). B3, B4 and B5 built: T0.01's other five
+* **Progress**: M6-B1/B2 merged at `0d0e4d5e` (PR 179). B3, B4 and B5 built: T0.01's other five
   blocks and the title-block cross-reference. docs/12 §4.26.
 * **Creation**: [DR-208](/decisions/dr-208-legend-explains-what-the-set-prints.md).
 * **Note**: **RENDER IT, THEN TEST IT, EVERY TIME.** Two renders today caught what no assertion
@@ -693,13 +693,13 @@ Entry 141.
 
 ## 2026-09-30 (ninetieth entry)
 
-* **Progress**: `#576` merged at `444174ef` (PR 178). M6-B (`#316`) begun; the user will run the Plan
+* **Progress**: `#576` merged at `2ff4d572` (PR 178). M6-B (`#316`) begun; the user will run the Plan
   view's drill and M6's physical criteria together.
 * **Creation**: [DR-207](/decisions/dr-207-legend-prints-the-ten-then-what-is-used.md).
 
 ## 2026-09-30 (eighty-ninth entry)
 
-* **Progress**: `#968` merged at `84a6a245` (PR 177), closing Story `#953` again.
+* **Progress**: `#968` merged at `6b63ff4c` (PR 177), closing Story `#953` again.
 * **Creation**: [DR-206](/decisions/dr-206-schedules-say-a-runs-lifecycle.md), resolving `#576`.
 * **Note**: **A "RULING NEEDED" CAN BE HALF ANSWERED ALREADY.** `#576` called a status column an
   unruled scope change; docs/08 §3.4 specified one. What the spec lacked was its price on the one
@@ -716,7 +716,7 @@ Entry 141.
 
 ## 2026-09-30 (eighty-seventh entry)
 
-* **Progress**: `#957` merged at `6c61d0b5` (PR 174); `#958` is PR 175. Chapter `#960`, the
+* **Progress**: `#957` merged at `7bb19f3a` (PR 174); `#958` is PR 175. Chapter `#960`, the
   shelf's load in its header, completes DR-204's list. docs/12 §4.23.
 * **Note**: **OVER IS CERTAIN BEFORE IT IS COMPLETE.** A mass is never negative, so known masses
   already past a capacity are over whatever the unknowns weigh. The load line says `OVER` then and
@@ -724,14 +724,14 @@ Entry 141.
 
 ## 2026-09-30 (eighty-sixth entry)
 
-* **Progress**: `#956` merged at `dc43f5fc` (PR 173), closing Story `#961`. `#957` is PR 174;
+* **Progress**: `#956` merged at `4ac8683e` (PR 173), closing Story `#961`. `#957` is PR 174;
   `#958` and `#959` built. docs/12 §4.23.
 * **Note**: **A DIALOG CAN BE A DATA FIX.** Deleting a shelf left its hosts naming a device that
   was gone. The ticket read as UX; the ruling behind it was also closing a TOP-005 hole.
 
 ## 2026-09-30 (eighty-fifth entry)
 
-* **Progress**: `#967` merged at `d1783fc0` (PR 172). `#956` is PR 173; `#957` and `#958` built.
+* **Progress**: `#967` merged at `65010ca1` (PR 172). `#956` is PR 173; `#957` and `#958` built.
 * **Update**: [DR-204](/decisions/dr-204-a-device-can-sit-on-a-shelf.md) gains §11.203.9, where a
   dragged host lands, reconciled with the bin.
 * **Note**: **READ THE RULING, NOT YOUR SUMMARY OF IT.** `#956` shipped a shelf drop with no width
@@ -741,7 +741,7 @@ Entry 141.
 
 ## 2026-09-30 (eighty-fourth entry)
 
-* **Progress**: `#964` merged at `66b5eacf` (PR 171); `#967` is PR 172. Chapter `#956`, a drag onto
+* **Progress**: `#964` merged at `ac54b02b` (PR 171); `#967` is PR 172. Chapter `#956`, a drag onto
   a shelf, docs/12 §4.23.
 * **Note**: **A GATE THAT SAID "NOWHERE TO GO" OUTLIVES THE PLACE BEING BUILT.** The palette refused
   to drag a device with no rack height, correctly, until a shelf existed to take it. The refusal
@@ -772,7 +772,7 @@ Entry 141.
 
 ## 2026-09-30 (eighty-first entry)
 
-* **Progress**: `#953`'s first half merged at `ec9f759c` (PR 169). `#961`'s first slice (docs/12
+* **Progress**: `#953`'s first half merged at `8e868f4c` (PR 169). `#961`'s first slice (docs/12
   §4.24): the Staging Bin, with `U`, off-rack releases and return chips.
 * **Creation**: [DR-205](/decisions/dr-205-the-staging-bin-ships.md).
 * **Note**: **THE SAME SLIP TWICE IN ONE HOUR.** A recommended option named a Staging Bin that did
@@ -798,7 +798,7 @@ Entry 141.
 
 ## 2026-09-30 (seventy-eighth entry)
 
-* **Progress**: `#950` closes at `f2024657` (PR 166). `#951` (docs/12 §4.21): the Device Builder
+* **Progress**: `#950` closes at `b09786cb` (PR 166). `#951` (docs/12 §4.21): the Device Builder
   asks size and mounting once, on Identity, and derives `Occupies` and the span.
 * **Creation**: [DR-203](/decisions/dr-203-size-and-mounting-asked-once.md). Side-mounted and
   in-furniture gear take no rack units, on the user's trade answer; a hosted card and a rear
@@ -917,7 +917,7 @@ Entry 141.
   it did not read (`#947`). A finding recorded only in a document has no owner and gets forgotten.
 * **Note**: **§4.15 SAID THE DEAD-DECLARATION LIST WAS "ON `#97`", AND IT NEVER WAS.** Neither the
   description nor either comment carries it. The review's own census script was re-run at
-  `66de1a84` and finds 41, not 42, and that list is on `#945`. The claim was written as though
+  `0c428985` and finds 41, not 42, and that list is on `#945`. The claim was written as though
   the evidence had been posted, which is the stale-claim failure the review existed to find, made
   in the review's own record.
 * **Note**: **AC-014 IS THE EPOCH-MASK TEST, NOT THE APPLY/REVERT ROUND TRIP**, and it was
@@ -951,8 +951,8 @@ Entry 141.
 
 * **Progress**: the full-tree review (`#97`) closes. docs/12 §4.15 is its record: eleven findings,
   each with a disposition, and the three claims of its own that were wrong. `#936` (`58866679`)
-  took the analyzer ratchet from 233 to 23; `#937` (`9c5805fc`) made the CSV import offer one type
-  per id; `#939` (`aa7362de`), `#940` (`9a4d4429`) and `#941` (`28de3367`) built
+  took the analyzer ratchet from 233 to 23; `#937` (`aaac23f5`) made the CSV import offer one type
+  per id; `#939` (`dd2272b9`), `#940` (`9b1d9735`) and `#941` (`51e992d9`) built
   [DR-194](/decisions/dr-194-a-local-diagnostic-log-ships-now.md)'s local diagnostic log, its
   startup-failure window and `Help ▸ Open diagnostics folder…`.
 * **Note**: **A MECHANICAL FIX IS NOT A BEHAVIOUR-PRESERVING ONE BECAUSE A TOOL MADE IT.** The
@@ -977,8 +977,8 @@ Entry 141.
   record says the reasoning is the author's.
 * **Creation**: [A blanket rebuild hides a missing subscription](/practices/a-blanket-rebuild-hides-a-missing-subscription.md),
   from `#932` and `#933`: one mask too narrow and invisible, one too broad and writing to the file.
-* **Progress**: `#932` (`9bf8312b`), `#933` (`aefca8c3`), `#934` (`9564d331`) and `#935`
-  (`7bea52f5`) on `review-97`, each gated in a sibling worktree while the next was written.
+* **Progress**: `#932` (`4d873ea3`), `#933` (`6853f48f`), `#934` (`6bc85ecf`) and `#935`
+  (`b17107fa`) on `review-97`, each gated in a sibling worktree while the next was written.
 * **Note**: **TWO OF THE REVIEW'S OWN CLAIMS WERE WRONG, AND BOTH WERE CAUGHT BY RUNNING THEM.** "No
   command declares `style`" came from a `grep -v command.dart` that also dropped
   `set_entity_property_command.dart`; the corrected reading was the worse defect. "Re-importing the
@@ -1040,7 +1040,7 @@ Entry 141.
   census found, each put to the user with three priced options. The user chose the recommended option
   every time and gave no reasons, so each record says the reasoning is the author's.
 * **Progress**: all four built on `rulings-190-193`, one commit each, each gated in a sibling worktree
-  while the next was written: `7b1cccb7` (#925), `994a9f1a` (#926), `1189b0d9` (#927), `e64a42ee`
+  while the next was written: `60b5a8e9` (#925), `38105e93` (#926), `56c89906` (#927), `61cb45a8`
   (#928).
 * **Note**: **TWO TESTS PASSED VACUOUSLY ON THE FIRST MUTATION RUN.** DR-191's undo and unpin cases
   asserted a null that is also what undo restores, so they passed on a controller that computed
@@ -1054,7 +1054,7 @@ Entry 141.
 
 ## 2026-09-23 (sixty-third entry)
 
-* **Update**: docs/20 now walks every view as a workflow (`#924`, `a86af3a6`), written from a census
+* **Update**: docs/20 now walks every view as a workflow (`#924`, `d3ef791f`), written from a census
   of the running UI. The census found the previous guide wrong in four places: it said there was no
   project settings editor (`File ▸ Project settings...` exists), called the Schedule an equipment
   schedule (it is the cable schedule), fixed undo at 200 (it is configurable), and listed `F7`/`F8` as
@@ -1247,7 +1247,7 @@ Entry 141.
 
 ## 2026-09-16 (fifty-sixth entry)
 
-* **Closed**: `#91` with ``4547ad41``, citing
+* **Closed**: `#91` with ``a6b946a9``, citing
   [DR-036](/decisions/dr-036-public-gplv3-cc0-catalog.md) and DR-011 §11.11.5. **No new ruling.**
   docs/00 §7's competitive table is re-read against the vendors' own pricing pages, dated, and its
   Price row says what DR-036 rules: nothing is priced. **No version move**: it closes under `#786`.
@@ -1265,7 +1265,7 @@ Entry 141.
 
 ## 2026-09-16 (fifty-fifth entry)
 
-* **Closed**: `#796` with `#799` in ``1f0c5bb1``, ruled as
+* **Closed**: `#796` with `#799` in ``dbb61751``, ruled as
   [DR-182](/decisions/dr-182-sizes-stay-and-the-week-total-retires.md) in ``6663525``. The roadmap
   states cost as relative sizes over all twenty v1 epics; the week total is withdrawn rather than
   re-estimated. **No version move**: it closes under `#786`.
@@ -1286,7 +1286,7 @@ Entry 141.
 
 ## 2026-09-16 (fifty-fourth entry)
 
-* **Closed**: `#82` with ``adbd07af``, ruled as
+* **Closed**: `#82` with ``4bfdc6e5``, ruled as
   [DR-181](/decisions/dr-181-a-family-may-override-its-glyph.md) in ``6663525``. A signal family
   states which of its domain's shapes it draws; the seed sets it on the 26 that were drawing the
   wrong one. **No version move**: it closes under `#786`.
@@ -1307,7 +1307,7 @@ Entry 141.
 
 ## 2026-09-16 (fifty-third entry)
 
-* **Closed**: `#80` with ``1445d547`` and ``5ae8180f``, ruled as
+* **Closed**: `#80` with ``17387974`` and ``91966c68``, ruled as
   [DR-180](/decisions/dr-180-a-project-states-its-wiring-standard.md) in ``6663525``. A project
   states T568A or T568B once and a cable may override it; unset is unknown and both keys are absent
   when unset. **No version move**: it closes under `#786`.
@@ -1326,8 +1326,8 @@ Entry 141.
 
 ## 2026-09-15 (fifty-second entry)
 
-* **Closed**: `#782` with ``04c8eb95``, ruled as
-  [DR-179](/decisions/dr-179-the-rp-extensions.md) in ``a6457f9``. The app writes `.rppj`, `.rpdx`
+* **Closed**: `#782` with ``f3d7a418``, ruled as
+  [DR-179](/decisions/dr-179-the-rp-extensions.md) in ``eb208c4``. The app writes `.rppj`, `.rpdx`
   and `.rpda`; `.rmpj`, `.rmdx`, `.rmda` and `.rackmate` still open, and Save keeps the name it
   opened. **No version move**: it closes under `#786`.
 * **Update**: [DR-179](/decisions/dr-179-the-rp-extensions.md) is built.
@@ -1337,7 +1337,7 @@ Entry 141.
 
 ## 2026-09-15 (fifty-first entry)
 
-* **Closed**: `#780` with ``1e75efc`` and `#92` with ``1a48354``, under
+* **Closed**: `#780` with ``16a0cbc`` and `#92` with ``cc10e75``, under
   [DR-095](/decisions/dr-095-a-milestone-closes-on-clauses-discharged-or-parked.md). Every clause table
   before the current milestone carries section 0's marks, and roadmap section 8.9 is a gate. **No version
   move**: they close under `#786`.
@@ -1351,8 +1351,8 @@ Entry 141.
 
 ## 2026-09-15 (fiftieth entry)
 
-* **Closed**: `#843` with ``f6f1b22``, ruled as
-  [DR-178](/decisions/dr-178-a-test-that-asserts-a-time-runs-alone.md) in ``8d97776``. The tests
+* **Closed**: `#843` with ``d4098f8``, ruled as
+  [DR-178](/decisions/dr-178-a-test-that-asserts-a-time-runs-alone.md) in ``8a3cc73``. The tests
   tagged `perf` assert a stopwatch reading and run in a gate step of their own, one test at a time;
   the core suite leaves them out. **No version move**: it closes under `#786`.
 * **Update**: [DR-178](/decisions/dr-178-a-test-that-asserts-a-time-runs-alone.md) is built.
@@ -1373,7 +1373,7 @@ Entry 141.
 * **Creation**: [DR-179](/decisions/dr-179-the-rp-extensions.md): `.rppj`, `.rpdx` and `.rpda`, with
   every extension a build has written still opening.
 * **Note**: **THE RENAME SWEEP REWROTE A LEGACY EXTENSION, AND §11.95.8's RESTORATION MISSED IT.**
-  `0e2c5bb` turned DR-015's still-opened `.rackmate` into `.rackpal` in the code and in the canon
+  `3edc316` turned DR-015's still-opened `.rackmate` into `.rackpal` in the code and in the canon
   clause, a fact about the old name that no build ever made true.
 * **Creation**: [DR-180](/decisions/dr-180-a-project-states-its-wiring-standard.md): a project states
   its wiring standard, and a cable may override it.
@@ -1387,8 +1387,8 @@ Entry 141.
 
 ## 2026-09-15 (forty-eighth entry)
 
-* **Closed**: `#561` with ``a1f70f7``, ruled as
-  [DR-176](/decisions/dr-176-rack-presets-are-saved-from-a-rack.md) in ``e09eda7``, on DR-016's
+* **Closed**: `#561` with ``24f2af2``, ruled as
+  [DR-176](/decisions/dr-176-rack-presets-are-saved-from-a-rack.md) in ``d9b09a1``, on DR-016's
   scope addition of 2026-08-03. Your rack presets are saved from a rack, kept per machine, and sit
   beside seeded presets you can hide. **No version move**: it closes under `#786`, through `#96`.
 * **Creation**: [DR-176](/decisions/dr-176-rack-presets-are-saved-from-a-rack.md).
@@ -1404,8 +1404,8 @@ Entry 141.
 
 ## 2026-09-15 (forty-seventh entry)
 
-* **Closed**: `#81` with ``b50412c``, ruled as
-  [DR-175](/decisions/dr-175-registry-parity-reads-the-family-table.md) in ``2dac125``. Registry
+* **Closed**: `#81` with ``14739e6``, ruled as
+  [DR-175](/decisions/dr-175-registry-parity-reads-the-family-table.md) in ``cb6832e``. Registry
   parity now holds each family's name, connector, tag, direction and topology to seed-devices §4.4.
   **No version move**: it closes under `#786`.
 * **Creation**: [DR-175](/decisions/dr-175-registry-parity-reads-the-family-table.md).
@@ -1421,7 +1421,7 @@ Entry 141.
 
 ## 2026-09-15 (forty-sixth entry)
 
-* **Closed**: `#111` with ``28e2d35``, ruled as
+* **Closed**: `#111` with ``bfa119c``, ruled as
   [DR-174](/decisions/dr-174-a-set-on-one-cable-draws-one-pennant.md) in ``4550282``. A set on one
   cable draws one pennant on a bracket, and a split set draws a pennant per pin. **No version move**:
   it closes under `#786`, through `#96`.
@@ -1439,8 +1439,8 @@ Entry 141.
 
 ## 2026-09-15 (forty-fifth entry)
 
-* **Closed**: `#112` with ``1788e3e``, ruled as
-  [DR-173](/decisions/dr-173-matrix-zone-audio-is-a-stereo-pair.md) in ``a7c412b``. V01 and V03's
+* **Closed**: `#112` with ``0c7b1eb``, ruled as
+  [DR-173](/decisions/dr-173-matrix-zone-audio-is-a-stereo-pair.md) in ``0f101af``. V01 and V03's
   de-embedded zone audio is an L/R pair per zone on two 3-pin blocks. **No version move**: it closes
   under `#786`, through `#96`.
 * **Creation**: [DR-173](/decisions/dr-173-matrix-zone-audio-is-a-stereo-pair.md).
@@ -1458,7 +1458,7 @@ Entry 141.
 ## 2026-09-15 (forty-fourth entry)
 
 * **Closed**: `#560` with ``7151178``, ruled as
-  [DR-172](/decisions/dr-172-undo-depth-is-a-preference.md) in ``7d10974``. The undo depth is a
+  [DR-172](/decisions/dr-172-undo-depth-is-a-preference.md) in ``bb4965c``. The undo depth is a
   per-machine preference edited in Edit > Preferences, and a full history says so once per document.
   **No version move**: it closes under `#786`.
 * **Creation**: [DR-172](/decisions/dr-172-undo-depth-is-a-preference.md).
@@ -1473,8 +1473,8 @@ Entry 141.
 
 ## 2026-09-14 (forty-third entry)
 
-* **Closed**: `#558` with `de9a2f7` and `1f21c1f`, ruled as
-  [DR-171](/decisions/dr-171-outlet-counts-are-derived.md) in `355d553`.
+* **Closed**: `#558` with `67070b1` and `560457a`, ruled as
+  [DR-171](/decisions/dr-171-outlet-counts-are-derived.md) in `59d7d88`.
   Outlet counts are read off ports and the cords drawn to them, and
   `PowerProfile`'s two stored counts are gone from the model and from every
   file format. **No version move**: it closes under `#786`.
@@ -1512,8 +1512,8 @@ Entry 141.
 
 ## 2026-09-14 (forty-first entry)
 
-* **Closed**: `#906` with `d257104`, ruled as
-  [DR-170](/decisions/dr-170-editor-chrome-keeps-its-width.md) in `fb63fab`.
+* **Closed**: `#906` with `3beb2a9`, ruled as
+  [DR-170](/decisions/dr-170-editor-chrome-keeps-its-width.md) in `f6ec593`.
   Rack and schematic chrome keeps its authored width at every zoom, and no
   line paints thinner than half a physical pixel. **No version move**: it
   closes under `#786`.
@@ -1533,7 +1533,7 @@ Entry 141.
 
 ## 2026-09-14 (fortieth entry)
 
-* **Closed**: `#905` with `222cf31`. A plan mark's line weight is the drafting
+* **Closed**: `#905` with `6a27702`. A plan mark's line weight is the drafting
   weight, the user's decision, recorded as canon §11.168.11: a drop at the base
   signal line and a device at twice it, constant on paper and on screen. **No
   version move**: it closes under `#786`.
@@ -1555,7 +1555,7 @@ Entry 141.
 
 ## 2026-09-14 (thirty-ninth entry)
 
-* **Closed**: `#904` with `77eab81`. A printed plan mark is the round end of
+* **Closed**: `#904` with `0cb32c8`. A printed plan mark is the round end of
   its callout pill, the user's decision, recorded as canon §11.168.10 and as a
   relation rather than a number, since the pill itself awaits `PLAN-J`'s print.
   **No version move**: it closes under `#786`.
@@ -1576,7 +1576,7 @@ Entry 141.
 
 ## 2026-09-14 (thirty-eighth entry)
 
-* **Reopened**: `#896`, and closed again with `#903` (`60893c0`). §11.168.2's
+* **Reopened**: `#896`, and closed again with `#903` (`7b43c95`). §11.168.2's
   clause was reported met and was not: the plan mark was still four times too
   big at 400%. **Closing on a false demonstration is worse than leaving a
   clause open**, so the story's state went back rather than a new item quietly
@@ -1602,7 +1602,7 @@ Entry 141.
 
 ## 2026-09-14 (thirty-seventh entry)
 
-* **Closed**: `#895` with `01bb9494`, and `#896` with its six chapters
+* **Closed**: `#895` with `fc9025b9`, and `#896` with its six chapters
   `#897`-`#902`. A room outline can be drawn over a pinned item; a plan mark is
   a constant size on screen, coloured by its signal domain and carrying that
   domain's glyph; a plan opens fitted; the designator is a hover.
@@ -1637,8 +1637,8 @@ Entry 141.
 
 ## 2026-09-13 (thirty-sixth entry)
 
-* **Closed**: `#889` with `bb39e122`, `45d4d058`, `f00d6c46` and this commit,
-  and `#888` with `f00d6c46`. The Location and Plan views are one view called
+* **Closed**: `#889` with `956f6a11`, `8e461bd4`, `af2bf0f3` and this commit,
+  and `#888` with `af2bf0f3`. The Location and Plan views are one view called
   `Site`, at position 1. **No version move**: it closes under `#786`.
 * **Note**: **THE MERGE WAS HALF-DONE IN THE DESIGN.** docs/15 §6 has put the
   location tree in the Plan view's rail since the chapter brief. What it
@@ -1676,7 +1676,7 @@ Entry 141.
 
 ## 2026-09-13 (thirty-fifth entry)
 
-* **Closed**: `#887` with `e077860c`. The 0U occupant's channel, start U and
+* **Closed**: `#887` with `b552ea35`. The 0U occupant's channel, start U and
   span moved from the rack panel to the DEVICE inspector, where AC-044 puts
   them. **No version move**: it closes under `#786`.
 * **Note**: **A PLACEMENT ARGUED FROM AN OBSTACLE THAT IS GONE.** DR-163
@@ -1700,7 +1700,7 @@ Entry 141.
 
 ## 2026-09-13 (thirty-fourth entry)
 
-* **Closed**: `#883` with `6fc22a29` and `6fe267d6`. AC-044's plain bar: a 0U
+* **Closed**: `#883` with `e74558b8` and `de4b3680`. AC-044's plain bar: a 0U
   occupant is drawn on the rail it is screwed to, and it can be selected.
   **No version move**: it closes under `#786`.
 * **Note**: **ONE LINE MADE HALF A RULING UNREACHABLE.**
@@ -1736,7 +1736,7 @@ Entry 141.
 
 ## 2026-09-13 (thirty-third entry)
 
-* **Closed**: `#885` with `72f22723` and `a1bdc029`. The device palette moved out
+* **Closed**: `#885` with `56ae07b8` and `a51e6794`. The device palette moved out
   of `RackCanvasScreen` to a `PaletteHost` above the tab view, and the Plan view
   can place a device onto a floorplan. **No version move**: it closes under
   `#786`.
@@ -1770,10 +1770,10 @@ Entry 141.
 
 ## 2026-09-13 (thirty-second entry)
 
-* **Closed**: `#884`, the producer `#876`'s 0U list never had, with `f04392a4`
-  and `d688d0d7`. A device is put into a channel from that channel's own row.
+* **Closed**: `#884`, the producer `#876`'s 0U list never had, with `5cafc4dd`
+  and `d6026dff`. A device is put into a channel from that channel's own row.
   **No version move**: it closes under `#786`.
-* **Closed**: `#882` as NOT A DEFECT, with `868bbcdf`. The user dragged a pin on
+* **Closed**: `#882` as NOT A DEFECT, with `6ffaa374`. The user dragged a pin on
   the Plan tab in the running app. What the ticket measured was a HARNESS while
   its title named the tab; the measurement stays in
   `plan_tab_route_test.dart`'s header, where it is still true and stops the next
@@ -1837,7 +1837,7 @@ Entry 141.
 
 ## 2026-09-13 (thirtieth entry)
 
-* **Closed**: `#878` with `fb4544be`. A pin can be taken off the plan with `Delete`
+* **Closed**: `#878` with `72794efe`. A pin can be taken off the plan with `Delete`
   and floorplan pages reorder by a drag handle. **No version move**: it closes
   under `#786`.
 * **Note**: **BOTH MISSING COMMANDS WERE THE UNDO OF SOMETHING.**
@@ -1871,7 +1871,7 @@ Entry 141.
 
 ## 2026-09-13 (twenty-ninth entry)
 
-* **Closed**: `#880` and `#881` with `4878134f`. **Neither was a defect in the
+* **Closed**: `#880` and `#881` with `87d8dc9d`. **Neither was a defect in the
   product.** Both were rows in `#872`'s reachability gate that were about the
   gate. **No version move**: they close under `#786`.
 * **Note**: **`#880`'s FIRST SENTENCE WAS FALSE AND ONE `cat` SETTLED IT.** The
@@ -1903,7 +1903,7 @@ Entry 141.
 
 ## 2026-09-13 (twenty-eighth entry)
 
-* **Closed**: `#877` with `7baabc98`. A wall plate and a whole Structure body can be
+* **Closed**: `#877` with `fd3592dc`. A wall plate and a whole Structure body can be
   removed, from a trash icon on the Outlets rail and an overflow menu in the
   editor header. **No version move**: it closes under `#786`.
 * **Note**: **THE SIXTH CAPABILITY IN FIVE DAYS FOUND COMPLETE AND
@@ -1940,7 +1940,7 @@ Entry 141.
 
 ## 2026-09-12 (twenty-seventh entry)
 
-* **Closed**: `#879` with `56d96565`. A rule's severity can be overridden for a
+* **Closed**: `#879` with `fbc2d6c8`. A rule's severity can be overridden for a
   project, from a `Rule severities` section in project settings beside `Signal
   colours`. **No version move**: it closes under `#786`.
 * **Note**: **THE FOURTH CAPABILITY IN THREE DAYS FOUND COMPLETE AND
@@ -1978,7 +1978,7 @@ Entry 141.
   `#875`. A widget's nullable callback that NO mount ever passes fails the build.
   Its exemption list is EMPTY, because all six the first run found were wired
   rather than exempted.
-* **Closed**: `#875` with `ccde720b`. **No version move**: it closes under
+* **Closed**: `#875` with `29d1a533`. **No version move**: it closes under
   `#786`.
 * **Note**: **THE FEATURE WAS BUILT THREE TIMES AND REACHABLE NONE OF THEM.**
   DR-128 §11.127.5 said the panel renders the remedy as a button and it did not;
@@ -2013,7 +2013,7 @@ Entry 141.
 * **Ruled**: [DR-159](/decisions/dr-159-undo-is-document-global.md). Undo is
   document-global, the Edit menu says what it will take back, and the device
   builder keeps its own stack.
-* **Closed**: `#874` with `241222a`. **No version move**: it closes under `#786`.
+* **Closed**: `#874` with `b0b0414`. **No version move**: it closes under `#786`.
 * **Note**: **THE INTENT WAS ALWAYS RIGHT AND ONLY THE INSTALLATION POINT WAS
   WRONG.** `RackCanvasScreen`'s own handler comment said the key was
   DOCUMENT-global and the registry row named promoting it to `KeyScope.global` as
@@ -2048,8 +2048,8 @@ Entry 141.
   device template is removed from the project as a whole, every version of it, and
   it takes the devices standing on it after a confirmation counting three things
   in three units.
-* **Closed**: `#869` with `1feb958` and `7e9b662`; `#870` with `ff0707e`; `#873`
-  with `cd75b69`; `#871` with `d81ef0b`. **`v0.6.57`** for `#870` alone: it is a
+* **Closed**: `#869` with `a4d5fc4` and `c571db6`; `#870` with `1470482`; `#873`
+  with `ecb54ec`; `#871` with `47bbf3f`. **`v0.6.57`** for `#870` alone: it is a
   leaf Story under the Plan view epic, which is the one under development. The
   other three close under `#786` and move no number.
 * **Note**: **THE VERSION RULE HAD TO BE RESTATED, AND BOTH READINGS REPRODUCE THE
@@ -2105,7 +2105,7 @@ Entry 141.
   be deferred to its first child and read after `apply`.
 * **Closed**: `#863` and `#866` with `#867` and `#868`. **No version move**: they
   close under the cross-cutting debt epic and the patch counts tasks in the epic
-  under development (docs/14 §14.0). `477bc2e` is the precedent in the tree.
+  under development (docs/14 §14.0). `a953772` is the precedent in the tree.
 * **Note**: **THE COMPILER WAS THE CENSUS, WHICH IS WHY THE USER PICKED THAT
   SHAPE.** Three were offered: a `bool` return across 78 implementations, an
   abstract `applied` getter, or a defaulted one across 24. The return type has no
@@ -2912,7 +2912,7 @@ Entry 141.
 * **Note**: **A SPIKE IS ONLY EVIDENCE IF ITS FAILURES ARE REPORTED AS
   LOUDLY AS ITS PASSES.** The spike's six cases pass, and one deliberate
   mutation **survived** them: dropping the paint offset out of its render
-  object leaves every case green, which is `b560a50`'s shipped defect
+  object leaves every case green, which is `c5669a9`'s shipped defect
   reproduced on the first attempt. A widget test does not composite, and a
   canvas at the window's origin makes screen, local and scene coordinates
   agree. That survival is the more useful half of the run.
@@ -3068,7 +3068,7 @@ Entry 141.
 * **Creation**: [A wrong ruling ID
   resolves](/practices/a-wrong-ruling-id-resolves.md). **The wrong ID was
   not invented at the point of use**: it came from docs/09's Plan view
-  import row, written four weeks earlier in `f423aa3`, and the chapter did
+  import row, written four weeks earlier in `115b3bc`, and the chapter did
   exactly what roadmap §8.2 asks by citing what the roadmap gave it. The
   reusable half is why nothing caught it. A DANGLING id fails to resolve
   and a COLLIDING one is caught by scanning refs; a WRONG one resolves, so
@@ -3748,7 +3748,7 @@ Entry 141.
 * **Updated**: [re-read a task against canon](/practices/re-read-a-task-against-canon.md)
   grows a second arm. The practice was written for tasks whose QUESTION a ruling
   had already answered; M4-M1 (`#234`) is a task whose WORK another task had
-  already done. `2180a35` (M3-F/4, `#162`) made the file dialog's filter a named
+  already done. `5c5f68f` (M3-F/4, `#162`) made the file dialog's filter a named
   kind on the wire before M4 opened, and said so in its subject line. **Canon was
   not stale and the grep this practice prescribes would have come back clean**:
   the wrong document was `docs/13`'s D13 row, and the board item was a
@@ -3843,7 +3843,7 @@ Entry 141.
   `fontFamily`, so from M1 to M4 RackMate drew its **diagram in Jost and its
   chrome in Segoe UI**: a rack label and the inspector row describing it, in two
   faces, on one screen. **No gate could see it because both faces render.**
-  Fixed at `875db98` with `fontFamily: 'Jost'`, and Jost Medium bundled beside
+  Fixed at `3559a14` with `fontFamily: 'Jost'`, and Jost Medium bundled beside
   Regular because 28 sites were asking for `w600`/`w700` against a lone Regular
   and Flutter was synthesising the difference.
 * **Note**: **THE SHEET IS RENDERED FROM THE TREE, NOT FROM NOTES.** The
@@ -4002,7 +4002,7 @@ Entry 141.
 ## 2026-08-25 (sixth entry)
 
 * **Note**: **I STATED A SUITE TOTAL INSTEAD OF READING ONE, and it propagated
-  through three commits and a merge.** `ab7eeb8` says `rackmate_core` went
+  through three commits and a merge.** `9c9c31d` says `rackmate_core` went
   `3,221 → 3,227` when the three cases it added took it to **3,224**, and every
   later figure was arithmetic on that base. Measured after the merge the true
   chain is **3,213 → 3,221 → 3,224 → 3,245 → 3,263**.
@@ -4080,7 +4080,7 @@ Entry 141.
 
 ## 2026-08-25 (third entry)
 
-* **Note**: **M4-J2 IS CLOSED** (`#761`, `#224`, `109d5e6`, `a02eeef`). `PortSetDef`
+* **Note**: **M4-J2 IS CLOSED** (`#761`, `#224`, `17bfc72`, `52e8916`). `PortSetDef`
   has a producer, the `ROLE` column is a closed list, `atomicConnect` has its first
   editor anywhere, and `Ungroup` is the only thing that removes a set.
   `rackmate_core` 3,224 → 3,245, `rackmate_ui` 1,139 → 1,151.
@@ -4152,7 +4152,7 @@ Entry 141.
 
 ## 2026-08-25
 
-* **Note**: **M4-J1 IS CLOSED** (`#760`, `#223`, four commits, `dbd7d19`..`ab7eeb8`,
+* **Note**: **M4-J1 IS CLOSED** (`#760`, `#223`, four commits, `3fc4d34`..`9c9c31d`,
   fourteen gates green on each). The bank tree is in the rail on every section, a
   click switches to Ports and jumps to the band, and DR-085's mirror has the
   preview that names every row it leaves alone. `rackmate_core` 3,197 → 3,224,
@@ -4234,7 +4234,7 @@ Entry 141.
 ## 2026-08-21 (third entry)
 
 * **Note**: **M4-R IS CODE COMPLETE AND ITS DRILL IS UNRUN** (`#694`, nine
-  commits, `a915a04`..`811c5c6`). The seventeen marks draw, the accent fills the
+  commits, `784849c`..`01875d1`). The seventeen marks draw, the accent fills the
   body, the ink follows the fill, the knockout clears the hatch and the builder
   picker shows the real geometry. `docs/18` carries the printed legibility drill
   and **nobody has run it**, so whether seventeen silhouettes are tellable apart
@@ -4464,7 +4464,7 @@ Entry 141.
 * **Note**: **TWO FIGURES IN MY OWN RULING WERE WRONG AND MEASURING CAUGHT
   BOTH.** Single runs where this repo measures best-of-N (144 ms for what is
   87 ms), and a claim that a full rebuild reshuffles the sheet TODAY when
-  `holdAt` already prevents it. Corrected in place at `4724e7f`, before anything
+  `holdAt` already prevents it. Corrected in place at `c310260`, before anything
   cited them. **A ruling's numbers get quoted; a wrong one outlives the session
   that wrote it.**
 * **Note**: **A MUTATION TEST CHANGED WHAT ITS OWN CASE CLAIMS.** With the
@@ -4521,8 +4521,8 @@ Entry 141.
 ## 2026-08-19
 
 * **Creation**: [DR-074, a wrong hole can be corrected](/decisions/dr-074-a-wrong-hole-can-be-corrected.md),
-  **BUILT** across `#721`–`#725` (`af79813`, `229fde2`, `c967d8b`, `fb50f67`,
-  `fb7811d`). A drop punched into the wrong port can be moved and either end can
+  **BUILT** across `#721`–`#725` (`3428cdc`, `3963d7c`, `71dcc93`, `4b032da`,
+  `3c916a1`). A drop punched into the wrong port can be moved and either end can
   be taken back off its jack. This closes the gap DR-040 §11.39.6 opened and
   which DR-071 §11.70.4 and DR-073 §11.72.7 each recorded as **still owed**;
   both keep their own words in canon and carry a pointer, because each is that
@@ -5036,7 +5036,7 @@ Entry 141.
 * **Note**: **M3-G RUN 1 IS `UNVERIFIABLE`, AND THE PROCEDURE IS WHAT FAILED.**
   Seven minutes, no file saved, `verify_drill.dart` never ran. **Not `MET` and not
   `REFUTED`**: the verifier reads the saved file, so a run without one produced a
-  stopwatch reading and nothing checkable. Recorded at docs/16 §4.1 (`529d724`)
+  stopwatch reading and nothing checkable. Recorded at docs/16 §4.1 (`4cbb221`)
   rather than quietly re-run, on #165's own principle that M1's refutation is the
   most useful record on the board because it was written as a refutation.
 * **Note**: **THE ONE IRREVERSIBLE STEP OF A PROCEDURE MUST NOT BE THE TAIL OF A
@@ -5065,8 +5065,8 @@ Entry 141.
 ## 2026-08-13 (second entry)
 
 * **Update**: [DR-025](/decisions/dr-025-signal-and-service-are-two-words.md) is
-  **BUILT**, three deliverables in order: the Command (`515d61e`), the `@signal=`
-  modifier (`48ae15b`) and the SERVICE picker (`80fd007`). §11.24.5's *"the DRC
+  **BUILT**, three deliverables in order: the Command (`cc9fac9`), the `@signal=`
+  modifier (`a442280`) and the SERVICE picker (`829a5d3`). §11.24.5's *"the DRC
   validates RETROACTIVELY when a `Service` later assigns a real family"* now has
   its later; until the picker, a run created before the ruling could never be
   corrected.
@@ -5092,7 +5092,7 @@ Entry 141.
   from a raw string and `AtomicConnectCommand` carries it onto both the `Service`
   and the `Net` with nothing in between to object. Measured: 48 parts name 34
   families and all 34 resolve, **a fact about that catalog on that date rather
-  than an invariant**. `379a9cd` makes it one, and proves itself by removing a
+  than an invariant**. `91fc520` makes it one, and proves itself by removing a
   family the catalog uses and demanding the shipped detection report it.
 * **Note**: **MAKING A COLUMN EDITABLE INTRODUCED A CRASH, AND THE COLUMN WAS THE
   FIRST THAT COULD.** `DropdownButton` asserts exactly one item matches its
@@ -5111,7 +5111,7 @@ Entry 141.
   typed into"* on a column the app applies, **four lines below a comment added by
   M3-L/3 saying "a harness stricter than the product tests a product that does
   not exist"**. A lesson written down is not a lesson applied.
-* **Note**: **A DOC COMMENT WAS MOVED AND MISPLACED AGAIN** (`a1c5a8e`).
+* **Note**: **A DOC COMMENT WAS MOVED AND MISPLACED AGAIN** (`07415d5`).
   `structureColumnIsBatchable`'s twenty-three lines sat above
   `resolveTerminationToken`, four functions from what they describe. **The
   mechanism is that two adjacent `///` blocks merge into one**, so it is
@@ -5634,7 +5634,7 @@ Entry 141.
   task** is the shape #591 and #587 already carried in this milestone, arriving a third
   time at the exit criterion rather than inside it.
 * **Note**: **M3-D/1 closed on one allocator and the argument covered fourteen drops of
-  sixty.** Its record reads *"`b4b9115` gave both an allocator"*, and the caller cited
+  sixty.** Its record reads *"`584dc8b` gave both an allocator"*, and the caller cited
   is M3-C/1's field label. The rack label's missing caller was justified by CR-044's
   optionality, which is correct for AC-018's fourteen and says nothing about the other
   forty-six. **An exemption sized for the exception was read as covering the rule.**
@@ -5875,7 +5875,7 @@ Entry 141.
 ## 2026-08-10 (third entry)
 
 * **Note**: **two abandoned worktrees were diffed against main and both were
-  salvaged**, at `091255f` and `497d54f`. Both were based on `49b762c`, roughly
+  salvaged**, at `f92c575` and `e1d9b4a`. Both were based on `c138bee`, roughly
   thirty commits back. Neither was superseded, and one had become **more**
   valuable while it sat.
 * **Note**: **canon §12.8 was giving directions with coordinates, and all nine
@@ -6225,7 +6225,7 @@ Entry 141.
 
 ## 2026-08-07
 
-* **Update**: **M3-B is closed** (board #84, `4ae5a54`). The location tree
+* **Update**: **M3-B is closed** (board #84, `ca0a23c`). The location tree
   is derived, commanded and reachable: a project-level panel, a second
   top-level menu, and `Location` creatable for the first time since it was
   modelled in M0. [DR-021](/decisions/dr-021-location-delete-cascades.md)
@@ -6303,7 +6303,7 @@ Entry 141.
   machine in a metric locale has it today. Filed under the wrong heading is how
   a live defect reads as future platform work.
 * **Note**: `D13`'s register text is stale in one detail, the filter is
-  `*.rmpj;*.rackmate` since `dc22ddc`, not `.rackmate`. The hard-coding is
+  `*.rmpj;*.rackmate` since `ac64fcf`, not `.rackmate`. The hard-coding is
   unchanged; only the strings moved. And `D7` is now closed on the board to
   match docs/13 §2.2, where the gate was recorded PAID at `#94`.
 * **Note**: M0's and M1's clause rows still read `To Do` while docs/12 §3
@@ -6316,7 +6316,7 @@ Entry 141.
 
 * **Creation**: [DR-015, the rm extension
   family](/decisions/dr-015-extension-family.md). `.rmpj` project, `.rmdx`
-  device, `.rmda` device archive. The project half is built (`dc22ddc`);
+  device, `.rmda` device archive. The project half is built (`ac64fcf`);
   `.rmdx` renames a spec nothing implements; `.rmda` is ruled and not built.
 * **Note**: **not a format change**, and saying so precisely matters, no
   byte inside a document moves, `schemaVersion` does not advance, the
@@ -6398,7 +6398,7 @@ Entry 141.
   cost lives in roadmap **§6**, not §3, which is the walking skeleton.
 
 * **Update**: the `drawn`-mode router is caught up with six field reports
-  (`38baed1` … `5d53512`, board #96). docs/05 §10 phase 4 carries the
+  (`0d0c3d7` … `83ce9b9`, board #96). docs/05 §10 phase 4 carries the
   corrected rule; docs/12 §5.1 carries the evidence.
 * **Note**: **five of the six reports were one decision set wrong.** A
   staircase is out of one pin, along a corridor, into the other, and where
@@ -6418,7 +6418,7 @@ Entry 141.
   allocation"*. The contradiction survived every review this corpus has had
   and did not survive someone trying to write the code.
 * **Note**: two of the six fixes were at the wrong layer and **the
-  measurements agreed with them**. `ebee4c2` added a detour candidate that
+  measurements agreed with them**. `4cc2c87` added a detour candidate that
   pushed the corridor past both bodies (right behaviour, right numbers,
   closed the report) and was later provably dead, because the staircase's
   own corridor is never further out and so it could never clear a column the
@@ -6442,7 +6442,7 @@ Entry 141.
   cable n and cable 47−n are mirror images in every quantity a per-link
   router may consult. Separating them is §11.1.3 item 2, v1.2.
 
-* **Update**: **#124 is BUILT** (`b128a42`). The family glyph is drawn as
+* **Update**: **#124 is BUILT** (`c5c3794`). The family glyph is drawn as
   GEOMETRY, so the pennant's channel 4 no longer asks a font how wide a
   character is. Closes the field report of pennants reading `NET-NEN006`,
   the family token and the net name printed on top of each other.
@@ -6452,7 +6452,7 @@ Entry 141.
   live in, so it returned a near-zero advance; on screen the same run went
   through a `TextPainter`, which fell back to a system face and drew it at
   full width. **Measured short, drawn wide.** The error is the glyph's real
-  width, a constant, which is why em-scaling the inset (`09d7538`) did
+  width, a constant, which is why em-scaling the inset (`1c4824f`) did
   nothing.
 * **Note**: **CR-081 has a blind spot and this found it.** *"Both backends
   share this one measurer"* is true of the MEASURER and says nothing about
@@ -6485,7 +6485,7 @@ Entry 141.
   obvious way.
 
 * **Update**: [DR-014](/decisions/dr-014-splitting-a-set.md) is **BUILT**
-  (`acdae02` core, `0e5c568` sheet, board #110). A wire drawn from an
+  (`beedbe6` core, `47c8a2b` sheet, board #110). A wire drawn from an
   already-wired set member to a **different device** splits the set. It closes
   the field report *"the Right analog audio channels can't have connections
   made once the left channel is made"*, which was `atomicConnect` working
@@ -6527,7 +6527,7 @@ Entry 141.
 ## 2026-08-02
 
 * **Update**: [DR-013](/decisions/dr-013-delete-cascades.md) is **BUILT**
-  (`48f1198`, board #95). The `TODO(post-M0)` that DR-011.1 turned from inert
+  (`d0cd0f9`, board #95). The `TODO(post-M0)` that DR-011.1 turned from inert
   into a live defect is closed: deleting a wired device now takes its cables,
   ports and orphaned nets with it, after a confirmation that states the count,
   and undo puts every one of them back under the same id.
@@ -6544,7 +6544,7 @@ Entry 141.
   materialised ports; a jack on a device that still exists is not a lie because
   nothing is plugged into it. The code was right and the test was wrong, which
   is worth recording because it is the less common direction.
-* **Update**: **D7's owed gate is PAID** (board #94, `7c2ac49`). The
+* **Update**: **D7's owed gate is PAID** (board #94, `ccd6043`). The
   `SingleActivator` ban was enforced over one file in the app package while
   every binding surface except the File menu lives in `rackmate_ui`.
   `keymap_source_ban_test.dart` now scans that whole package with comments
@@ -6561,7 +6561,7 @@ Entry 141.
   rewording, neither by relaxing the gate.
 * **Creation**: [DR-006](/decisions/dr-006-self-signed-distribution.md), written
   up now because board #13 built the first part of it. **The portable build
-  ships** (`580cb2a`, `1e45cf6`, `bee96bd`): `tools/release/` stages, signs and
+  ships** (`a3c5d8c`, `ae52707`, `967fe3a`): `tools/release/` stages, signs and
   gates a portable Windows folder, documented in `docs/14-deployment.md`.
   **M2's headline does not move**: the portable build is not named by M2's
   exit criterion, and M8's four clauses are untouched.
@@ -6597,7 +6597,7 @@ Entry 141.
   why M8's clause had to be split rather than tightened.
 
 * **Update**: [DR-012](/decisions/dr-012-deferred-gesture-rules.md) §11.12.2, 
-  **multi-draw is BUILT** (`8876261`, `4840307`, `e078c0b`), which completes
+  **multi-draw is BUILT** (`8876261`, `4840307`, `bcb19a4`), which completes
   all four of RJ-001's gestures. N `Link`s in rank order under one undo entry,
   a live preview of all N bands, driven identically from pointer and keyboard.
   **M2's headline does not move**: it was already `CRITERION MET`, the
@@ -6616,7 +6616,7 @@ Entry 141.
   29 of 45 templates, were in the wrong order**, and had been through every
   milestone. `A01`'s zone speaker outputs were DRAWN out of sequence.
   FIXED_ORDER, `PORT_SEQ`, `chainOutputFor` and `portsInBank` all read that
-  field and all four were wrong. Fixed at `d8aedca`; the regenerated goldens
+  field and all four were wrong. Fixed at `5ccb76b`; the regenerated goldens
   diff to `"order"` values and nothing else.
 * **Creation**: [census before building](/practices/census-before-building.md).
   The catalog defect was found by a measurement taken for something else, which
@@ -6689,10 +6689,10 @@ Entry 141.
   M2-F Phase 5. The chip is SCREEN CHROME and not scene: `buildRackScene` feeds
   the PDF as well as the screen (CR-086), so a chip emitted into the scene would
   print on the customer's elevation sheet.
-* **Note**: `docs/12-milestone-board.md` §5.1 re-audited at `ea0af6d`. M2 moves
+* **Note**: `docs/12-milestone-board.md` §5.1 re-audited at `13758ff`. M2 moves
   from `NOT STARTED` to **PARTIAL**, four of five exit clauses cited; the open
   one is the sixty-connection drill, which needs a person. Every other row on
-  that board is still as of `0fa532d` and says so.
+  that board is still as of `6554187` and says so.
 
 ## 2026-07-31
 
@@ -6769,7 +6769,7 @@ Entry 141.
 
 ## 2026-07-28
 
-* **Update**: Caught the bundle up with M2-D (`e13fa68`) and M2-E (`219c0bf`),
+* **Update**: Caught the bundle up with M2-D (`e19664e`) and M2-E (`e698877`),
   which had landed after it was written. Batching that catch-up was itself the
   drift this bundle exists to prevent, maintain as changes land, not after.
 * **Creation**: [CR-078, four encoding channels](/invariants/four-encoding-channels.md),

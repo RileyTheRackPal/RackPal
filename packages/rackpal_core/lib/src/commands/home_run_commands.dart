@@ -9,7 +9,7 @@
 // `Endpoint` has modelled an unbound far end since M0 and NO GESTURE COULD
 // PRODUCE ONE, which made AC-018 unreachable by construction. #141's own
 // instruction was to check whether the schedule needed teaching first, and
-// it does not: `301136f` verified over `whole_house.rppj` that a link with
+// it does not: `70cb8d5` verified over `whole_house.rppj` that a link with
 // an unbound end already schedules, carries its `W` number and its CR-113
 // field label, reaches the Pull Sheet, and is excluded from the Termination
 // Schedule only with a reported count. So the work is producing the drops.

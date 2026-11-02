@@ -387,7 +387,7 @@ Every target above resolves in `packages/rackpal_core/lib/src/catalog/seed_media
 > has never existed, was declared in no pubspec, and could not have been loaded
 > if it had: `rackmate_core` imports no Flutter, so `rootBundle` is unavailable
 > to it. DR-010 §11.10.1 settled the master as seeded Dart for that reason, and
-> M3-C/6 (commit `acd63d5`) is what made the claim true. The equivalent
+> M3-C/6 (commit `f2e1fea`) is what made the claim true. The equivalent
 > assertion for `conn.*` and signal-family IDs lives in
 > `seed_registries_test.dart`.
 

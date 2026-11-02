@@ -62,7 +62,7 @@ turns out false is wrong on every plate drawing at once. **A reader who takes
 this ruling as licence to assume uniformity has made exactly the inference
 §11.7.8 forbids.**
 
-Manufacturer drawings committed on 2026-08-09 (`e8cc9fc`) supply a Hubbell
+Manufacturer drawings committed on 2026-08-09 (`2508018`) supply a Hubbell
 keystone *opening* of 14.605 × 17.17 mm citing NEMA WD60S2. The opening is not
 the nose and both numbers are right: the widths agree to 0.1 mm, which is side
 clearance, and the opening is 1.17 mm taller, which is where the latch tab
@@ -96,4 +96,4 @@ one figure it left open. **M3-H/2 is unblocked.**
 [1] canonical-decisions.md §11.27 (`docs/canonical-decisions.md`)
 [2] canonical-decisions.md §11.7.8 and §11.7.9 B (DR-007)
 [3] `docs/reference/keystone/technical drawings/`, vendor sheets committed at
-    `e8cc9fc`
+    `2508018`

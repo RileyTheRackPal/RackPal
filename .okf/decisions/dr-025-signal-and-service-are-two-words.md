@@ -105,8 +105,8 @@ targets.
 
 # BUILT 2026-08-13, and what building it taught
 
-Three deliverables, in order: the Command (`515d61e`), the `@signal=` modifier
-(`48ae15b`) and the SERVICE picker (`80fd007`). §11.24.6 held: one command writes
+Three deliverables, in order: the Command (`cc9fac9`), the `@signal=` modifier
+(`a442280`) and the SERVICE picker (`829a5d3`). §11.24.6 held: one command writes
 both fields, and one undo restores both.
 
 **The control was chosen by measurement, and the measurement contradicted the
@@ -138,7 +138,7 @@ this is a third thing rather than a corner of its stated blind spots.
 `AtomicConnectCommand` carries it onto both the `Service` and the `Net` with
 nothing in between to object. Measured: 48 parts name 34 families and all 34
 resolve, **a fact about that catalog on that date rather than an invariant**.
-`379a9cd` makes it one.
+`91fc520` makes it one.
 
 **The `Use` column deferral now has a named cost the user has confirmed.** Signal
 families being catalog-updated (RJ-012) means expanding the trade's vocabulary is

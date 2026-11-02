@@ -734,7 +734,7 @@ void _expectOps(RackDocument doc, {required int opsPerFlag}) {
   //   * the first five was ACCIDENTAL: making the flag opaque with a
   //     second `OpPath` behind the tint. Compositing the two colours at
   //     build time gives identical pixels in one op, so that one was given
-  //     back (`ff712d2`);
+  //     back (`e981272`);
   //   * this five is STRUCTURAL (#124). Channel 4 used to be one text run
   //     carrying a glyph the app's font does not have — measured near-zero
   //     by Jost and painted full width by the screen's fallback face, which

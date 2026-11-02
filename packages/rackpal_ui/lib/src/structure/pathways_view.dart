@@ -186,7 +186,7 @@ class _Toolbar extends StatelessWidget {
 /// IT NAMES THE TWO GESTURES THAT MAKE ONE, which is
 /// `unbuilt_copy_accuracy_test.dart`'s rule: copy on a surface must
 /// describe what the product can actually do. Both named here are built —
-/// DR-032's drop line at `b093062`, and this tab's own button — so
+/// DR-032's drop line at `14ae1e2`, and this tab's own button — so
 /// neither sentence is a promise about an unbuilt feature.
 class _EmptyState extends StatelessWidget {
   const _EmptyState();

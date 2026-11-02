@@ -53,7 +53,7 @@ run's route from another's is that column's entire job.
 
 §11.31.5 binds the drop-line DSL, the matrix column and the CSV importer alike:
 **one medium must not mean two things depending on which box a person typed it
-into.** The drop line shipped at `b093062` and the matrix column at `2618272`;
+into.** The drop line shipped at `14ae1e2` and the matrix column at `2618272`;
 the importer does not exist yet (docs/07 §5).
 
 That clause is what forced [DR-035](/decisions/dr-035-a-created-pathway-records-its-medium-and-room.md),

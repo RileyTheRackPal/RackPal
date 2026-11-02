@@ -1,6 +1,6 @@
 // THE THREE DEFECTS THAT SANK THE PREVIOUS SCHEMATIC CANVAS, each with a
 // test that would have caught it (docs/m1-implementation-log.md, commit
-// `b560a50`).
+// `c5669a9`).
 //
 // All three are widget-level, and that is the point: none of them was
 // visible from a unit test of the geometry, all three were visible the
@@ -113,7 +113,7 @@ void main() {
         isNotEmpty,
         reason:
             'the canvas is replaying an empty list — this is the '
-            'b560a50 failure exactly',
+            'c5669a9 failure exactly',
       );
       final texts = painted.whereType<OpText>().map((t) => t.text).toSet();
       for (final designator in kFixtureDesignators) {

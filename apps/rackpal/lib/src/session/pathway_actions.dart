@@ -161,7 +161,7 @@ PathwayAddFn buildPathwayAddAction({
 /// the pathway rather than deleting the cable, because a cable whose
 /// conduit is gone is still a cable — it is a run whose route nobody has
 /// recorded, which is the state every drop in this product was in until
-/// `bcb1b31`.
+/// `8eaee44`.
 ///
 /// NO CONFIRMATION DIALOG, and that is the undo stack being trusted. The
 /// tooltip states the consequence and the run count before the click, the

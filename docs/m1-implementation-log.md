@@ -885,7 +885,7 @@ invisible.
   of the formulas is honoured in caller-supplied units; converting `kGridUnit` to diagram
   points needs a schematic scene builder's scale anchor, which does not exist. Flagged in that
   file's header.
-* **`.clinerules/editing.md`** (added by the off-discipline stage, commit `6db8131`) still
+* **`.clinerules/editing.md`** (added by the off-discipline stage, commit `cbd1ef9`) still
   instructs whoever reads it to "Make a commit after every task … just commit to the main
   branch." It is almost certainly how 19 commits including 12 thrashing `fix:` commits landed
   directly on `main`. It was not acted on and was not removed; that is the repo owner's call,
@@ -1810,7 +1810,7 @@ Run again during the follow-up cleanup, on the repaired gate and the two behavio
 > encode line.** `_assertByteRoundTrip` OVERWROTE `test/fixtures/*.rackmate.json` with whatever
 > the encoder currently produced, then asserted write→read→write stability — so the fixtures were
 > **records, not golden expectations**, and could not catch "the encoder stopped emitting a key".
-> That had been true since M0 (`b94bd60`). `b5a957f` repaired it: the test now compares against
+> That had been true since M0 (`83988f2`). `8d7cd69` repaired it: the test now compares against
 > the **committed** goldens and `UPDATE_GOLDENS=1` regenerates them deliberately, so a format
 > change to a stored document is a red test. Fixture (c) carries a populated override plus a
 > `jc.yellow` convention entry, so the corpus both contains the shape and now defends it.

@@ -497,7 +497,7 @@ final bool _updateGoldens = Platform.environment['UPDATE_GOLDENS'] == '1';
 /// CR-117, asserted against the bytes ON DISK.
 ///
 /// HISTORY, because this is the second spelling of this function and the
-/// first one could not fail. From `b94bd60` (M0) until this change it
+/// first one could not fail. From `83988f2` (M0) until this change it
 /// began by OVERWRITING `test/fixtures/$label.rmpj.json` with the
 /// bytes it was about to check, and then compared those bytes to
 /// themselves round-tripped. That proves

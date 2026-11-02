@@ -99,11 +99,11 @@ to legibility, because at 13 px the highlight competes for the stem's own pixels
 
 ## Built
 
-The **type** half is built at `875db98` (`#771`); the 28 synthesising sites were
+The **type** half is built at `3559a14` (`#771`); the 28 synthesising sites were
 retargeted to `kConsoleEmphasis` (`w500`) at `#775`, under a gate that reads the weights
-`pubspec.yaml` declares per family. The **colour** half is built at `b2b12fb` (`#770`),
+`pubspec.yaml` declares per family. The **colour** half is built at `c64764b` (`#770`),
 in `rackpal_core/draw/console_palette.dart` beside `contrast.dart`, and
-`console_theme.dart` defines no colour of its own. `RackMono` is Space Mono at `71b9bd1`
+`console_theme.dart` defines no colour of its own. `RackMono` is Space Mono at `aa304d5`
 (`#773`). The rule got a construction rather than a gate: `StatusMarker` has no
 constructor that takes a colour without a shape, and Notice's circle is an **outline**
 because a filled one is the bare dot this ruling forbids.
@@ -122,11 +122,11 @@ sheet for the rule broke the rule, and nothing gates a picture.
 - **Device accent swatch 5 is PAL-2's reserved selection yellow `#F0E442`.** PAL-2 bars it
   from cables only, and §11.89.10 leaves accents to `#565`, so no ruling is broken. A
   device body in the colour that means "selected" is a UI question for `#565`'s owner.
-- **Fixed at `6ef51f89` (`#1029`): the bundled Jost reported "RackMate build"** in its name
+- **Fixed at `8d702080` (`#1029`): the bundled Jost reported "RackMate build"** in its name
   table. `#781` had corrected the generator and never re-run it. Only the name table was
   rewritten, with every other table proven byte-identical. Canon §11.89.8 now records the
-  four owed codepoints as built at `b7b5ac2` (`a912bbcb`).
-- **Fixed at `7f5bbde3` (`#1029`): seven comments said only Jost Regular is bundled.** The
+  four owed codepoints as built at `26c3832` (`3ce37708`).
+- **Fixed at `26f8d7b7` (`#1029`): seven comments said only Jost Regular is bundled.** The
   rewrite kept the half still true: a drawing op reaches one face, and `bold` must stay
   unwired on screen until the PDF loads Medium too.
 - **Not fixed, because it is not a note:** docs/03, 05, 08, 11 and canon still specify

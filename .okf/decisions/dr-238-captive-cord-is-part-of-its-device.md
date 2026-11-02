@@ -23,4 +23,4 @@ Settled by the user on 2026-10-06 for `#1002`: remove captive cords on T6.30.
 
 Canon §11.237 holds the full text.
 
-Built at `78d7deda`; docs/12 §4.48 holds the evidence.
+Built at `87c3517f`; docs/12 §4.48 holds the evidence.

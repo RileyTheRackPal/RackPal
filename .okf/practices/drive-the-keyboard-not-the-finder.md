@@ -134,4 +134,4 @@ whether it still passes.** If it does, it was never about navigation.
 [2] `packages/rackpal_ui/lib/src/builder/device_builder_screen.dart`
 [3] [assert the artifact, not the mechanism](assert-the-artifact-not-the-mechanism.md)
 [4] `packages/rackpal_ui/test/builder/port_grid_test.dart`, the `Enter`
-    route cases; docs/12 §5.3.9; commit `9969ded`
+    route cases; docs/12 §5.3.9; commit `5b4e238`

@@ -56,7 +56,7 @@
 //
 //     AND ITS PAINT IS UNTESTABLE FROM HERE, MEASURED. Dropping the paint
 //     offset out of its transform leaves all six cases below GREEN. That
-//     is `b560a50`'s defect reproduced inside the spike on the first try,
+//     is `c5669a9`'s defect reproduced inside the spike on the first try,
 //     which is why the schematic's render object carries a
 //     `debugSceneToScreen` and why E/2's must too.
 //   * A DRAG PREVIEW. `DragPreviewController`'s vocabulary is `deviceH`,

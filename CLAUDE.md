@@ -51,7 +51,7 @@ until M5-G4 added the AC-051 pair gate and made it sixteen. Count the
 
 `azure-pipelines.yml` is registered as **definition 1, `RackPal CI (Windows)`**, and
 **it runs**. First execution was 2026-08-27 (build 20260827.1) against `main` at
-`46ec050`: it passed first try, all 24 steps, 22m01s, no fixes. Run 2 took the
+`1fab087`: it passed first try, all 24 steps, 22m01s, no fixes. Run 2 took the
 warm-cache path at 18m28s.
 
 - **`main` has a blocking build-validation policy** (policy id 1), and it protects
@@ -144,7 +144,7 @@ warm-cache path at 18m28s.
     busy one.
 - **THE DIAGNOSTIC, WHICH COSTS ONE QUERY.** A red on `refs/heads/main` whose commit
   passed as a `refs/pull/*/merge` build is **the environment, not the tree**: the same
-  bytes were green minutes earlier. `195` was `c28ae95`, PR 94's merge, whose own policy
+  bytes were green minutes earlier. `195` was `793839e`, PR 94's merge, whose own policy
   build passed and whose two successors on `main` passed. Check that before reading a
   single log line, and do not reach for a load or contention theory that the failure's
   own signature does not support.
@@ -153,7 +153,7 @@ warm-cache path at 18m28s.
   the PR completes**, not instantly. On 2026-09-12 that gap was polled for about two
   minutes after each of two merges, found empty, and reported first as a broken trigger
   and then as *"a pattern rather than a hiccup"*. **Both builds existed**: `210` on
-  `d16af1da` and `213` on `ea58cf26`, both `individualCI`, both queued shortly after
+  `484c01f1` and `213` on `5cd09e97`, both `individualCI`, both queued shortly after
   their merges, and a manual build was queued on the false premise and duplicated `210`
   for nothing. **Read `reason` on the newest build for that branch before concluding
   anything**: `individualCI` means the trigger fired and `manual` means a person did.
@@ -414,7 +414,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
   against each other and is structurally blind to all of them being stale together
   (no count is written here: this bullet gave one until `rackpal_pdfium` joined
   and made it wrong, which is the rule on second copies of a moving number). That
-  is how `v0.2.0` sat through thirty M3 tasks (`bdbbdb4`) and `v0.3.30` through
+  is how `v0.2.0` sat through thirty M3 tasks (`d250082`) and `v0.3.30` through
   forty-six M4 ones. **Derive the number in the commit message**, counted two
   ways that agree, so the next person can re-derive it rather than trust it.
   `M4-0`-style decomposition items are Issues and are not counted.

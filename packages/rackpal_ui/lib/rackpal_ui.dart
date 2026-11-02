@@ -10,7 +10,7 @@
 /// composes, currently just `UnbuiltView`.
 ///
 /// `src/canvas/schematic/` IS BACK (M2-E), and on the same terms the
-/// Schedule came back on. The one that was deleted at `b560a50` had no
+/// Schedule came back on. The one that was deleted at `c5669a9` had no
 /// pipeline behind it: `main.dart` handed it a hardcoded EMPTY
 /// `DiagramScene`, so it manufactured a symbol with `Pin1`/`Pout1` ports
 /// that corresponded to no device in any document. This one derives its

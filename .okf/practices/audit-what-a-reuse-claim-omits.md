@@ -76,7 +76,7 @@ wrong about the thing it asked about.
 A spike is only evidence if what it could not do is recorded as loudly as what
 it could. `PLAN-E/1`'s six cases pass, and one deliberate mutation **survived**
 them: dropping the paint offset out of the spike's render object leaves every
-case green, which is `b560a50`'s shipped defect reproduced on the first
+case green, which is `c5669a9`'s shipped defect reproduced on the first
 attempt. **That survival is the more useful half of the run**, and a spike
 reported only as "it worked" would have thrown it away.
 

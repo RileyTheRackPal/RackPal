@@ -114,7 +114,7 @@ these ports are not a set.
 
 # Built 2026-08-25
 
-All four clauses plus the one above ship (`#224`, `a02eeef`). The role picker
+All four clauses plus the one above ship (`#224`, `52e8916`). The role picker
 closed, `atomicConnect` got its first editor anywhere, and a set below two
 members became a notice on the `SET` column.
 

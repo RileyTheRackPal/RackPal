@@ -38,7 +38,7 @@ No scope changes and no epic moves between Sagas.
 
 # Built
 
-`#796` landed it on 2026-09-16 (``1f0c5bb1``), with `#799`. Roadmap §6 is a size table over all
+`#796` landed it on 2026-09-16 (``dbb61751``), with `#799`. Roadmap §6 is a size table over all
 twenty v1 epics, argued from the board read that day, and the week columns are gone from it, from
 the roadmap's header, from docs/00 and, by a note, from canon's own re-cost table.
 

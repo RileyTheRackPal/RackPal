@@ -253,7 +253,7 @@ void main() {
     ) async {
       // The default is the one the remedy mints and the one a vertical
       // rail usually is. It is 1-based because CR-025 says so, and the
-      // only producer in the product wrote U 0 until `c95224d`.
+      // only producer in the product wrote U 0 until `da60884`.
       final doc = _doc();
       final handed = await pumpRack(tester, doc);
       await reveal(tester, find.text(kAddZeroUChannelLabel));
