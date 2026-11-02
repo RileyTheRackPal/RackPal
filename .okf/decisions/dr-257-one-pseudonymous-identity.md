@@ -23,6 +23,7 @@ Settled by the user on 2026-11-02, from `#1286` under
 | Timezone | User, on the recommendation | Every offset `+0000`, same instant; future commits under `TZ=UTC0` |
 | Sample drafter | User, on the recommendation | `rriley` / `R. Riley`, the same byte lengths, so no fixture offset moved |
 | Organisation | User, on the recommendation | A placeholder in the tree; `az devops configure --defaults` on each machine |
+| Landing a PR | User, on the recommendation | A merge commit built locally, completed by *Rebase and fast-forward*; the service never makes a commit, since its merges carry the account profile |
 
 Not taken: scrubbing GitHub's copy only, which diverges from Azure DevOps on every later commit.
 

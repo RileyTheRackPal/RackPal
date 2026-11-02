@@ -10,6 +10,9 @@ Entry 148.
 * **Note**: **A MAILMAP REACHES TWO LEAKS OF SEVEN.** The census over every blob, message and tag found the rest in
   fixtures, a worked example, the corpus, a binary `.pyc` that text replacement skips, and the offset on every
   timestamp. Census the objects, not the log.
+* **Note**: **THE SERVICE WAS AN AUTHOR.** A sixth of the old headers were Azure DevOps merge commits, stamped with
+  the completing account's profile, so the first PR after the rewrite would have re-leaked it. A probe proved
+  *Rebase and fast-forward* lands a locally built merge commit unchanged; CLAUDE.md has the procedure.
 
 ## 2026-10-19
 

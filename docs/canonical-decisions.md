@@ -25062,6 +25062,14 @@ author's desk. A rewrite of the headers alone would have left all but the first 
    from Azure DevOps on every later commit. `main` on Azure DevOps was force-pushed once, under a policy
    bypass the user granted for the purpose, and GitHub receives only the verified history, since a push
    there cannot be withdrawn.
+6. **Azure DevOps never makes a commit.** Its merge commits carry the completing account's profile, the
+   identity this ruling removes, and that is where a sixth of the old headers came from. A pull request
+   lands as a merge commit built locally under this identity and pushed as the source branch's tip, then
+   completed with *Rebase and fast-forward*: with nothing to rebase, the service fast-forwards `main` to
+   that commit unchanged, measured on PR 265 against a throwaway branch. The history keeps one merge per
+   pull request. Not taken: a linear history with no merge commits; changing the service profile, which
+   was not proven to reach the address a merge commit records. The cost is one extra policy build per
+   pull request, since the build re-queues on the new tip.
 
 **11.256.3 WHAT THE REWRITE PROVED.** `git filter-repo` 2.47.0 over 1,698 commits. Afterwards the census
 finds nothing but two residuals, both deliberate: a third party's contributor address inside the vendored

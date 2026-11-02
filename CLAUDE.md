@@ -59,9 +59,22 @@ warm-cache path at 18m28s.
   `TF402455: Pushes to this branch are not permitted; you must use a pull request`.
   This file said the opposite until 2026-08-29 (*"a direct push to `main` still
   lands"*), which was wrong: in Azure Repos a *blocking* policy does both jobs.
-  Land work with `az repos pr create`, then
-  `az repos pr update --id N --status completed --squash false`, and budget the
-  policy build (~18 min) before the PR can complete.
+  Budget the policy build (~18 min) before a PR can complete.
+- **NEVER LET AZURE DEVOPS MAKE A COMMIT** (DR-257 §11.256.2.6). It stamps the
+  completing account's profile on every merge commit it creates, which is the
+  identity the history rewrite removed, so `--squash false` (and squash, and a
+  rebase that has anything to rebase) re-leaks it on the first PR. Land work so:
+  1. `az repos pr create`, to learn the PR number `N`.
+  2. Locally, on a branch made from the current `origin/main`:
+     `git merge --no-ff <branch> -m "Merge pull request N from <branch> into main"`
+     under `TZ=UTC0`, then push that merge commit as the PR's source branch tip
+     (a fast-forward of the source, so no force). The policy build re-queues on it.
+  3. When it is green, confirm `origin/main` is still the merge's first parent,
+     then complete over REST with `"completionOptions":
+     {"mergeStrategy":"rebase"}`. With nothing to rebase, ADO fast-forwards and
+     `main` becomes your merge commit byte for byte (probed on PR 265).
+  4. Read `main` back: its tip must be your SHA. If `main` moved first, rebuild the
+     merge on the new tip; a real rebase would rewrite every commit as ADO's.
 - The pipeline is the same gate set as `run_local.ps1` minus the two local-only
   checks (`flutter pin`, `tracked sources`), which a clean clone cannot fail by
   construction. **THAT SENTENCE HAD A SECOND HALF UNTIL 2026-10-18**: *"and minus two
