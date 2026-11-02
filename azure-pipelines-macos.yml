@@ -214,7 +214,7 @@ jobs:
       # DR-258 (#1287): the identity gate, unshallowing commits only first.
       # Why each line is as it is: the same step in azure-pipelines.yml.
       - pwsh: |
-          git -c "http.extraheader=AUTHORIZATION: bearer $env:SYSTEM_ACCESSTOKEN" fetch --quiet --no-tags --unshallow --filter=tree:0 origin "$env:BUILD_SOURCEBRANCH"
+          git -c "http.extraheader=AUTHORIZATION: bearer $env:SYSTEM_ACCESSTOKEN" fetch --quiet --no-tags --unshallow --filter=tree:0 origin "$env:BUILD_SOURCEVERSION"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/identity_gate.py --ci
           exit $LASTEXITCODE

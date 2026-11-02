@@ -714,8 +714,13 @@ jobs:
       # gates because the partial fetch makes the clone a promisor; nothing
       # below reads history. --ci skips only Azure DevOps' own PR merge
       # commit, which never lands on main (the script's header says how).
+      # THE SHA, NOT THE REF. The first version fetched BUILD_SOURCEBRANCH, and
+      # on PR 266 (builds 670, 671) the clone stayed shallow: a push to the
+      # source branch after the build queued moved refs/pull/N/merge, so the
+      # fetch deepened the NEW merge and left the built one's boundary in
+      # place. The gate refused, as it must. The exact commit cannot move.
       - pwsh: |
-          git -c "http.extraheader=AUTHORIZATION: bearer $env:SYSTEM_ACCESSTOKEN" fetch --quiet --no-tags --unshallow --filter=tree:0 origin "$env:BUILD_SOURCEBRANCH"
+          git -c "http.extraheader=AUTHORIZATION: bearer $env:SYSTEM_ACCESSTOKEN" fetch --quiet --no-tags --unshallow --filter=tree:0 origin "$env:BUILD_SOURCEVERSION"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/identity_gate.py --ci
           exit $LASTEXITCODE

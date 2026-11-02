@@ -22,8 +22,11 @@ board `#1287` built it.
 # How it runs on CI
 
 The checkout is `fetchDepth: 1`. The step first runs `git fetch --unshallow --filter=tree:0` for the
-build's ref (commits only, 3.8 s for the whole history when measured), passing the job token for that
-fetch alone. Then `--ci`: on a PR build, `HEAD` is the service's own merge and is skipped only when it is
+exact commit being built, `BUILD_SOURCEVERSION` (commits only, about 3 s for the whole history when
+measured), passing the job token for that fetch alone. **The SHA, not the ref**: the first version
+fetched `BUILD_SOURCEBRANCH`, and on PR 266 a push after the build queued moved `refs/pull/N/merge`, so
+the fetch deepened the new merge and left the built commit shallow. The gate refused, which is the
+behaviour it exists for, and that first real run is the evidence its shallow check is not vacuous. Then `--ci`: on a PR build, `HEAD` is the service's own merge and is skipped only when it is
 a two-parent merge one of whose parents is `SYSTEM_PULLREQUEST_SOURCECOMMITID`.
 
 # Non-vacuity
