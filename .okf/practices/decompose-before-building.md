@@ -18,7 +18,7 @@ milestone.
 
 The tasks still held:
 
-- *"a previous Sugiyama implementation was deleted in `b560a50`, do not restore
+- *"a previous Sugiyama implementation was deleted in `c5669a9`, do not restore
   it from history"*, with the two specific defects it carried
 - *"read a link's class through `effectiveLinkClassOf`, never `Link.linkClass`"*
 - [DR-001](/decisions/dr-001-net-labels-by-default.md)'s scope reduction, do not

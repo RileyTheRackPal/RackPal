@@ -48,4 +48,4 @@ enumeration does not protect the enumeration.
 
 [1] `apps/rackpal/test/gitattributes_byte_exactness_test.dart`
 [2] `.gitattributes`
-[3] Commit `abbd532`
+[3] Commit `27dd492`

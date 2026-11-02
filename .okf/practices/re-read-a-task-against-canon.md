@@ -62,7 +62,7 @@ now carry it.
 Its text reads *"`file_dialog_channel.cpp` holds ONE hardcoded
 `COMDLG_FILTERSPEC` array shared by Open and Save. Filter and default extension
 become parameters of the method call."* All of that had been true and none of it
-still was: `2180a35` (M3-F/4, `#162`) made the filter a named KIND on the wire
+still was: `5c5f68f` (M3-F/4, `#162`) made the filter a named KIND on the wire
 before M4 opened, and its own subject line says *"closing D13 before D2"*.
 
 **Nothing in canon was stale.** The ruling was right, the register row

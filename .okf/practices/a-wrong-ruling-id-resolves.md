@@ -28,7 +28,7 @@ documents (docs/03's dependency table, docs/09's roadmap row) carried it. Nobody
 resolved it once.
 
 **And it was not invented at the point of use.** It came from docs/09's Plan view
-import row, written 2026-08-10 in `f423aa3`, four weeks before the chapter that
+import row, written 2026-08-10 in `115b3bc`, four weeks before the chapter that
 copied it. The chapter did what §8.2 asks: it cited the ID the roadmap gave it.
 
 # Why nothing caught it, and this is the reusable half

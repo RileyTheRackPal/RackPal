@@ -36,8 +36,8 @@
 // (CR-109)." It was held out of this file rather than half-built,
 // because a tint with no `Pathway` behind it would have said CR-109 held
 // when it did not. What it was waiting on arrived in order:
-// `MediaTypeDef.isPathwayOnly` (`719fa34`), a `Pathway` anything could
-// create (`bcb1b31`), the drop line honouring the flag (`b093062`), and
+// `MediaTypeDef.isPathwayOnly` (`fc07fb3`), a `Pathway` anything could
+// create (`8eaee44`), the drop line honouring the flag (`14ae1e2`), and
 // DR-035 giving that act the medium and the room, WITHOUT WHICH A CELL
 // COULD NOT COUNT ITS OWN WORK: a matrix cell is a target, so a column
 // that creates entities it cannot then find is a control that lies.
@@ -348,8 +348,8 @@ String structureMatrixColumnHeader(RackDocument doc, MediaTypeId id) {
 /// **`EMT` IS THE NINTH AND IT IS BACK** (M3-E/1). It was held out of
 /// this list because it is the pathway column and nothing in the build
 /// created a `Pathway`, so offering it would have made conduit into cable
-/// one click faster than the typed line already did. `719fa34` added the
-/// flag, `b093062` made the drop line honour it and DR-035 gave the
+/// one click faster than the typed line already did. `fc07fb3` added the
+/// flag, `14ae1e2` made the drop line honour it and DR-035 gave the
 /// created pathway the two facts a cell needs to count it, so the column
 /// now does what §4.2 says it does.
 ///

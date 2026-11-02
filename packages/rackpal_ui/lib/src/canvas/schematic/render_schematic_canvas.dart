@@ -15,7 +15,7 @@
 // ═════════════════════════════════════════════════════════════════════
 // Not because the two do the same job — the rack canvas hosts a
 // `RenderDeviceBox` child per device and this one hosts nothing — but
-// because the schematic canvas that was deleted at `b560a50` invented a
+// because the schematic canvas that was deleted at `c5669a9` invented a
 // SECOND pattern and got all three of its load-bearing details wrong:
 //
 //   1. IT PAINTED ITS BACKGROUND WITHOUT ITS PAINT OFFSET while the
@@ -65,7 +65,7 @@ import 'package:rackpal_ui/src/draw/text_run_cache.dart';
 /// which means dropping the offset term from the composition below changes
 /// NOTHING observable through any widget test, and a deliberate mutation
 /// that dropped it survived the whole suite. That is exactly the shape of
-/// the defect this file exists to prevent (`b560a50`: "the background fill
+/// the defect this file exists to prevent (`c5669a9`: "the background fill
 /// ignored its paint offset"), so it does not get to be untested because
 /// today's caller happens to pass zero.
 ///
@@ -191,7 +191,7 @@ final class RenderSchematicCanvas extends RenderBox {
 
   /// The scene→screen matrix the last paint actually used.
   ///
-  /// EXPOSED FOR ONE TEST AND ONE DEFECT. `b560a50`'s canvas painted part
+  /// EXPOSED FOR ONE TEST AND ONE DEFECT. `c5669a9`'s canvas painted part
   /// of its content through the paint offset and part of it without, and
   /// nothing in the widget tree could tell the two apart — the difference
   /// only shows on a canvas that is not at the window's origin. This is

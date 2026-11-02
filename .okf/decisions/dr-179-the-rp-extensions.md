@@ -38,7 +38,7 @@ letters unruled.
 - Refused: renaming at M8, and keeping `rm`.
 # Built
 
-`#782` landed it on 2026-09-15 (`04c8eb95`): the app writes `.rppj`, `.rpdx` and `.rpda`, and every
+`#782` landed it on 2026-09-15 (`f3d7a418`): the app writes `.rppj`, `.rpdx` and `.rpda`, and every
 spelling a build has written still opens, `.rmpj`, `.rmdx`, `.rmda` and the pre-DR-015 `.rackmate`.
 The four starters were renamed with `git mv` and are byte-identical. Two claims the ruling had
 already doubted turned out to have expired: a device template and a device archive both needed the

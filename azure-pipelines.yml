@@ -9,7 +9,7 @@
 # weeks, NO AZURE DEVOPS RUN HAD EVER EXECUTED IT. That sentence stood here
 # unedited the whole time, which is the only reason the gap was cheap to
 # find. IT RAN ON 2026-08-27: pipeline "RackPal CI (Windows)" (definition 1),
-# build 20260827.1, against `main` at 46ec050, and it PASSED FIRST TRY --
+# build 20260827.1, against `main` at 1fab087, and it PASSED FIRST TRY --
 # all 24 steps, no fixes, 22 minutes wall clock. What that run proved and
 # what it still did not are separated below, and neither is dressed up as
 # the other.
@@ -352,7 +352,7 @@ jobs:
       # starts a local gate run, while a policy build is waited on. To test
       # it, run one branch build with the machine idle.
       #
-      # PROVEN, not assumed: build 20260830.17 ran on it against 3cec172 and
+      # PROVEN, not assumed: build 20260830.17 ran on it against d594055 and
       # passed every gate.
       # The build's own `queue` field still reads "Azure Pipelines", which is
       # where the build was SUBMITTED and not where the job ran; the agent's
@@ -581,7 +581,7 @@ jobs:
       # GATE 1b — THE FORMATTER
       # ==================================================================
       # DR-017 (canon section 11.16), answering docs/12 section 4.1. The tree was
-      # formatted in one mechanical commit (b6ff394, 124 of 426 files) and
+      # formatted in one mechanical commit (1d2c622, 124 of 426 files) and
       # this keeps it that way. It is a gate rather than an advisory step on
       # purpose: a permanently-yellow step trains people to ignore output,
       # which is the exact argument docs/11 section 8 makes for strictness.

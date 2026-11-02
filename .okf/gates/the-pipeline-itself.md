@@ -15,7 +15,8 @@ status: live
 
 Board `#567`. `azure-pipelines.yml` is registered as **definition 1, `RackPal CI
 (Windows)`**, on `https://{org}.visualstudio.com`, project `RackMate` (the
-Azure DevOps project keeps that name by ruling: DR-096 §11.95.9).
+Azure DevOps project keeps that name by ruling: DR-096 §11.95.9; the organisation is
+named on each machine rather than here, by [DR-257](../decisions/dr-257-one-pseudonymous-identity.md)).
 
 ## It ran, and the first run is the interesting one
 
@@ -23,7 +24,7 @@ The file carried the sentence *"NO AZURE DEVOPS RUN HAS EVER EXECUTED IT"* for t
 half weeks. Because that sentence stood unedited, the gap was cheap to find rather than
 being something a reader had to infer.
 
-Build **20260827.1**, against `main` at `46ec050`: **passed first try**, all 24 steps,
+Build **20260827.1**, against `main` at `1fab087`: **passed first try**, all 24 steps,
 22m01s, zero fixes. Six named unknowns became measurements in one run: the YAML schema was
 accepted unmodified, the pinned Flutter archive resolved, `windows-2022` still builds
 desktop Windows, and wall clock is 22 minutes rather than an estimate.

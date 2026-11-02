@@ -51,7 +51,7 @@ until M5-G4 added the AC-051 pair gate and made it sixteen. Count the
 
 `azure-pipelines.yml` is registered as **definition 1, `RackPal CI (Windows)`**, and
 **it runs**. First execution was 2026-08-27 (build 20260827.1) against `main` at
-`46ec050`: it passed first try, all 24 steps, 22m01s, no fixes. Run 2 took the
+`1fab087`: it passed first try, all 24 steps, 22m01s, no fixes. Run 2 took the
 warm-cache path at 18m28s.
 
 - **`main` has a blocking build-validation policy** (policy id 1), and it protects
@@ -59,9 +59,22 @@ warm-cache path at 18m28s.
   `TF402455: Pushes to this branch are not permitted; you must use a pull request`.
   This file said the opposite until 2026-08-29 (*"a direct push to `main` still
   lands"*), which was wrong: in Azure Repos a *blocking* policy does both jobs.
-  Land work with `az repos pr create`, then
-  `az repos pr update --id N --status completed --squash false`, and budget the
-  policy build (~18 min) before the PR can complete.
+  Budget the policy build (~18 min) before a PR can complete.
+- **NEVER LET AZURE DEVOPS MAKE A COMMIT** (DR-257 §11.256.2.6). It stamps the
+  completing account's profile on every merge commit it creates, which is the
+  identity the history rewrite removed, so `--squash false` (and squash, and a
+  rebase that has anything to rebase) re-leaks it on the first PR. Land work so:
+  1. `az repos pr create`, to learn the PR number `N`.
+  2. Locally, on a branch made from the current `origin/main`:
+     `git merge --no-ff <branch> -m "Merge pull request N from <branch> into main"`
+     under `TZ=UTC0`, then push that merge commit as the PR's source branch tip
+     (a fast-forward of the source, so no force). The policy build re-queues on it.
+  3. When it is green, confirm `origin/main` is still the merge's first parent,
+     then complete over REST with `"completionOptions":
+     {"mergeStrategy":"rebase"}`. With nothing to rebase, ADO fast-forwards and
+     `main` becomes your merge commit byte for byte (probed on PR 265).
+  4. Read `main` back: its tip must be your SHA. If `main` moved first, rebuild the
+     merge on the new tip; a real rebase would rewrite every commit as ADO's.
 - The pipeline is the same gate set as `run_local.ps1` minus the two local-only
   checks (`flutter pin`, `tracked sources`), which a clean clone cannot fail by
   construction. **THAT SENTENCE HAD A SECOND HALF UNTIL 2026-10-18**: *"and minus two
@@ -85,7 +98,7 @@ warm-cache path at 18m28s.
   reported the CRLF tree as LF that way. Count bytes in Python before believing either.
 - **CI RUNS ON A SELF-HOSTED AGENT SINCE 2026-08-30**, `{agent-host}` in the
   **`Default`** pool (not `LocalMachine`, which exists and has zero agents). It
-  lives at `C:\Users\riley\Documents\vsts-agent-win-x64-5.277.0` and runs
+  lives at `%USERPROFILE%\Documents\vsts-agent-win-x64-5.277.0` and runs
   **interactively** from `run.cmd`, NOT as a Windows service: `Get-Service
   vstsagent*` finds nothing and `Agent.Listener.exe` has no parent service. So
   a build sits in `queued` until somebody opens that window, and an
@@ -118,7 +131,7 @@ warm-cache path at 18m28s.
   both survive it; **"it builds on a machine that is not the author's" does
   not**, and that is now nobody's gate.
 - Queue a run against any branch:
-  `az pipelines run --org https://{org}.visualstudio.com --project RackMate --id 1 --branch <name>`
+  `az pipelines run --project RackMate --id 1 --branch <name>`
 - **THE SERVICE HAS GONE RED MORE THAN ONCE AND THE COUNT IS NOT WRITTEN HERE**, on this
   file's own rule. This bullet read *"Nothing has ever gone red"*, then
   **"EXACTLY ONCE"** from 2026-09-02, and both were true when written and wrong within
@@ -144,7 +157,7 @@ warm-cache path at 18m28s.
     busy one.
 - **THE DIAGNOSTIC, WHICH COSTS ONE QUERY.** A red on `refs/heads/main` whose commit
   passed as a `refs/pull/*/merge` build is **the environment, not the tree**: the same
-  bytes were green minutes earlier. `195` was `c28ae95`, PR 94's merge, whose own policy
+  bytes were green minutes earlier. `195` was `793839e`, PR 94's merge, whose own policy
   build passed and whose two successors on `main` passed. Check that before reading a
   single log line, and do not reach for a load or contention theory that the failure's
   own signature does not support.
@@ -153,7 +166,7 @@ warm-cache path at 18m28s.
   the PR completes**, not instantly. On 2026-09-12 that gap was polled for about two
   minutes after each of two merges, found empty, and reported first as a broken trigger
   and then as *"a pattern rather than a hiccup"*. **Both builds existed**: `210` on
-  `d16af1da` and `213` on `ea58cf26`, both `individualCI`, both queued shortly after
+  `484c01f1` and `213` on `5cd09e97`, both `individualCI`, both queued shortly after
   their merges, and a manual build was queued on the false premise and duplicated `210`
   for nothing. **Read `reason` on the newest build for that branch before concluding
   anything**: `individualCI` means the trigger fired and `manual` means a person did.
@@ -294,6 +307,16 @@ Org `https://{org}.visualstudio.com`, project **`RackMate`**, area and iteration
 **`RackMate`**, tags `rackpal-sync; task`. States: `To Do`, `Doing`, `Done` (there
 is no `Removed`).
 
+**THE ORGANISATION IS NOT WRITTEN IN THIS TREE** (DR-257): it repeats a mail
+address, and the history was rewritten to remove it. Each machine names it once with
+`az devops configure --defaults organization=https://<name>.visualstudio.com
+project=RackMate`, after which `az` commands need no `--org`; a REST call reads it
+from `git remote get-url origin`. **Do not write it back**, in a file, a commit
+message or a ruling. The same holds for the identity: every commit is
+`Riley <rileytherackpal@proton.me>` at `+0000`, so set `user.name` and `user.email`
+in the repository's own config (the global identity on this machine is not this
+one) and commit with `TZ=UTC0`.
+
 **THE PROJECT IS `RackMate` AND THAT IS DELIBERATE.** DR-096 §11.95.9 rules in
 terms that the rename *"does not rename the Azure DevOps project, the repository or
 the board's area path"*. This file said `RackPal` for all three until 2026-08-28,
@@ -414,7 +437,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
   against each other and is structurally blind to all of them being stale together
   (no count is written here: this bullet gave one until `rackpal_pdfium` joined
   and made it wrong, which is the rule on second copies of a moving number). That
-  is how `v0.2.0` sat through thirty M3 tasks (`bdbbdb4`) and `v0.3.30` through
+  is how `v0.2.0` sat through thirty M3 tasks (`d250082`) and `v0.3.30` through
   forty-six M4 ones. **Derive the number in the commit message**, counted two
   ways that agree, so the next person can re-derive it rather than trust it.
   `M4-0`-style decomposition items are Issues and are not counted.

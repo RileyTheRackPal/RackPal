@@ -14,7 +14,7 @@ the two came apart, and the test certified the defect it was written to forbid.
 
 # What happened
 
-`b48e96c` let the two halves of a symbol's edge reuse one set of comb heights,
+`dcb1eec` let the two halves of a symbol's edge reuse one set of comb heights,
 arguing that the detour sends the near half round one side of the body and the
 far half round the other, so two pins reflected about the middle can never
 overlap.
@@ -149,13 +149,13 @@ mechanisms on principle.
     into core at `#948`)
     (group 1, and its own header recording both wrong versions)
 [2] `docs/12-milestone-board.md` §5.1, the six field reports this came out of
-[3] Commits `b48e96c` (the mirrored comb), `5d53512` (the measurement that
+[3] Commits `dcb1eec` (the mirrored comb), `83ce9b9` (the measurement that
     replaced the count)
 [4] `packages/rackpal_core/test/derived/pull_sheet_clause_test.dart`, and
     `docs/12-milestone-board.md` §5.2's M3-D/4 close
 [5] `packages/rackpal_ui/test/canvas/plan/plan_canvas_screen_test.dart`, the
     group headed *"the mark is a constant size on screen"*, and commit
-    `60893c0` (`#903`), which carries the 7-and-28 measurement
+    `7b43c95` (`#903`), which carries the 7-and-28 measurement
 [6] `packages/rackpal_core/test/scene/plan_scene_test.dart`, the group headed
-    *"the marker is the size its caller says"*, and commit `77eab81` (`#904`),
+    *"the marker is the size its caller says"*, and commit `0cb32c8` (`#904`),
     which deleted the case that certified the retired rule

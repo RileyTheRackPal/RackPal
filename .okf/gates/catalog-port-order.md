@@ -55,5 +55,5 @@ be `FracIndex` owning its own comparison, which is a change to a type used for
 racks, links and sheets as well, and was not made under a gesture ticket.
 
 **It does not migrate saved documents**, and should not: a `TemplateSnapshot`
-is a snapshot (docs/02 §6). Documents written before `d8aedca` keep the order
+is a snapshot (docs/02 §6). Documents written before `5ccb76b` keep the order
 they were captured with.

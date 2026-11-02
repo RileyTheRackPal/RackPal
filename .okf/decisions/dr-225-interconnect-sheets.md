@@ -39,9 +39,9 @@ link-count branch on purpose. Each gap would otherwise have been decided by whoe
 
 # Built
 
-M6-D landed it on 2026-10-03 on branch `m6d-interconnect`: the partition in `499ea59d`, the drawn
-sheet in `561133b5`, the fallback and its note in `4a428856`, the legend rows in `f619470f` and the
-DR-004 guard in `3ab732f7`. Whole House prints `T6.01` RF and `T6.02` Network.
+M6-D landed it on 2026-10-03 on branch `m6d-interconnect`: the partition in `9b611fb0`, the drawn
+sheet in `16e1d1f3`, the fallback and its note in `a37adc64`, the legend rows in `3c30b7e2` and the
+DR-004 guard in `c40509d5`. Whole House prints `T6.01` RF and `T6.02` Network.
 
 **THE FALLBACK ALMOST NEVER FIRES, AND THAT WAS MEASURED.** Drawn and net labels share one layout and
 one type size and differ only in ink reach: Whole House Network 5.18 pt drawn, 5.39 labels; the test

@@ -47,7 +47,7 @@
 // being structurally English-only, which this file has nothing to do with.
 //
 // **THE WRONG ID WAS NOT INVENTED HERE.** It came from docs/09's Plan view
-// import row, written 2026-08-10 in `f423aa3`, and was copied into two
+// import row, written 2026-08-10 in `115b3bc`, and was copied into two
 // source files and two derived documents without anybody reading the row it
 // pointed at. A wrong ruling ID is worse than a missing one for exactly
 // that reason: it resolves. Every check that verifies an ID EXISTS passes,

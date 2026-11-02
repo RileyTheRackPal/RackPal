@@ -820,7 +820,7 @@ ConnectorTypeDef? resolveConnectorToken(Registries registries, String token) {
 /// nine seeded templates do not cover.
 ///
 /// THIS COMMENT USED TO SAY THE OTHER ARM WAS UNREACHABLE. Until M3-C/4
-/// (`5abb8b3`) `registries.outletTemplates` was `{}` in every document,
+/// (`23ea288`) `registries.outletTemplates` was `{}` in every document,
 /// so the literal arm was the only one that could fire and `EXT-CAM-4`
 /// was not reproducible. Nine templates ship now and the corpus's own
 /// label comes out of a blank project.
@@ -892,7 +892,7 @@ Location? _resolveLocation(RackDocument doc, String name) {
 ///
 /// KEYED ON `(locationId, designation)`, WHICH IS WHAT docs/07 §5.3.2 HAS
 /// ALWAYS SAID (DR-053 §11.52.2). This matched on designation alone,
-/// project-wide, until `2c82f04`: `Attic: 2x Cat6 @outlet="WP-1"` on a
+/// project-wide, until `88242f5`: `Attic: 2x Cat6 @outlet="WP-1"` on a
 /// project with a Living Room `WP-1` hung the attic's drops on the LIVING
 /// ROOM's plate, and nothing refused, because as far as the planner was
 /// concerned the outlet resolved. Those drops then carried the wrong room

@@ -183,7 +183,7 @@ void main() {
       // names: `write(read(bytes)) == bytes`.
       //
       // It went unnoticed because `byte_roundtrip_test.dart` overwrote its
-      // own goldens before comparing (since `b94bd60`, M0), so the corpus
+      // own goldens before comparing (since `83988f2`, M0), so the corpus
       // could not see a format change to a stored document. All four
       // fixtures were silently rewritten mid-run and the suite stayed
       // green. See that file's history note.

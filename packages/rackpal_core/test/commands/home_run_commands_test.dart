@@ -4,7 +4,7 @@
 // checks the command in isolation; `AC-018 end to end` checks the thing the
 // task is actually for — that a drop produced by this gesture reaches the
 // schedule with its `W` number and its label, which is what "reachable by
-// construction" has to mean. `301136f` proved the schedule handles unbound
+// construction" has to mean. `70cb8d5` proved the schedule handles unbound
 // ends in a file somebody hand-authored; this proves the app can now MAKE
 // one.
 

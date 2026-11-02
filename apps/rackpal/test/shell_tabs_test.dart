@@ -299,7 +299,7 @@ void main() {
 
     testWidgets('on a document that HAS ports, the sheet draws that '
         "document's own devices", (tester) async {
-      // THE `b560a50` DEFECT AT THE LAYER IT ACTUALLY LIVED IN. It was not
+      // THE `c5669a9` DEFECT AT THE LAYER IT ACTUALLY LIVED IN. It was not
       // the canvas that was wrong first — it was `main.dart`, which passed
       // a hardcoded empty `DiagramScene`. This test goes through the real
       // app shell, so it exercises the same seam.

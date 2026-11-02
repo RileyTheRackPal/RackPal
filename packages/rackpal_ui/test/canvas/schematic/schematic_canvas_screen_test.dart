@@ -1,6 +1,6 @@
 // The Schematic tab, pumped over a real document.
 //
-// THE FIRST GROUP IS THE `b560a50` REGRESSION AT SCREEN LEVEL. That canvas
+// THE FIRST GROUP IS THE `c5669a9` REGRESSION AT SCREEN LEVEL. That canvas
 // was handed a hardcoded EMPTY scene by `main.dart` and manufactured a
 // symbol to fill the hole; every test here mounts the screen the way the
 // app mounts it — a `DocumentController` and nothing else — so the only
@@ -113,7 +113,7 @@ void main() {
     return gesture;
   }
 
-  group('the document reaches the canvas (b560a50)', () {
+  group('the document reaches the canvas (c5669a9)', () {
     testWidgets("the sheet draws the DOCUMENT's devices and no manufactured "
         'symbol', (tester) async {
       await pump(tester);

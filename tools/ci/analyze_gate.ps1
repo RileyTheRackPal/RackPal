@@ -41,7 +41,7 @@
     AND THE TWO TOOLS SEE THE SAME TREE, which is the part worth measuring
     rather than assuming: `flutter analyze` is the command this project runs
     by hand, and this gate runs the other one. Both were captured and
-    compared issue by issue (file, line, rule) at commit 0fa532d -- 195
+    compared issue by issue (file, line, rule) at commit 6554187 -- 195
     apiece, symmetric difference empty. So a number produced here and a
     number produced by `flutter analyze` are the same number, and a
     developer's habitual command agrees with the gate. It also confirms that

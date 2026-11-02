@@ -9,7 +9,7 @@
 // re-measure — and cannot be satisfied by a list that merely compares
 // equal.
 //
-// The second group is the `b560a50` background defect, pinned at the level
+// The second group is the `c5669a9` background defect, pinned at the level
 // where it is a structural property rather than a pixel: the sheet ground
 // is op ZERO of the same list as everything else, so there is no second
 // draw that could pick up a different transform.
@@ -222,7 +222,7 @@ void main() {
     });
   });
 
-  group('the sheet ground (the b560a50 offset defect, structurally)', () {
+  group('the sheet ground (the c5669a9 offset defect, structurally)', () {
     test('the ground is op ZERO of the same list as everything else', () {
       // The deleted canvas drew its background BESIDE its content and
       // therefore under a different transform. There is no "beside" here:
@@ -367,7 +367,7 @@ void main() {
 
     test('the document reaches the plan — the designators on the sheet are '
         "the DOCUMENT's", () {
-      // THE b560a50 DEFECT #1, at the level below the widget: an empty
+      // THE c5669a9 DEFECT #1, at the level below the widget: an empty
       // scene would produce a plan with no text at all, and the canvas
       // that shipped filled that hole by MANUFACTURING `Pin1`/`Pout1`.
       final plan = planFor(const SchematicViewFilter());

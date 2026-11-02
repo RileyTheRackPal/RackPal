@@ -28,7 +28,7 @@ const String kDocumentExtension = '.rppj';
 /// rename.
 ///
 /// **`.rackpal` IS NOT HERE, AND ITS ABSENCE IS DR-179 §11.178.1's
-/// CORRECTION.** This list held it from `0e2c5bb` until 2026-09-15: the
+/// CORRECTION.** This list held it from `3edc316` until 2026-09-15: the
 /// product rename rewrote DR-015's `.rackmate`, which shipped builds
 /// really wrote, into a spelling no build ever produced. The back-compat
 /// path then pointed at nothing, and a project saved before 2026-08-02

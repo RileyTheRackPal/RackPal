@@ -1,7 +1,7 @@
 // Sugiyama phases 0–3, tested as an algorithm — no document, no drawing.
 //
 // The two named tests at the top exist because the DELETED implementation
-// (`b560a50`) failed exactly there and shipped behind zero tests: it threw
+// (`c5669a9`) failed exactly there and shipped behind zero tests: it threw
 // `ConcurrentModificationError` on any graph with an edge, and it divided
 // by zero on a single-node layer. Neither of those is a hypothetical
 // regression; both are the regression.

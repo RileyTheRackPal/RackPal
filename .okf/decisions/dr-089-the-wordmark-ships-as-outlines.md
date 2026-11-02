@@ -59,7 +59,7 @@ identical ops, so every gate passed. The licence and that field bug point the sa
 ## The lockup
 
 **Deprecation**: this section describes the RackMate lockup as DR-089 shipped it. DR-096
-re-spelled it at `1b9f861e` and DR-117 §11.116.1 settled the result; see
+re-spelled it at `1650f0fb` and DR-117 §11.116.1 settled the result; see
 [Since](#since-the-rename) below for the mark that ships now. Kept because the ink-flush
 reasoning is why PAL was *not* tracked to match.
 
@@ -90,7 +90,7 @@ M8-A reaches for a code-signing certificate. See
 
 DR-096 §11.95.4 made the letterforms an outside art dependency: nobody working in this
 tree can cut a new letter, because the tool that cuts them is the font and the font may
-not be here. RackPal arrived as paths at `1b9f861e`.
+not be here. RackPal arrived as paths at `1650f0fb`.
 
 PAL is 812 units **narrower** than RACK by ink, so the old solve would need +406/1000 em
 and PAL would read as three initials. So RACK sets the measure **untracked**, the rule

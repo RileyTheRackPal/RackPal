@@ -1376,7 +1376,7 @@ void main() {
       expect(
         channel.startU,
         1,
-        reason: 'the only producer in the product wrote U 0 until c95224d',
+        reason: 'the only producer in the product wrote U 0 until da60884',
       );
       expect(channel.endU, 12);
       expect(channel.side, ZeroUChannelSide.rearLeft);

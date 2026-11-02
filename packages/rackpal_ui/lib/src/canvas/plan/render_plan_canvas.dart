@@ -20,7 +20,7 @@
 // machinery never mentioned (docs/12 §5.9.7.4).
 //
 // COPIED RATHER THAN GENERALISED, DELIBERATELY. The schematic's own header
-// records why the second one was a copy: the canvas deleted at `b560a50`
+// records why the second one was a copy: the canvas deleted at `c5669a9`
 // invented a SECOND pattern and got all three of its load-bearing details
 // wrong. The shared part here is the clip layer, the transform layer, the
 // `LayerHandle` lifecycle, the viewport listener and the paint-offset
@@ -33,7 +33,7 @@
 // ═════════════════════════════════════════════════════════════════════
 // The spike at `plan_canvas_reuse_spike_test.dart` ran one mutation that
 // SURVIVED: dropping the paint offset out of the transform below leaves
-// every widget case green. That is `b560a50`'s shipped defect reproduced
+// every widget case green. That is `c5669a9`'s shipped defect reproduced
 // on the first attempt, and it is invisible for a structural reason --
 // this object is `isRepaintBoundary`, so Flutter hands `paint` an
 // `Offset.zero` and carries the on-screen position on the layer, and a

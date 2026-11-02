@@ -51,7 +51,7 @@ the unknown counts G4 requires of every rollup. A milestone that shipped an
 unordered, untotalled data structure would hand M6 the design work along with
 the rendering, and the seam would have become an excuse.
 
-**Demonstrated at M3-D/4** (`pull_sheet_clause_test.dart`, `59ea14a`). The
+**Demonstrated at M3-D/4** (`pull_sheet_clause_test.dart`, `50cdd23`). The
 finding there is worth carrying: every part of clause 3 already had passing
 tests and **none of them had ever been pointed at the same document**. Three
 unit tests over three fixtures demonstrate three mechanisms; the clause is a

@@ -10,10 +10,10 @@
 > register is therefore no longer a deferral ledger — it is the **work list**, and its items are
 > to be cleared, not merely tracked.
 
-**Compiled 2026-07-28** against `0f83628`, by direct inspection. **Revised 2026-07-29** against
-`b36c04c`: D7 cleared but its gate found incomplete (§3.1), D9 and the byte-exactness paragraph
+**Compiled 2026-07-28** against `ae8e85b`, by direct inspection. **Revised 2026-07-29** against
+`9dd514f`: D7 cleared but its gate found incomplete (§3.1), D9 and the byte-exactness paragraph
 **corrected** (both overstated the debt), D13 and D14 added, and §3.5 added to cost M3 against this
-list. **Re-read 2026-08-01** against `91cd487`, after M2-F, see §2.1: every row still describes the
+list. **Re-read 2026-08-01** against `3c5f45a`, after M2-F, see §2.1: every row still describes the
 tree, three citations have drifted by a line or two and are corrected in place, and **§3.1's hole
 grew by nine bindings**. Every claim below cites what was read. Where a number is an estimate rather
 than a measurement it says so, the distinction is the point, and §10.10's own 3–5 week figure is an
@@ -55,7 +55,7 @@ Cost column is an **estimate**, not a measurement, unless marked otherwise.
 | **D2** | **Native file dialog.** RackPal drives `IFileDialog` itself from `windows/runner/file_dialog_channel.cpp` + `.h`, deliberately, `file_selector` was removed on purpose (`pubspec.yaml:8-20`). macOS needs an `NSOpenPanel`/`NSSavePanel` channel behind the existing `FilePicker` interface | `windows/runner/` | **largest item**: days |
 | **D3** | **`path_provider_windows`** must gain a macOS answer at the one call site | `path_provider_windows` in `apps/rackpal/pubspec.yaml` (cited by name, since the line drifted from `:70` to `:89` by 2026-10-17) | hours |
 | **D4** | **CI has one job, pinned to Windows.** The `windows_ci` job in `azure-pipelines.yml`, which since 2026-08-30 runs on a self-hosted Windows agent in the `Default` pool where it once named `vmImage: 'windows-2022'`. Needs a macOS job, and that job cannot use the Windows agent. Note the pipeline's own header comment already anticipates a matrix: *"that is a later question"*; **it is now this question**. **A macOS JOB EXISTS SINCE 2026-10-17 (DR-255, §2.5)**: `azure-pipelines-macos.yml`, definition 2, a Microsoft-hosted `macOS-15` image run as an optional PR check, never blocking, at a measured 27.2 minutes. What it lacks is a build: D1 and D6. **AND IT IS AN INTEL MACHINE**: build 486's forensics step printed `15.7.9 x86_64`, so nothing it proves reaches Apple Silicon (§2.6) | `azure-pipelines.yml`; `azure-pipelines-macos.yml` | **job done**; build waits on D1, D6; arm64 unmeasured |
-| **D5** | **Gate scripts are PowerShell.** Six `.ps1` under `tools/ci/`. Likely runnable under `pwsh` on macOS unmodified, **verify before budgeting a rewrite**. **VERIFIED ON BUILD 481 (§2.5)**: one of the six needed changing, `ensure_flutter.ps1`, which probed `flutter.bat` and fetched the Windows archive; it now chooses by OS (`554cdd04`). The other five ran unmodified, and `python` is supplied by a pipeline step | `tools/ci/` | **done** |
+| **D5** | **Gate scripts are PowerShell.** Six `.ps1` under `tools/ci/`. Likely runnable under `pwsh` on macOS unmodified, **verify before budgeting a rewrite**. **VERIFIED ON BUILD 481 (§2.5)**: one of the six needed changing, `ensure_flutter.ps1`, which probed `flutter.bat` and fetched the Windows archive; it now chooses by OS (`323c8a09`). The other five ran unmodified, and `python` is supplied by a pipeline step | `tools/ci/` | **done** |
 | **D6** | ~~**`verify_windows_build.ps1`** is Windows-specific by name and purpose; needs a macOS counterpart~~ **CLEARED 2026-10-19 (#463, section 2.8)**: `tools/ci/verify_macos_build.ps1` gates the bundle definition 2 builds: the executable, the exact `Contents/Frameworks` set as measured, the executable and both frameworks universal, the dylib's two slices and its signature, no JNI library, the starters packaged | `tools/ci/verify_macos_build.ps1` | **done** |
 | **D7** | ~~KEYBOARD MODIFIERS~~: **CLEARED, GATE INCOMPLETE.** Was 43 hard-coded `SingleActivator` bindings assuming `Ctrl`, across six files. Now a 35-row `kKeymap` registry whose primary modifier resolves once, in `KeyBinding.activatorFor(TargetPlatform)`, through `defaultTargetPlatform`. **Zero `SingleActivator` instances remain outside the registry today**, but see §3.1 and §2.1: the ban is enforced in **one file**, and not in the package where M3 is built, and M2-F added **nine** more rows to that ungated package (35 → 44), **~~gate owed~~ PAID at #94, §2.2: `keymap_source_ban_test.dart` scans all of `rackpal_ui/lib`, comments stripped, three constructors banned, mutation-verified** | `packages/rackpal_ui/lib/src/keymap/keymap.dart` | **done** |
 | **D8** | **Code signing.** DR-006 rules Windows self-signing; macOS needs **notarisation and stapling**, which D10 names and §12.9 explicitly leaves *"unaffected and still binding"* | canon `:2696`, `:5875` | days + Apple Developer enrolment lead time |
@@ -63,11 +63,11 @@ Cost column is an **estimate**, not a measurement, unless marked otherwise.
 | **D10** | **`window_manager` / `screen_retriever_windows`** for geometry restore. `window_manager` is cross-platform; the pinned `screen_retriever_windows` transitive is not | `screen_retriever` and `window_manager` in `apps/rackpal/pubspec.yaml` (by name: `:98` and `:106` on 2026-08-01, `:122` and `:130` on 2026-10-17) | hours |
 | **D11** | **A second print test matrix.** AC-054's greyscale laser check is a physical act on a physical printer, and no agent can perform it | §10.10 | manual |
 | **D12** | **Path-length semantics.** `exceedsWindowsMaxPath` is already gated behind `isWindows` (`atomic_writer.dart:464`), so the mechanism exists; macOS needs its own answer (4096 bytes, not 259 chars) | `atomic_writer.dart` | hours |
-| **D13** | ~~**The file dialog takes no file-type filter.** `COMDLG_FILTERSPEC` is hard-coded to `.rackpal` and `SetDefaultExtension(L"rackpal")` fires on **both** dialogs, inside `ConfigureDialog`, which both branches call. The Dart interface passes only `confirmButtonText`, `suggestedName`, `initialDirectory`.~~ **CLEARED at `2180a35` (M3-F/4, `#162`), CONFIRMED and WIDENED at M4-M1 (`#234`). See §2.3.** Dart sends a KIND and the runner keeps a table of them. **This row was three separate false statements about the tree for the whole of M4**, which is the failure §2's own preamble names: a stale row is trusted. The instruction that survives is the one aimed at D2: **the macOS dialog must be born taking the kind**, which is `#457` | `file_dialog_channel.cpp` `kFileKinds`; `file_picker.dart` `enum FileDialogType` | **done**, `#457` outstanding |
+| **D13** | ~~**The file dialog takes no file-type filter.** `COMDLG_FILTERSPEC` is hard-coded to `.rackpal` and `SetDefaultExtension(L"rackpal")` fires on **both** dialogs, inside `ConfigureDialog`, which both branches call. The Dart interface passes only `confirmButtonText`, `suggestedName`, `initialDirectory`.~~ **CLEARED at `5c5f68f` (M3-F/4, `#162`), CONFIRMED and WIDENED at M4-M1 (`#234`). See §2.3.** Dart sends a KIND and the runner keeps a table of them. **This row was three separate false statements about the tree for the whole of M4**, which is the failure §2's own preamble names: a stale row is trusted. The instruction that survives is the one aimed at D2: **the macOS dialog must be born taking the kind**, which is `#457` | `file_dialog_channel.cpp` `kFileKinds`; `file_picker.dart` `enum FileDialogType` | **done**, `#457` outstanding |
 | **D14** | **Locale-dependent sheet size.** docs/08:509 requires *"Non-US platform locale substitutes A4/A3"*. Unimplemented, `SheetSize` has two values, neither A4. **Not macOS-specific**: a Windows machine in a metric locale hits it, which is why it went unnoticed. Recorded here because it is the one genuinely platform-dependent input to PDF geometry, and §2's closing paragraph was worrying about floats and fonts while this sat unlisted | docs/08:509; `sheet_def.dart:38-45` | hours |
 | **D15** | **The PDF rasteriser for the Plan view's underlay import**, and it is the entry **DR-018 §11.17.4 predicted verbatim** before there was a ruling to hang it on: *"`docs/13` gains an entry if the chosen import path is a Windows-only rasterizer, because DR-009 puts macOS in v1."* DR-029 buys PDF import, so it does. ~~**DECIDED AT PLAN-D/1, 2026-09-07: PDFium, through a Dart wrapper (`pdfrx`/`pdfx`), NOT `Windows.Data.Pdf`.**~~ **THE ENGINE STANDS AND THE WRAPPER DID NOT SURVIVE (re-read 2026-10-17).** DR-138 §11.137.1 verified what this row left open and refused `pdfrx` twice: every route downloads pdfium at build time, which CR-100 forbids in its own words, and 2.x needed a newer Flutter than the pin. DR-145 and DR-148 deferred the rasteriser, and **DR-153 §11.152 built it as a direct `dart:ffi` binding over a vendored binary** (`packages/rackpal_pdfium`). **D9 and D15 are now the same fact**: one vendored pdfium serves the underlay import (this row) and the export preview (D9), and the macOS debt for both is a single thing, a macOS binary and the loader that finds it, carried by Story #61. `Windows.Data.Pdf` is still rejected, for the reason below. DR-037 §11.36.8 ruled this a decision needing the tree read rather than a user, and the tree says two things. **The cost is already committed**: the D9 row (above this one) is the vendoring of pdfium per platform (CR-100), first scheduled for M8's print-preview button, so choosing it here made the two ONE vendoring problem paid once and moved D9's schedule earlier rather than adding a second debt. **And `Windows.Data.Pdf` has no macOS answer at all**, so under DR-009 it guarantees a second rasteriser has to be chosen before v1 ships, which is a per-platform cost where the other is shared. **THE GRAIN THIS RUNS AGAINST IS RECORDED RATHER THAN DISCOVERED AT M8**: this project removed `file_selector` and the `path_provider` umbrella partly because they dragged an Android JNI bridge and `dartjni.dll` into a Windows Release build, and `flutter_dependency_test.dart` fails the build if that DLL returns. A multi-megabyte unsigned native binary in a self-signed portable distribution (DR-006) is the same shape of problem, and CR-100's answer is the same: **vendor the binary, never fetch it at build time**, which is exactly what docs/03 §10.1 already says disqualifies `printing`'s own CMake. ~~**TWO THINGS ARE UNVERIFIED AND ARE `PLAN-D/3`'s TO ESTABLISH BEFORE THE DEPENDENCY GOES `in use`**: the WRAPPER's licence (PDFium itself is BSD-3-Clause and clean under DR-036; the Dart package around it is a separate question), and whether its build fetches pdfium or accepts a vendored one. Until then docs/03 §10.1 carries it as `planned`.~~ **BOTH WERE ESTABLISHED, AND THE SECOND ENDED THE WRAPPER** (DR-138 §11.137.1: it fetches at build time and cannot accept a vendored binary), so no wrapper is in any pubspec. **Note what changes and what does not**: a PDF is rasterised at **import** and the member written to the zip is still PNG or JPEG, so `PlanUnderlay.format` keeps two values and `rackpal_core` needs no decoder (DR-029 §11.28.12). The debt is an import path, not a model change | canon §11.28.5, §11.36.8, §11.137, §11.152; docs/15 §2; the D9 row above | **the same days as D9, not additional to them**: it pulled the binary forward from M8. **Paid with D9 at #468 (§2.7)**, the bundle install excepted |
 
-### 2.1 Re-read against `91cd487` (2026-08-01, after M2-F)
+### 2.1 Re-read against `3c5f45a` (2026-08-01, after M2-F)
 
 **No row was found overstating the debt this time**, which is the outcome the 2026-07-29 revision
 was checking for and did not get. What did move:
@@ -158,7 +158,7 @@ open waits on a build (D1).
 > A4), and it is **not macOS-specific**: a Windows machine in Germany hits it. It belongs on this
 > list and was missing from it.
 
-### 2.3 D13 is CLEARED, and it had been cleared for weeks (`2180a35`, `#162`; confirmed `#234`)
+### 2.3 D13 is CLEARED, and it had been cleared for weeks (`5c5f68f`, `#162`; confirmed `#234`)
 
 **THE ROW WAS WRONG IN EVERY CLAUSE IT MADE, AND THAT IS THE FINDING.** §2's preamble rules that
 *"a row that has stopped describing the tree is worse than a missing row, because it is trusted"*.
@@ -169,10 +169,10 @@ Measured against `file_dialog_channel.cpp` on 2026-08-29, clause by clause:
 
 | The row said | The tree says |
 |---|---|
-| *"takes no file-type filter"* | `StringArg(args, "fileType")` has been read since `2180a35` |
-| *"hard-coded to `.rackpal`"* | `.rackpal` has not been the project extension since DR-015 (`dc22ddc`), and the entry reads `*.rmpj;*.rackpal` |
+| *"takes no file-type filter"* | `StringArg(args, "fileType")` has been read since `5c5f68f` |
+| *"hard-coded to `.rackpal`"* | `.rackpal` has not been the project extension since DR-015 (`ac64fcf`), and the entry reads `*.rmpj;*.rackpal` |
 | *"`SetDefaultExtension(L"rackpal")` fires on both dialogs"* | it fires once, on the value the chosen kind carries |
-| *"The Dart interface passes only `confirmButtonText`, `suggestedName`, `initialDirectory`"* | `FileDialogType` is a fourth argument and has been since `2180a35` |
+| *"The Dart interface passes only `confirmButtonText`, `suggestedName`, `initialDirectory`"* | `FileDialogType` is a fourth argument and has been since `5c5f68f` |
 
 **WHAT M4-M1 ACTUALLY ADDED, stated so this closure is not read as more than it is.** The
 parameterisation was M3-F/4's. `#234` added the `device` kind that `.rmdx` needs, turned two
@@ -183,7 +183,7 @@ unrecognised kind does not throw and does not open an empty dialog; it falls bac
 filter, so an `Export device template…` would offer `*.rmpj` and read as a mis-wired feature
 rather than an un-taught runner.
 
-**HOW A ROW STAYS WRONG FOR WEEKS.** `2180a35`'s message says *"closing D13 before D2"* in its
+**HOW A ROW STAYS WRONG FOR WEEKS.** `5c5f68f`'s message says *"closing D13 before D2"* in its
 subject line, so the author knew which register row they were closing and did not edit the
 register. The register is not under any gate: nothing compares a row against the tree, and
 `re-read a task against canon` is aimed at rulings rather than at source. **The countermeasure is
@@ -221,12 +221,12 @@ Name the thing, and let the reader search for it.
 **DR-255 (canon §11.254) gave D4 a job**: `azure-pipelines-macos.yml`, definition 2, on a
 Microsoft-hosted `macOS-15` image, run as an optional PR check because the organisation's hosted
 allowance is one job of 1,800 minutes a month and a blocking check would let that allowance decide what
-merges. Build 481 was its first run, on `macos-ci-459` at `9fc65910`, and it ran **before** a single
+merges. Build 481 was its first run, on `macos-ci-459` at `d68750d3`, and it ran **before** a single
 test was changed, so it measured the tree rather than a tree adjusted to pass.
 
 **D5 is answered, and the register's guess was nearly right.** Of the six `.ps1`, **one** could not run
 on macOS, and reading said so before the run: `ensure_flutter.ps1` probed `flutter.bat`, fetched the
-Windows archive and extracted with `System32\tar.exe`. It now chooses each by OS (`554cdd04`), and on
+Windows archive and extracted with `System32\tar.exe`. It now chooses each by OS (`323c8a09`), and on
 its first macOS execution it installed the pin and verified the framework revision. The other five ran
 unmodified. `verify_windows_build.ps1` is not run there, since there is nothing to build (D1, D6). The
 interpreter name was the only other gap, `python` against an image that promises `python3`, and one
@@ -283,7 +283,7 @@ left that the tree cannot pin: **the SDK's zlib**, and **the platform libm** beh
 `math.cos` and `math.pow`, which the scene and `pdf` itself call before `PdfNum` rounds to five
 places.
 
-**Build 486, on `6b794ea5`: all ten cases passed, and so did every suite.** The four starters
+**Build 486, on `1a73cbac`: all ten cases passed, and so did every suite.** The four starters
 came out of macOS as the same files Windows wrote, byte for byte, so the content streams are
 identical too, and the zlib and libm differences that could have moved them did not. No D-row is
 owed for it.
@@ -502,7 +502,7 @@ not even macOS-specific.
 
 **Two ordering consequences worth acting on before the big items.** ~~**D13 before D2**: widening
 the dialog contract after the macOS implementation exists means writing it twice.~~ **BOUGHT, and
-earlier than this paragraph knew** (§2.3): `2180a35` made the filter a kind before any macOS runner
+earlier than this paragraph knew** (§2.3): `5c5f68f` made the filter a kind before any macOS runner
 existed, and `#234` made the kinds a table. What D2 inherits is a shape rather than a warning, and
 `#457` is where it gets carried across. And **the §3.1 gate before M3-C**, which is the largest
 remaining binding surface in v1 and lands in the package the gate does not cover.

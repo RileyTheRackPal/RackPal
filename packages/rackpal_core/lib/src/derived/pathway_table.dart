@@ -30,7 +30,7 @@
 // different questions. [PathwayTable.unknownLengthCount] is how many
 // pathways nobody has measured. [PathwayTable.unroutedRunCount] is how
 // many cables run through no pathway at all — which was EVERY cable in
-// this product until `bcb1b31`, and is the number that says whether this
+// this product until `8eaee44`, and is the number that says whether this
 // tab is describing the job or a corner of it.
 import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/derived/equipment_list.dart' show kUnknownCell;
@@ -208,7 +208,7 @@ PathwayTable buildPathwayTable(RackDocument doc) {
 
   final pathways = doc.pathways.values.toList()
     // TOTAL, ENDING IN THE ID. Two pathways can share an `order` — the
-    // drop-line planner allocated exactly that before `b093062` fixed it
+    // drop-line planner allocated exactly that before `14ae1e2` fixed it
     // — and a comparator returning 0 there would leave their positions to
     // map iteration order, which §8.4 forbids.
     ..sort((a, b) {

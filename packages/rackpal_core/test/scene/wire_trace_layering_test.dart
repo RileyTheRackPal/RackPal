@@ -395,7 +395,7 @@ void main() {
       // wire; it does nothing for the wire crossing the flag's BODY, which
       // a 12% fill lets straight through. `compositeOver` resolves the
       // specified 12% against the sheet at build time — the same answer
-      // `net_label_layer` reached at `ff712d2`, and the reason that
+      // `net_label_layer` reached at `e981272`, and the reason that
       // function is public rather than transcribed here.
       final fills = <int>{
         for (final op in layer.ops.whereType<OpRoundRect>())

@@ -11,7 +11,7 @@
 //
 // A REAL DOCUMENT, from the REAL seed catalog and the REAL seeded
 // registries — not a hand-built graph. That is the whole point of it: the
-// canvas deleted at `b560a50` failed because a hardcoded EMPTY scene
+// canvas deleted at `c5669a9` failed because a hardcoded EMPTY scene
 // reached it and it then MANUFACTURED a symbol, and a test whose fixture
 // was invented inside the test would be exactly as detached from a
 // document as that canvas was. Every template here is one `buildSeedCatalog`

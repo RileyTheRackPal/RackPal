@@ -110,7 +110,7 @@ $ErrorActionPreference = 'Stop'
 #
 # THEY ARE THE COUNTS OF THE TREE THEY SHIP WITH, and that is the whole
 # point of the gate. The first version of this table was measured at commit
-# 0fa532d and left there while four more commits landed, which put 131 tests
+# 6554187 and left there while four more commits landed, which put 131 tests
 # of slack under the floors -- up to 90 core, 28 ui and 13 app tests could
 # have been deleted or stopped being discovered while this script logged a
 # cheerful "+N" and exited 0. A floor three commits behind is a loosened

@@ -309,7 +309,7 @@ final class SignalStyle {
 ///
 /// THE RESOLUTION CHAIN, and every link in it can fail:
 /// `family` → `registries.signalFamilies[..]` → `.domain` →
-/// `registries.signalDomains[..]`. Before DR-010 (`a984add`) the FIRST
+/// `registries.signalDomains[..]`. Before DR-010 (`ec746e8`) the FIRST
 /// step failed in every document ever written, because the registries
 /// shipped empty — so the degraded path below is not hypothetical, it is
 /// what every pre-DR-010 file still does.

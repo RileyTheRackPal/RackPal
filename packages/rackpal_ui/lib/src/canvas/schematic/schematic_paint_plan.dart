@@ -5,7 +5,7 @@
 // ═════════════════════════════════════════════════════════════════════
 // WHY EVERYTHING GOES THROUGH ONE LIST, INCLUDING THE BACKGROUND
 // ═════════════════════════════════════════════════════════════════════
-// The schematic canvas that was deleted at `b560a50` painted its
+// The schematic canvas that was deleted at `c5669a9` painted its
 // background fill IGNORING its own paint offset while the symbols DID get
 // offset — so the sheet ground covered the toolbar and one box appeared to
 // float over it. Twelve consecutive `fix:` commits never touched that line,
@@ -64,7 +64,7 @@ const double kSheetGroundMarginGu = 8;
 /// about it.
 ///
 /// Immutable and rebuilt whole on every change. That is deliberate and it
-/// is the second half of the `b560a50` post-mortem: the deleted canvas
+/// is the second half of the `c5669a9` post-mortem: the deleted canvas
 /// guarded every render-object setter with `identical()` against a `final
 /// List` that was mutated in place, so `updateRenderObject` could never
 /// mark anything needing paint and no `setState` reached the screen. A

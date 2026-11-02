@@ -15,7 +15,7 @@
 // §11.1 before continuing.
 //
 // ── THIS IS A REBUILD, NOT A RESTORATION ────────────────────────────────
-// `rackpal_ui/canvas/schematic/sugiyama.dart` was deleted at `b560a50`
+// `rackpal_ui/canvas/schematic/sugiyama.dart` was deleted at `c5669a9`
 // because it was dead AND wrong, and two of its defects are the reason
 // specific lines below look the way they do:
 //   * its layer assignment iterated a `List` with `for-in` while calling

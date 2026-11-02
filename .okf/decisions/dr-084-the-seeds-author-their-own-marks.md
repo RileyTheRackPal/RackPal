@@ -23,7 +23,7 @@ keeps doing its job for every template nobody has authored.
 
 # The measurement is the whole argument
 
-A probe over `buildSeedCatalog()` at `64b953c`:
+A probe over `buildSeedCatalog()` at `8a7723a`:
 
 | | |
 |---|---|
