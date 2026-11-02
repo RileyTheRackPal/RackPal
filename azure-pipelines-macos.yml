@@ -211,6 +211,18 @@ jobs:
         workingDirectory: packages/rackpal_core
         condition: succeededOrFailed()
 
+      # DR-258 (#1287): the identity gate, unshallowing commits only first.
+      # Why each line is as it is: the same step in azure-pipelines.yml.
+      - pwsh: |
+          git -c "http.extraheader=AUTHORIZATION: bearer $env:SYSTEM_ACCESSTOKEN" fetch --quiet --no-tags --unshallow --filter=tree:0 origin "$env:BUILD_SOURCEBRANCH"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/identity_gate.py --ci
+          exit $LASTEXITCODE
+        displayName: 'Gate: identity and UTC offset (DR-258)'
+        condition: succeededOrFailed()
+        env:
+          SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+
       - pwsh: |
           pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackpal_core -Runner dart -Name rackpal_core -Tests untimed -OutDir '$(ciOutDir)'
           exit $LASTEXITCODE

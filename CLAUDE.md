@@ -14,6 +14,12 @@ file's own rule about a second copy of a moving number: it said *"fifteen"*
 until M5-G4 added the AC-051 pair gate and made it sixteen. Count the
 `Invoke-Gate` calls in the script. Notes that cost real time:
 
+- **The identity gate fails a commit made by anybody else, or at any offset but
+  `+0000`** (DR-258, `tools/identity_gate.py`). The usual cause is a shell or IDE
+  that started before `TZ=UTC0` was set, or a clone with no `user.email` of its
+  own. Mend unpushed commits with the rebase the gate prints; a failure listing
+  **thousands** of commits means a pre-rewrite ref was merged, and nothing from
+  that tree may be pushed anywhere.
 - **Analyzer is a ratchet pinned to an exact number** in
   `tools/ci/analyze_info_baseline.txt`. **Read the pin from that file**, which
   carries its own history of every move and why; do not trust a number written

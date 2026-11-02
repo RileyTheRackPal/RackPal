@@ -704,6 +704,26 @@ jobs:
         workingDirectory: packages/rackpal_core
         condition: succeededOrFailed()
 
+      # DR-258 (#1287): every commit reachable from HEAD is the identity
+      # DR-257 ruled, at +0000. The checkout above is fetchDepth 1, and a gate
+      # that sees one commit vouches for history it never read, so this step
+      # first fetches the rest WITHOUT trees or blobs (--filter=tree:0:
+      # commits only, 3.8 s for the whole history when measured). The checkout
+      # keeps no credentials (persistCredentials: false), so the job's own
+      # token is passed for this one fetch and nowhere else. LAST among the
+      # gates because the partial fetch makes the clone a promisor; nothing
+      # below reads history. --ci skips only Azure DevOps' own PR merge
+      # commit, which never lands on main (the script's header says how).
+      - pwsh: |
+          git -c "http.extraheader=AUTHORIZATION: bearer $env:SYSTEM_ACCESSTOKEN" fetch --quiet --no-tags --unshallow --filter=tree:0 origin "$env:BUILD_SOURCEBRANCH"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/identity_gate.py --ci
+          exit $LASTEXITCODE
+        displayName: 'Gate: identity and UTC offset (DR-258)'
+        condition: succeededOrFailed()
+        env:
+          SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+
       # ==================================================================
       # THE FIVE SUITES
       # ==================================================================
