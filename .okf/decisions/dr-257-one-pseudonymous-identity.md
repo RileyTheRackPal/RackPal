@@ -40,8 +40,8 @@ binary, a tip-to-tip diff of equal lines in and out, and the full local gate.
 Every commit hash changed; 1,020 citations in the tree were re-pointed through filter-repo's commit
 map, and blobs in history keep the hashes they were written with. Board items naming a closing commit
 (§8.8) still name the earlier one. Azure DevOps keeps the earlier objects in its pull request refs,
-which is private. The commit times still show working hours. A gate refusing any other identity or
-offset is offered and not ruled.
+which is private. The commit times still show working hours. The gate refusing any other identity or
+offset was offered here and ruled the same day as [DR-258](dr-258-the-identity-gate.md).
 
 # Related
 

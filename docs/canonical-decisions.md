@@ -25085,6 +25085,44 @@ request refs: it is private, and its records are the board's. Board items that n
 (§8.8) by its earlier hash. A gate that refuses a commit with any other identity or offset, which is
 offered and not ruled here.
 
+### 11.257 DR-258 · A gate refuses any commit with another identity or an offset other than +0000
+
+**Settled by the user on 2026-11-02**, from `#1287` (SCRUB-1), answering the gate DR-257 §11.256 offered
+and did not rule.
+
+**11.257.1 THE FACTS.** DR-257 rewrote the history and nothing kept it so. On the day it landed, three
+routes back were each one step away: a commit from an IDE started before `TZ=UTC0` reached its
+environment; a clone whose repository-local identity was never set, on a machine whose global identity
+is another one; and a merge from a ref cut before the rewrite, which restores every old commit at once.
+None is visible in a diff, all of them land on `main` silently, and the next push to the public remote
+cannot be withdrawn. The CI clone is `fetchDepth: 1`, so a check of history there sees one commit, and on
+a pull request build that one commit is the service's own merge, stamped with the identity DR-257
+removed.
+
+**11.257.2 RULED BY THE USER, ON THE RECOMMENDATION.**
+
+1. **`tools/identity_gate.py` fails on any commit reachable from `HEAD` whose author or committer is not
+   the identity DR-257 ruled, or whose author or committer offset is not `+0000`.** It names only the
+   identity it allows: a tracked list of the forbidden ones would publish them.
+2. **It runs in `run_local.ps1` and in both pipelines**, so a bad commit is caught on the machine that
+   made it as well as on the service.
+3. **A shallow clone fails the gate.** The pipeline step first fetches the whole history as commits only
+   (`--filter=tree:0`, measured at 3.8 s on 2026-11-02), passing the job's token for that fetch alone
+   since the checkout keeps none.
+4. **On a pull request build, `HEAD` alone is skipped, and only when it is a merge one of whose parents is
+   the build's source commit.** That commit is the service's and never lands (§11.256.2.6). A source
+   commit that is wrong is still refused.
+5. **It runs planted cases first**, thirteen throwaway repositories each with exactly one defect, so a
+   green run is evidence that it can fail.
+
+**11.257.3 WHAT IT PROVED BEFORE IT LANDED.** Thirteen planted cases correct. All 1,702 commits of `main`
+pass. Pointed at the pre-rewrite tip, it refused all 1,698 commits on all four identity fields, and the
+offset on exactly the 1,467 the census of §11.256.1 had counted, two independent counts that agree.
+
+**What this does not rule.** The CONTENT of the tree: a scrubbed name typed back into a file is not a
+header, and a check for it would have to name it. Tags, which no ref here creates. How a commit that has
+already reached a remote is mended, which is a history rewrite and a ruling of its own.
+
 ---
 
 ## 12. Superseded rulings

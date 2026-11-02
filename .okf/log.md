@@ -2,6 +2,14 @@
 
 ## 2026-11-02
 
+Entry 149.
+
+* **Added**: [DR-258](decisions/dr-258-the-identity-gate.md) and [the identity gate](gates/identity.md) (`#1287`):
+  every commit reachable from HEAD is the DR-257 identity at +0000, locally and in both pipelines.
+* **Note**: **A HISTORY GATE ON A DEPTH-1 CLONE IS A GATE THAT ONLY SAYS YES.** CI sees one commit, and on a PR
+  build that commit is the service's own. The gate fails a shallow clone outright, and the step fetches commits
+  only (`--filter=tree:0`) before it runs.
+
 Entry 148.
 
 * **Added**: [DR-257](decisions/dr-257-one-pseudonymous-identity.md), one pseudonymous identity at UTC across the
