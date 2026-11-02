@@ -1,5 +1,16 @@
 # Update Log
 
+## 2026-11-02
+
+Entry 148.
+
+* **Added**: [DR-257](decisions/dr-257-one-pseudonymous-identity.md), one pseudonymous identity at UTC across the
+  whole history, ahead of a secondary GitHub remote (`#1286`). Changed: [the pipeline itself](gates/the-pipeline-itself.md),
+  whose organisation is now named on each machine.
+* **Note**: **A MAILMAP REACHES TWO LEAKS OF SEVEN.** The census over every blob, message and tag found the rest in
+  fixtures, a worked example, the corpus, a binary `.pyc` that text replacement skips, and the offset on every
+  timestamp. Census the objects, not the log.
+
 ## 2026-10-19
 
 Entry 147.

@@ -85,7 +85,7 @@ warm-cache path at 18m28s.
   reported the CRLF tree as LF that way. Count bytes in Python before believing either.
 - **CI RUNS ON A SELF-HOSTED AGENT SINCE 2026-08-30**, `{agent-host}` in the
   **`Default`** pool (not `LocalMachine`, which exists and has zero agents). It
-  lives at `C:\Users\riley\Documents\vsts-agent-win-x64-5.277.0` and runs
+  lives at `%USERPROFILE%\Documents\vsts-agent-win-x64-5.277.0` and runs
   **interactively** from `run.cmd`, NOT as a Windows service: `Get-Service
   vstsagent*` finds nothing and `Agent.Listener.exe` has no parent service. So
   a build sits in `queued` until somebody opens that window, and an
@@ -118,7 +118,7 @@ warm-cache path at 18m28s.
   both survive it; **"it builds on a machine that is not the author's" does
   not**, and that is now nobody's gate.
 - Queue a run against any branch:
-  `az pipelines run --org https://{org}.visualstudio.com --project RackMate --id 1 --branch <name>`
+  `az pipelines run --project RackMate --id 1 --branch <name>`
 - **THE SERVICE HAS GONE RED MORE THAN ONCE AND THE COUNT IS NOT WRITTEN HERE**, on this
   file's own rule. This bullet read *"Nothing has ever gone red"*, then
   **"EXACTLY ONCE"** from 2026-09-02, and both were true when written and wrong within
@@ -293,6 +293,16 @@ a board task instructing weeks of work that a ruling had abolished.
 Org `https://{org}.visualstudio.com`, project **`RackMate`**, area and iteration
 **`RackMate`**, tags `rackpal-sync; task`. States: `To Do`, `Doing`, `Done` (there
 is no `Removed`).
+
+**THE ORGANISATION IS NOT WRITTEN IN THIS TREE** (DR-257): it repeats a mail
+address, and the history was rewritten to remove it. Each machine names it once with
+`az devops configure --defaults organization=https://<name>.visualstudio.com
+project=RackMate`, after which `az` commands need no `--org`; a REST call reads it
+from `git remote get-url origin`. **Do not write it back**, in a file, a commit
+message or a ruling. The same holds for the identity: every commit is
+`Riley <rileytherackpal@proton.me>` at `+0000`, so set `user.name` and `user.email`
+in the repository's own config (the global identity on this machine is not this
+one) and commit with `TZ=UTC0`.
 
 **THE PROJECT IS `RackMate` AND THAT IS DELIBERATE.** DR-096 §11.95.9 rules in
 terms that the rename *"does not rename the Azure DevOps project, the repository or

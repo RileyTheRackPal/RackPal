@@ -15,7 +15,8 @@ status: live
 
 Board `#567`. `azure-pipelines.yml` is registered as **definition 1, `RackPal CI
 (Windows)`**, on `https://{org}.visualstudio.com`, project `RackMate` (the
-Azure DevOps project keeps that name by ruling: DR-096 §11.95.9).
+Azure DevOps project keeps that name by ruling: DR-096 §11.95.9; the organisation is
+named on each machine rather than here, by [DR-257](../decisions/dr-257-one-pseudonymous-identity.md)).
 
 ## It ran, and the first run is the interesting one
 

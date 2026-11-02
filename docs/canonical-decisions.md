@@ -25031,6 +25031,52 @@ titled "RackPal".
 ruling names one. Code signing and notarisation (D8). Document-type registration in `Info.plist`, which
 the Windows runner does not do either.
 
+### 11.256 DR-257 · The history carries one pseudonymous identity at UTC, and the organisation is named on each machine rather than in the tree
+
+**Settled by the user on 2026-11-02**, from `#1286` (SCRUB-0) under DR-254's anonymity constraint, ahead of
+a secondary remote on GitHub. Each part was put as a question with its cost.
+
+**11.256.1 THE FACTS.** A census of every blob, commit header, message and tag found the author's legal
+name and an employer address on most commit headers, a handle and its mail address on the rest, a sample
+drafter carrying the legal name in the fixtures and the docs/02 worked example, the Azure DevOps
+organisation name (which repeats a mail address) in CLAUDE.md, the OKF and §11.95.6, a committed `.pyc`
+holding the absolute path it was compiled from, and a local timezone offset on every commit made at the
+author's desk. A rewrite of the headers alone would have left all but the first two in place.
+
+**11.256.2 RULED BY THE USER, EACH ON THE RECOMMENDATION.**
+
+1. **Every commit and tag is authored and committed by `Riley <rileytherackpal@proton.me>`.** The handle
+   and its mail address go too, since the user named both as identifying. The address is public in every
+   commit by construction.
+2. **Every timestamp is `+0000`**, the same instant with the offset rewritten. Future commits keep it
+   with `TZ=UTC0`, which Git for Windows honours. What no rewrite can honestly change, and this does not
+   pretend to: the times themselves still show working hours.
+3. **The sample drafter is `rriley` / `R. Riley`**, the same byte lengths as the name it replaces, so no
+   fixture offset moved. Test actors and the community handle in docs/06 and its tests become `riley`.
+4. **The organisation is named on each machine, not in the tree.** The tree writes
+   `https://{org}.visualstudio.com`; each machine runs `az devops configure --defaults` once and the
+   commands in CLAUDE.md drop `--org`. This amends the wording of §11.95.6 and nothing else (§12.61): the
+   organisation, the project and the repository are **not renamed**, which is the substance §11.95.6
+   ruled and which stands.
+5. **The same rewritten history is on both remotes.** A history scrubbed only for GitHub would diverge
+   from Azure DevOps on every later commit. `main` on Azure DevOps was force-pushed once, under a policy
+   bypass the user granted for the purpose, and GitHub receives only the verified history, since a push
+   there cannot be withdrawn.
+
+**11.256.3 WHAT THE REWRITE PROVED.** `git filter-repo` 2.47.0 over 1,698 commits. Afterwards the census
+finds nothing but two residuals, both deliberate: a third party's contributor address inside the vendored
+ICU licence, which is not ours to edit, and bytes inside a compressed PDF stream. Every binary blob is
+byte-identical. The tip differs from its predecessor in 37 files by 105 lines in and 105 out, every one a
+listed substitution, and the full local gate passed on it. Commit-hash citations in the tree were
+re-pointed through the commit map; blobs in history keep the hashes they were written with. The rewrite
+reached §11.95.6 in every historical version of this file, which is why §12.61 records the change rather
+than a diff showing it.
+
+**What this does not rule.** Retention on Azure DevOps, which still holds the earlier objects in its pull
+request refs: it is private, and its records are the board's. Board items that name a closing commit
+(§8.8) by its earlier hash. A gate that refuses a commit with any other identity or offset, which is
+offered and not ruled here.
+
 ---
 
 ## 12. Superseded rulings
@@ -25864,6 +25910,12 @@ close and a reopen.
 |---|---|---|
 | **Roadmap §6.1**, the *Microsoft Store alpha* row | The Store alpha, MSIX-0 to MSIX-7, sized as pre-M8 work | **Parked on M8** (§11.253.3). Its route is ruled at M8's decomposition, after `#1105`. |
 | **DR-179 §11.178**, its deadline bullet | *"The deadline is earlier than M8."* MSIX-7 (`#171`) registers the extensions in the package manifest | **The deadline lapses with the Store alpha**; file-type registration moves to M8 and belongs to whichever installer M8 rules. The extensions themselves stand. |
+
+### 12.61 Amended by DR-257 (the organisation is named on each machine)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-096 §11.95.6**, the remote's URL | Named the Azure DevOps organisation in full as the host of `origin` | **The URL reads `https://{org}.visualstudio.com/...`**, rewritten in every version of the file by the history rewrite (§11.256.2.4). Nothing is renamed: the organisation, project, repository and area path keep their names, and §11.95.6's ruling that they are not part of the sweep stands. |
 
 ## 13. Resolved §10 questions
 
