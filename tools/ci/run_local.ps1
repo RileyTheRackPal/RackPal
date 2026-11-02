@@ -120,6 +120,11 @@ try {
     # pack's grouping and writes nothing: a rule with no place in the pack,
     # or in the wrong band, fails here the day it arrives.
     Invoke-Gate 'rule review pack'    { python tools/rule_review.py --check }
+    # DR-258 (#1287). Every commit reachable from HEAD is the one identity
+    # DR-257 ruled, at +0000. Here it catches the commit before it leaves
+    # the machine: an IDE that never saw TZ=UTC0, or a clone whose own
+    # user.email was never set. Planted cases first, as above.
+    Invoke-Gate 'identity (DR-258)'   { python tools/identity_gate.py }
     # DR-090 section 11.89.8. The only gate here that reads a font BINARY,
     # because it is the only one that can: the two backends emit IDENTICAL
     # ops for a missing glyph and differ solely in what a rasteriser does
