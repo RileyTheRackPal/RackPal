@@ -4,15 +4,40 @@
 > people who design, build and document A/V racks. Expect gaps (the [user guide's §21.8](docs/21-user-guide.md)
 > lists the ones we know) and expect file formats to keep migrating forward.
 >
-> - **Try it:** download the Windows preview from [Releases](https://github.com/RileyTheRackPal/RackPal/releases),
->   unzip it anywhere and run `rackpal.exe`, or [build it from source](#building-from-source).
+> - **Try it:** [install the Windows preview](#installing-it), or [build it from source](#building-from-source).
 > - **Tell us:** [open an issue](https://github.com/RileyTheRackPal/RackPal/issues/new/choose). Workflow
 >   feedback ("this is not how I do it") is as welcome as bug reports. Pull requests are not accepted
 >   during the alpha; [CONTRIBUTING](CONTRIBUTING.md) says why.
 
 RackPal is a desktop application for designing A/V equipment racks for custom-integration work, **residential-CI-first, commercial-capable** (DR-002): you enter a rack height in rack units, populate the rack from a seeded catalog of generic archetypes, wire the gear together on a schematic canvas, and export a PDF sheet set containing both the drawing and the cable schedule. The repository holds the specification (the canonical decision record, the documents derived from it, and the working papers they were adjudicated from) **and a Flutter application that builds and runs on Windows**.
 
-## Status: IN BUILD
+## Who made this, and how
+
+RackPal has one primary developer, and they are not a software developer in the usual sense: their own coding skills are minimal.
+
+**RackPal was built with Claude, Anthropic's AI model, at every stage**: the first design drafts, the research and critiques in [docs/research/](docs/research/), the decision record and the specification derived from it, and the application's code, tests and build tooling as they stand today. The developer's part is the direction: what the tool is for, what it must do, and the product decisions, which are recorded as rulings in [§11 of the decision record](docs/canonical-decisions.md) so that each one can be read and argued with.
+
+If you read the code and find something no programmer would write, that is worth an issue too.
+
+## Installing it
+
+RackPal runs on **Windows 10 or 11, 64-bit**. There is no installer: it is a portable folder that runs from wherever you put it.
+
+1. Download the newest `RackPal-…-windows-x64.zip` from [Releases](https://github.com/RileyTheRackPal/RackPal/releases).
+2. **Unblock the zip before you extract it.** Right-click it, **Properties**, tick **Unblock** on the General tab, **OK**. Windows marks every downloaded file, and if you extract first it copies that mark onto every file inside.
+3. Extract it somewhere you can write to, such as your Documents folder or a USB stick. RackPal keeps its settings beside itself; in a read-only place it still runs, with autosave off.
+4. Open the `RackPal-portable` folder and run `rackpal.exe`.
+5. If Windows says **"Windows protected your PC"** (it will if step 2 was skipped), click **More info**, then **Run anyway**. The build is signed, but with a certificate made for this project rather than one bought from a certificate authority, so Windows does not know the publisher.
+
+**Your first run:** open one of the starter projects on the start screen rather than a real job. [The user guide's first fifteen minutes](docs/21-user-guide.md#214-your-first-fifteen-minutes) walks through one. `Help ▸ About RackPal…` shows which version you have; put it in any report.
+
+**Updating:** extract the new version over the old folder. Your settings live in the `RackPalData` folder beside `rackpal.exe` and survive it, and your projects are wherever you saved them.
+
+**Removing it:** delete the folder. RackPal installs nothing and writes no registry keys of its own. Windows' own file dialogs remember the folders you browsed, as they do for every program.
+
+**What it does not do:** connect to the network. There are no accounts, no telemetry and no auto-update, and a project is an ordinary file that goes nowhere unless you send it.
+
+## Status: alpha
 
 | | |
 |---|---|
@@ -40,7 +65,7 @@ The seven core requirements of the brief, and what v1 does about each. All seven
 | 6 | Structure device | A `DeviceInstance` with `kind == structure` rendering as an edge bank of off-page flags; `Outlet` is the creation atom, a home run is a `Link` carrying a `StructureOrigin` (CR-016, AC-019) |
 | 7 | PDF with diagram **and** schedule | Cover and drawing index, legend, exceptions page, front and rear elevations, **N interconnect sheets: one per domain partition of the single schematic `Sheet`**, Pull Sheet, Termination Schedule, Unused Home Runs, Equipment List and Materials, and plate/panel/pinout details where a non-standard pinout exists (AC-025, AC-055, CR-073, DR-005) |
 
-Beyond the seven: a live [Schedule](docs/05-schematic-editor.md) tab that fills in as you wire rather than appearing at export time (AC-035), validation rules that never block an export (CR-022; the catalogue and its count are [docs/02 §5](docs/02-data-model.md#5-the-v1-validation-rule-catalogue-three-tiers)), a Staging Bin, a project-level location tree, pathways, three separate cable-length fields, and CSV import for structured wiring.
+Beyond the seven: a live [Schedule](docs/05-schematic-editor.md) tab that fills in as you wire rather than appearing at export time (AC-035), validation rules that never block an export (CR-022; the catalogue and its count are [docs/02 §5](docs/02-data-model.md#5-the-v1-validation-rule-catalogue-three-tiers)), a Staging Bin, a project-level location tree, pathways, three separate cable-length fields, CSV import for structured wiring, and a [Plan view](docs/15-plan-view.md) that pins racks, outlets and field devices onto an imported floorplan and, once the plan is calibrated, measures lengths from it (DR-029).
 
 ## Documentation
 
@@ -90,7 +115,7 @@ Read [00-overview](docs/00-overview.md) first, then [canonical-decisions](docs/c
 
 Mobile is read-only by confirmed product decision. The architecture must not preclude touch, which is why `CanvasIntent{beginDrag, updateDrag, commitDrag, cancel}` is built first and no editor logic branches on `PointerDeviceKind` (AC-016 #23).
 
-## Intended tech stack
+## Tech stack
 
 | Layer | Choice | Why |
 |---|---|---|
@@ -133,7 +158,7 @@ flutter run -d windows
 
 CI runs on a private Azure DevOps project; this GitHub repository carries the same history. So the pipeline and the board that the corpus cites (definition numbers, build numbers, `#nnn` items) are not visible from here, and every gate it runs can be run locally with the commands below.
 
-**The pipeline runs.** It first executed on 2026-08-27 (build `20260827.1`, definition 1, `RackPal CI (Windows)`), and [docs/12 §4.1](docs/12-milestone-board.md#41-discharged-2026-08-27-the-pipeline-runs-and-it-has-been-red) records what that run proved, what it did not, and the runs since that have gone red. This page used to carry a box saying no run had ever happened; it was true when written and is not now. `main` is protected by a build-validation policy, so work lands by pull request. `azure-pipelines.yml`'s header says which of its claims are verified and which are not, and where the build agent runs.
+**The pipeline runs.** It first executed on 2026-08-27 (build `20260827.1`, definition 1, `RackPal CI (Windows)`), and [docs/12 §4.1](docs/12-milestone-board.md#41-discharged-2026-08-27-the-pipeline-runs-and-it-has-been-red) records what that run proved, what it did not, and the runs since that have gone red. `main` is protected by a build-validation policy, so work lands by pull request. `azure-pipelines.yml`'s header says which of its claims are verified and which are not, and where the build agent runs.
 
 What the file *defines*: a Windows agent, the Flutter version pinned in its `flutterVersion` variable and **verified after install** (DR-248, docs/03 §10.2), the analyzer gate, the two palette gates, the JUnit converter self-test, every suite with a non-vacuity floor, `flutter build windows --release`, and publication of the test results and the release ZIP.
 
@@ -198,14 +223,14 @@ Five principles decide most of the close calls in the decision record. Where a r
 4. **Never fabricate data; show `unknown`** (G4). A missing weight contributes nothing to a rollup and the rollup reports its unknown count. `typicalWatts` never silently defaults to half of nameplate. `null` means unknown everywhere and renders `—`.
 5. **Cut features, never foundations** (G5). Units, UUIDv7 identity, tombstones, per-entity metadata, fractional indices, the command stack and the drawing IR all ship in v1 even where their UI does not. Anything expensive to retrofit is done now; this produces the "model ships, gesture defers" pattern that appears eleven times in the scope ruling.
 
-Alongside the five, one ruling acts as the binding validation frame: **the gesture may hesitate; the document may not lie** (CR-017). The user knows things the software does not, so a rule that merely disagrees with them springs the gesture back with a reason rather than refusing it, **but the five tier-1 topology rules refuse outright and offer nothing to escape to** (DR-011.5, superseding this page's earlier claim of a `[ Connect anyway ]` button on every refusal; docs/02 §5's own tier table gives T1's escape as *"None. There is nothing to escape to."*). Spring-back belongs to the tier-2 rules, which land with validation at M5.
+Alongside the five, one ruling acts as the binding validation frame: **the gesture may hesitate; the document may not lie** (CR-017). The user knows things the software does not, so a rule that merely disagrees with them springs the gesture back with a reason rather than refusing it, **but the five tier-1 topology rules refuse outright and offer nothing to escape to** (DR-011.5; docs/02 §5's own tier table gives T1's escape as *"None. There is nothing to escape to."*). Spring-back belongs to the tier-2 rules, which shipped with validation at M5.
 
 One concept has one name everywhere, Dart identifier, JSON key, UI label, prose, commit message and PDF column header all derive from one glossary entry (N1). `Connection`, `CableType`, `PhysicalLink`, `bottomU`, `refDes` and the rest of [canon §4.7](docs/canonical-decisions.md#47-banned-names) are banned in code *and* in comments.
 
 ## Licence
 
-**AGPLv3-or-later** for the application code, in [`LICENSE`](LICENSE) (DR-189 §11.188.1, which reverses DR-036's GPLv3); **CC0 1.0** for the community device catalog, which is deliberately not copyleft (DR-036 §11.35.3). **This line read "TBD … under consideration" until 2026-09-23, six weeks after DR-036 answered the question**, which is why it now names the ruling rather than the state of a deliberation.
+**AGPLv3-or-later** for the application code, in [`LICENSE`](LICENSE) (DR-189 §11.188.1, which reverses DR-036's GPLv3); **CC0 1.0** for the community device catalog, which is deliberately not copyleft (DR-036 §11.35.3).
 
-**The output exception is proposed and NOT in force.** DR-036 §11.35.4 asks for an explicit statement that a document produced by RackPal is the user's own work and not a derivative of RackPal. A draft is at [docs/proposed-output-exception.md](docs/proposed-output-exception.md); it goes to a qualified reviewer before v1.0 (DR-259 §11.258.2.1, which moved that review from *"before any public push"*), and until then `LICENSE` alone is the licence. **This paragraph said there was no `LICENSE` file until 2026-11-03**, five weeks after one was committed. A dependency sweep on 2026-07-31 found the tree clean for it (81 packages, 58 BSD / 18 MIT / 5 Apache-2.0, zero copyleft) with the Apache-2.0 members closing GPLv2 but not GPLv3.
+**The output exception is proposed and NOT in force.** DR-036 §11.35.4 asks for an explicit statement that a document produced by RackPal is the user's own work and not a derivative of RackPal. A draft is at [docs/proposed-output-exception.md](docs/proposed-output-exception.md); it goes to a qualified reviewer before v1.0 (DR-259 §11.258.2.1, which moved that review from *"before any public push"*), and until then `LICENSE` alone is the licence. A dependency sweep on 2026-07-31 found the tree clean for it (81 packages, 58 BSD / 18 MIT / 5 Apache-2.0, zero copyleft) with the Apache-2.0 members closing GPLv2 but not GPLv3.
 
-Third-party licences are surfaced through `Help ▸ About RackPal…`, which opens Flutter's `showLicensePage` over the whole `LicenseRegistry`, and RackPal's own `LICENSE` is registered into it from `main` so the page lists this application beside its dependencies. **THIS SENTENCE CLAIMED THAT WAS ALREADY TRUE AND IT WAS NOT**: until 2026-09-23 neither `LicenseRegistry` nor `showLicensePage` appeared anywhere in the tree, so the portable folder shipped MIT, BSD-3 and Apache-2.0 code without reproducing the notices all three require. The licence asset is a gated copy of the root `LICENSE` (`test/session/license_asset_parity_test.dart`), because Flutter asset paths cannot escape the package directory and the alternative is the application showing terms the repository does not grant. **The shipped font is Jost, SIL OFL 1.1**: it supersedes CR-080's IBM Plex, which the ruling has not yet been amended for (docs/12 §4.6).
+Third-party licences are surfaced through `Help ▸ About RackPal…`, which opens Flutter's `showLicensePage` over the whole `LicenseRegistry`, and RackPal's own `LICENSE` is registered into it from `main` so the page lists this application beside its dependencies. The licence asset is a gated copy of the root `LICENSE` (`test/session/license_asset_parity_test.dart`), because Flutter asset paths cannot escape the package directory and the alternative is the application showing terms the repository does not grant. **The shipped fonts are Jost and Space Mono, both SIL OFL 1.1**, which replaced CR-080's IBM Plex; DR-249 amended CR-080 to match.

@@ -144,6 +144,14 @@ If that folder cannot be written to (a read-only stick, a locked-down profile),
 RackPal still runs, and a banner says that autosave and the recent-files list
 are off for the session.
 
+### If Windows says "Windows protected your PC"
+
+That is SmartScreen, and it appears when the download mark is still on the
+files, usually because the ZIP was extracted before it was unblocked. The
+public preview on GitHub is signed with a certificate made for this project
+rather than one bought from a certificate authority, so Windows does not
+recognise the publisher. Click `More info`, then `Run anyway`.
+
 ### If Windows still says "Unknown publisher"
 
 Two certificate stores have to have the publisher certificate, and having only
