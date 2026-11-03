@@ -60,9 +60,7 @@ reason the codec is not where this bug lives.
 
 # Related
 
-* [A collection field breaks every equality
-  check](a-collection-field-breaks-every-equality-check.md) is the same shape
+* "A collection field breaks every equality check" is the same shape
   one field over: there the addition broke comparison rather than
   reconstruction, and four call sites went quiet in the same way.
-* [Census the field, not the
-  name](census-the-field-not-the-name.md) is the search discipline this needs.
+* "Census the field, not the name" is the search discipline this needs.

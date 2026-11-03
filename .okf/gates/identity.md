@@ -31,8 +31,11 @@ a two-parent merge one of whose parents is `SYSTEM_PULLREQUEST_SOURCECOMMITID`.
 
 # Non-vacuity
 
-Thirteen planted throwaway repositories run first, each with one defect: each field, a bad commit
-reachable only through a merge's second parent, a shallow clone, and four PR-merge edge cases. Pointed at
+Planted cases over throwaway repositories run first (`--selftest`, in `tools/identity_gate.py`). Most
+carry one defect the gate must refuse: each header field wrong and buried under a clean commit, a bad commit
+reachable only through a merge's second parent, a shallow clone, and PR-merge edge cases. Some cases must
+PASS, by design: a clean history, and a PR build's own merge commit under `--ci`. One repository can be
+read more than once, with different flags or environment, so the cases outnumber the repositories. Pointed at
 the pre-rewrite tip on the day it was written, it refused 1,698 of 1,698 commits, and the offset on
 exactly the 1,467 the DR-257 census had counted.
 

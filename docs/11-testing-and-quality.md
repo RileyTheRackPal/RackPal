@@ -15,9 +15,9 @@ The `rackpal_core` package is pure, synchronous Dart with no `package:flutter`, 
                  ├───────────────────────────┤
        ~25       │  integration_test          │  file lifecycle, crash recovery
                  ├───────────────────────────┤
-      ~150       │  widget + pixel goldens    │  Linux only, 2 renderers, small
+      ~150       │  widget + pixel goldens    │  designed, not built (DR-253)
                  ├───────────────────────────┤
-      ~400       │  display-list goldens      │  DiagramScene text dumps
+      ~400       │  display-list goldens      │  DiagramScene text dumps (budget, DR-253)
                  ├───────────────────────────┤
    ~2 000+       │  pure-Dart unit + property │  model, rules, routing, codecs
                  └───────────────────────────┘
@@ -25,13 +25,15 @@ The `rackpal_core` package is pure, synchronous Dart with no `package:flutter`, 
 
 | Tier | Package | Runs | Gate |
 |---|---|---|---|
-| Unit / property | `rackpal_core`, `rackpal_text`, `rackpal_export` | every PR, all 3 OSes | blocking |
-| Display-list goldens | `rackpal_core` (`dart test`) | every PR, all 3 OSes | blocking |
-| Widget / pixel goldens | `rackpal_ui` | every PR, **Linux only** | blocking |
-| Integration | `apps/rackpal` | every PR, Windows + macOS | blocking |
-| Performance | `rackpal_core/test/perf/` | every PR under `perf` tag | warn-only for 3 months, then blocking |
-| Pixel-diff PDF | `rackpal_export` | nightly | non-blocking, triaged |
+| Unit / property | `rackpal_core`, `rackpal_text`, `rackpal_export` | every PR on Windows; macOS as an optional check (DR-255) | blocking on Windows only |
+| Byte and text goldens | `rackpal_core`, `rackpal_ui`, `rackpal_export` | with the suites that hold them | blocking on Windows (DR-253) |
+| Pixel goldens, and display-list goldens at the budgeted scale | `rackpal_core`, `rackpal_ui` | **designed, not built**: no `matchesGoldenFile` exists and the ~150 and ~400 are budgets | none (DR-253) |
+| Integration | `apps/rackpal` | **designed, not built**: no `integration_test` exists; the app suite runs from `apps/rackpal/test` | none |
+| Performance | `rackpal_core/test/scene/schematic_perf_test.dart` | every PR, under the `perf` tag, one test at a time (DR-178) | blocking on Windows; not run on macOS |
+| Pixel-diff PDF | `rackpal_export` | **designed, not built** | none |
 | Manual / hardware | — | per milestone | milestone exit criterion |
+
+**Read the table as the plan except where a row says otherwise.** There is no Linux job anywhere. The macOS check is a second pipeline, `azure-pipelines-macos.yml`, run as an optional PR check on a Microsoft-hosted image, and it **may never be made blocking** (DR-255 §11.254): the month its free minutes ran out, nothing would merge. §7 says what runs.
 
 Rejected alternative: a Flutter-first suite where the model is exercised through widgets. It makes every domain assertion cost a pump-and-settle and it cannot run the 1,000-seed property tests at all.
 
@@ -88,21 +90,21 @@ The **epoch-mask coverage test** (AC-014) is forty lines and is the highest valu
 The v1 catalogue is **8 tier-1 + 6 tier-2 + 16 tier-3**, with `PLC-001..003` ratified (canon §12.6(b)), `LEN-002` added (DR-020, canon §11.19), `ELE-005` restored (DR-132, canon §11.131) and `RCK-014` added (DR-219, canon §11.218.4), and every one is a Dart function in a registry keyed by `ruleId` (CR-024, AC-011). **The plan advisories are a second band** and are not counted here (DR-154 §11.153.2). The gate is AC-051, it is absolute, and it follows the RULE rather than the list: **no rule in either band ships without its fixture pair.**
 
 ```text
-packages/rackpal_core/test/fixtures/drc/
-  DIR-003.bad.rmpj      # output driven into output — the rule that describes hardware damage
-  DIR-003.near.rmpj     # bidirectional port pair, superficially identical, must be silent
-  SIG-001.bad.rmpj      SIG-001.near.rmpj
-  PWR-001.bad.rmpj      PWR-001.near.rmpj
-  PLC-001.bad.rmpj      PLC-001.near.rmpj    # ratified tier-1, canon §12.6(b)
-  PLC-002.bad.rmpj      PLC-002.near.rmpj
-  PLC-003.bad.rmpj      PLC-003.near.rmpj
-  ...
-  expectations.json         # ruleId -> {bad: [findingId...], near: []}
+packages/rackpal_core/test/validation/
+  drc_corpus_test.dart              # the gate: every catalogue rule has both halves
+  fixtures/
+    drc_fixture.dart                # DrcFixture, FixtureKind {knownBad, nearMiss}, violationOf
+    drc_corpus.dart                 # drcCorpus(): the one list, across all four evaluators
+    connect_scenarios.dart          # tier 1, TOP-001..005 (evaluateConnect)
+    placement_scenarios.dart        # tier 1, PLC-001..003 (evaluatePlacement)
+    spring_back_scenarios.dart      # tier 2 (SpringBackChip)
+    tier3_scenarios.dart            # tier 3 (evaluateDocument)
+    plan_scenarios.dart             # the plan band, PLN-*
 ```
 
-One table-driven test walks `expectations.json`: the `.bad` document must produce **exactly** that finding, not merely include it, and the `.near` document must produce **none** from that rule. A near-miss that is one field away from the bad case is what stops a rule from being written as `return true`. Three further assertions ride along: every `ruleId` in [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue-three-tiers) resolves to a registered function and vice versa (a rule not in the catalogue does not exist, CR-021); every rule's severity is one of the CR-018 vocabulary with `Severity.info` absent; and **no rule at any severity prevents a PDF from being written to disk** (CR-022, G3), asserted by exporting each `.bad` fixture and checking the file exists.
+The corpus is **Dart builders, not `.rmpj` files**, because the four evaluators do not share an input: tier 1 refuses a gesture through two evaluators, tier 2 springs a gesture back, and only tier 3 describes a document and produces findings. A file format could have expressed the tier-3 half and nothing else. Every fixture therefore normalises to one question, *which rule ids fired?*, through `FixtureOutcome` (`drc_fixture.dart`): a `knownBad` fixture must fire **exactly** its own rule and nothing else, not merely include it, and a `nearMiss` fixture must not fire that rule at all. A near-miss that is one property away from the bad case is what stops a rule from being written as `return true`. The gate `drc_corpus_test.dart` has the **catalogue** as its subject rather than an enum, so a row no enum mentions still fails for want of a pair. Three further assertions ride along: every `ruleId` in [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue-three-tiers) resolves to a registered function and vice versa (a rule not in the catalogue does not exist, CR-021); every rule's severity is one of the CR-018 vocabulary with `Severity.info` absent; and **no rule at any severity prevents a PDF from being written to disk** (CR-022, G3), asserted in `packages/rackpal_export/test/findings_never_block_export_test.dart`.
 
-Fixtures are `.rmpj` files, not Dart builders, so a domain expert can open one in the app during the M5 sign-off review (AC-051) without reading code.
+**Superseded:** this section said fixtures were `.rmpj` files so a domain expert could open one in the app during the M5 sign-off review without reading code. They are Dart builders, and each `DrcFixture` carries a one-line `what` saying what makes the case bad or which single property pulls it back to good, which is what a reviewer reads.
 
 ### 2.4 Routing determinism
 
@@ -118,15 +120,20 @@ The router is Sugiyama phases 0–3 plus a deterministic layer-ordered orthogona
 The migration corpus is the highest-value directory in the repository: it is what allows the model to be refactored for years. `migrateToCurrent` returns `Outcome<T>` and never throws for an expected condition (CR-093).
 
 ```text
-packages/rackpal_core/test/fixtures/schema/
-  v1_minimal.rmpj         # one empty 42U rack
-  v1_full.rmpj            # every entity type, every connector, every media type
-  v1_unicode.rmpj         # Ω ° ± µ → × ≈ — " " plus an accented client name
-  v1_unknown_fields.rmpj  # hand-edited with future keys at three nesting depths
-  v2_*.rmpj               # added the day v2 ships. NEVER edited afterwards.
+packages/rackpal_core/test/fixtures/          # flat, no schema/ subdirectory
+  a_empty_project.rmpj.json ... f_plate_gangs.rmpj.json
+                                              # byte-round-trip goldens (byte_roundtrip_test.dart)
+  e_three_hundred_links.rmpj.json             # also the 300-link perf and layout fixture
+  v1_templates_and_power.rmpj.json            # migration inputs, one per schema step:
+  v2_ports_with_positions.rmpj.json           #   v1->v2 ... v5->v6, opened as BYTES
+  v3_carried_protocols.rmpj.json              #   by migration_corpus_test.dart
+  v4_before_plan.rmpj.json
+  v5_outlet_counts.rmpj.json
 ```
 
-Assertions per fixture: it migrates to a valid current document; unknown fields survive the round-trip and are re-emitted in their original position (`unknown` on every persisted object, §4.4); `minReaderVersion > kSchemaVersion` ⇒ `Err(NewerSchema(refuse))`; `schemaVersion > kSchemaVersion` with a readable `minReaderVersion` ⇒ `Ok(doc, openReadOnly: true)` (CR-093, defect fixed). `.rmdx` has its own parallel chain and its own corpus (CR-063).
+**The files keep `.rmpj.json`, the earlier extension, on purpose.** They are test inputs whose names the tests read by path, not documents a user opens; the extension written today is `.rppj`, and `.rmpj` still opens (DR-179 §11.178). The earlier plan here named `v1_minimal`, `v1_full`, `v1_unicode` and `v1_unknown_fields` under a `schema/` directory; none of those exists. The corpus grew one input per real schema step instead, the day each step shipped (`v0 -> v1` is a map built inside the test), and an existing input is never edited.
+
+Assertions, as the tests in `migration_corpus_test.dart` make them: a v1 to v5 input migrates to a valid current document; `minReaderVersion > kSchemaVersion` ⇒ `Err(NewerSchemaError)`; a `schemaVersion` newer than this build's with a readable `minReaderVersion` ⇒ `Ok(doc, openReadOnly: true)` (CR-093, defect fixed); a chain that did not arrive is an error and not a success. Unknown fields surviving the round-trip in their original position (`unknown` on every persisted object, §4.4) is the byte round-trip's job, below. The device template format (`.rpdx`, earlier `.rmdx`) has its own parallel chain and its own corpus (CR-063).
 
 The **byte round-trip** is the contract, not the semantic one (CR-117): `write(read(bytes)) == bytes`. This is what constrains key ordering, including inside nested `unknown` maps, timestamp precision, and integer formatting, and those are exactly the things that otherwise produce spurious git diffs and a lying dirty flag. Rejected alternative: `read(write(read(x))) == read(x)`, which passes while the file churns.
 
@@ -211,6 +218,8 @@ The provenance test is what sets the catalog count, not a target number (CR-061)
 
 ## 3. Goldens: display lists first, pixels second
 
+> **Status (2026-11-03, DR-253 §11.252).** A "golden" is a committed fixture compared exactly: exported bytes, display-list text or generated reference text, failing on any difference. Those exist and run on Windows with their suites (`byte_roundtrip_test.dart`, `schematic_fixture.dart` with `schematic_perf_test.dart`, `keymap_reference_golden_test.dart`, `starters_pdf_golden_test.dart`). **No pixel golden exists**: no `matchesGoldenFile`, no `flutter_test_config.dart`, no `golden` tag, and no Linux job. What follows is the design for pixel goldens, which DR-253 left as an aspiration that carries no gate.
+
 **Do not pixel-diff the canvas as the first line of defence, and do not byte-diff the PDF.** The primary painter regression net is a canonical deterministic text dump of the `DiagramScene`:
 
 ```text
@@ -229,7 +238,7 @@ Pixel goldens then serve one narrow purpose: proving the two backends are faithf
 - `matchesGoldenFile` via plain `flutter_test`. No `golden_toolkit`, no `alchemist`, the value over a good `flutter_test_config.dart` is small and the maintenance risk is not. ~~VERIFY: `golden_toolkit` maintenance status at the time of scaffolding.~~ **Moot (2026-10-12, `#1056`):** the choice above was plain `flutter_test`, and no golden library is a dependency.
 - Golden the device faceplate renderer and the wire layer **separately**. Never golden the whole canvas: one pixel of change anywhere fails everything and reviewers begin rubber-stamping.
 - `debugDisableShadows = true`, fixed `Random` seeds, no animations, fixed `Size`. A separate invariant test asserts the scene contains no gradient, shadow, blur, blend mode or shader op (CR-088 deleted `RendererCaps` and promoted that rule from prose to a test) and that `saveLayer` count is zero.
-- Tagged `@Tags(['golden'])` in `dart_test.yaml` so non-Linux jobs skip them.
+- Tagged `@Tags(['golden'])` in `dart_test.yaml` so non-Linux jobs skip them. (Not built: there is no `golden` tag.)
 
 ### 3.1 Font strategy: the thing that actually makes goldens flaky
 
@@ -239,7 +248,7 @@ Four rules remove the system-font variable entirely:
 
 1. Register the bundled TTFs in `flutter_test_config.dart` via `FontLoader` before any golden runs.
 2. A test asserts **no golden scene references a family other than `Jost` or `RackMono`**: a fallback silently substituting Ahem or Roboto is the classic invisible golden drift.
-3. Goldens run on **Linux only**, with a **pinned** Flutter version. Windows and macOS jobs run `--exclude-tags golden`. Per-platform golden sets collapse under maintenance cost within months; this is the only approach that holds.
+3. **Pixel** goldens, if they are ever built, run on **one platform only**, with a **pinned** Flutter version, and the other platform's job excludes them. The design named Linux; the project has no Linux job, so the platform is whichever one is blocking, which is Windows (DR-255). Per-platform golden sets collapse under maintenance cost within months; this is the only approach that holds.
 4. Golden regeneration is a deliberate, reviewed step of every Flutter upgrade, because a minor bump routinely shifts antialiasing by a pixel.
 
 ---
@@ -339,35 +348,40 @@ A three-item manual checklist catches what nothing automated will: `debugRepaint
 
 > **Rewritten 2026-08-03 under [DR-017](canonical-decisions.md)**, which answered the open decision [docs/12 §4.1](12-milestone-board.md) recorded: **adopt `dart format` as a gate, keep the analyzer's info ratchet.** What stood here until then was a GitHub Actions workflow running `dart analyze --fatal-infos` and a three-OS matrix, none of which existed. The pipeline is Azure DevOps, on one agent, and had been for months. A CI section describing a provider the project does not use is not a specification, it is a trap: docs/12 §4.1 caught it only because somebody ran both and compared.
 
-**What runs today.** One job, `windows_ci`, on `windows-2022`, defined in [`azure-pipelines.yml`](../azure-pipelines.yml). Fourteen gates, in this order, each reproducible locally with `pwsh -File tools/ci/run_local.ps1`:
+**What runs today.** One job, `windows_ci`, defined in [`azure-pipelines.yml`](../azure-pipelines.yml) and run on the **self-hosted agent in the `Default` pool** (it ran on a Microsoft-hosted `windows-2022` image until 2026-08-30; the `pool:` block there says why it moved). It is the blocking build-validation policy on `main`. Its gates are the ones `tools/ci/run_local.ps1` runs, in the same order, minus the two local-only checks (`flutter pin`, `tracked sources`), which a clean clone cannot fail by construction: the pipeline installs and verifies the pinned Flutter itself. **The number of gates is not written here**: count the `Invoke-Gate` calls in `run_local.ps1`, the one place that holds it. Every gate is reproducible locally with `pwsh -File tools/ci/run_local.ps1`:
 
-| # | Gate | Fails when |
+| Gate (`run_local.ps1` name) | What runs | Fails when |
 |---|---|---|
-| 1 | `tools/ci/ensure_flutter.ps1 -VerifyOnly` | The agent is not on the pinned 3.44.4 / framework revision `ad70ec4` |
-| 2 | `tools/ci/verify_tracked_sources.ps1` | A `lib/` source is untracked, so a clone would not compile |
-| 3 | `flutter pub get` at the workspace root | Resolution fails for any member |
-| 4 | `tools/ci/analyze_gate.ps1` | Any error, any warning, or **more infos than the pin** in `tools/ci/analyze_info_baseline.txt` (**173**) |
-| 5 | `dart format --output=none --set-exit-if-changed .` | Any file is unformatted |
-| 6 | `python tools/pal1_check.py` | A palette collision ships. **Blocking**, and it needs no Dart, so a Dart refactor cannot break it |
-| 7 | `python tools/palette_parity.py` | The documented dashes and weights disagree with the checker |
-| 8 | `python tools/registry_parity.py` | The Dart seed disagrees with `pal1_check.py` on hue, dash or weight (DR-010), or with seed-devices §4.4 on a family's name, connector, tag, direction or topology (DR-175) |
-| 8b | `python tools/milestone_gate.py` | A milestone before the current one holds an exit clause that is neither `DEMONSTRATED` nor `CONFIRMED` nor parked on a later milestone by a ruling (roadmap §8.9, [DR-095](canonical-decisions.md)). It runs its own planted cases first |
-| 8c | `python tools/identity_gate.py` | A commit reachable from `HEAD` has an author or committer other than the identity [DR-257](canonical-decisions.md) ruled, or an offset other than `+0000` ([DR-258](canonical-decisions.md)). A shallow clone fails it, so CI fetches commits only first; `--ci` skips only a PR build's own merge. Planted cases first |
-| 9 | `tools/ci/junit_converter_selftest.py` | The JUnit converter regresses. 13 mutants, 13 caught |
-| 10–14 | Five suites via `tools/ci/run_suite.ps1` | Any test fails, **or** a suite falls below its non-vacuity floor: core 976, text 1, export 183, ui 382, app 664. The floor counts **non-skipped** cases, so silencing a flaky batch cannot buy a green run |
-| + | The timed step: `tools/ci/run_suite.ps1 -Tests timed` in `rackpal_core`, after every suite | A test tagged `perf` misses its stopwatch budget, run one test at a time. The core suite runs `-Tests untimed` and leaves those tests to this step ([DR-178](canonical-decisions.md)), so a budget never shares the machine with its own suite |
-| + | `flutter build windows --release`, then `tools/ci/verify_windows_build.ps1` | The build fails, or the release output has a plugin DLL removed, the exe missing, a packaged starter CRLF-corrupted, or a `dartjni.dll` **planted** (it must not be there) |
+| `flutter pin` (local only) | `tools/ci/ensure_flutter.ps1 -VerifyOnly` | The machine is not on the pinned version and framework revision, which live in `flutterVersion` and `flutterFrameworkRevision` in `azure-pipelines.yml` and nowhere else |
+| `tracked sources` (local only) | `tools/ci/verify_tracked_sources.ps1` | A `lib/` source is untracked, so a clone would not compile |
+| `flutter pub get` | At the workspace root | Resolution fails for any member |
+| `analyzer gate` | `tools/ci/analyze_gate.ps1` | Any error, any warning, or **more infos than the pin** in `tools/ci/analyze_info_baseline.txt`, which carries its own history |
+| `formatter` | `dart format --output=none --set-exit-if-changed .` | Any file is unformatted |
+| `PAL-1 conformance` | `python tools/pal1_check.py` | A palette collision ships. **Blocking**, and it needs no Dart, so a Dart refactor cannot break it |
+| `palette parity` | `python tools/palette_parity.py` | The documented dashes and weights disagree with the checker |
+| `registry parity` | `python tools/registry_parity.py` | The Dart seed disagrees with `pal1_check.py` on hue, dash or weight (DR-010), or with seed-devices §4.4 on a family's name, connector, tag, direction or topology (DR-175) |
+| `milestone completeness` | `python tools/milestone_gate.py` | A milestone before the current one holds an exit clause that is neither `DEMONSTRATED` nor `CONFIRMED` nor parked on a later milestone by a ruling (roadmap §8.9, [DR-095](canonical-decisions.md)). It runs its own planted cases first |
+| `rule review pack` | `python tools/rule_review.py --check` | A rule has no place in the review pack's grouping (`docs/20-rule-review.md`), or sits in the wrong band (#972). It writes nothing |
+| `identity (DR-258)` | `python tools/identity_gate.py` | A commit reachable from `HEAD` has an author or committer other than the identity [DR-257](canonical-decisions.md) ruled, or an offset other than `+0000` ([DR-258](canonical-decisions.md)). A shallow clone fails it, so CI fetches commits only first; `--ci` skips only a PR build's own merge. Planted cases first |
+| `glyph coverage` | `python tools/glyph_coverage_check.py` | A non-ASCII character in a Dart string literal is missing from a bundled font weight (DR-090 §11.89.8). The only gate that reads a font binary; it needs `fontTools`, which a pipeline step installs hash-pinned |
+| `JUnit converter self-test` | `tools/ci/junit_converter_selftest.py` | The converter would report green over a red run: a failing hidden `loading` test dropped, or a missing `done` event or `success:false` not becoming a failure. Each clause is asserted with a clean stream that must **not** produce it |
+| `AC-051 pair coverage` | `dart test test/validation/drc_corpus_test.dart` in `rackpal_core` | A catalogue rule lacks either half of its fixture pair. A named step although the core suite runs the same file, so the schedule control reads as its own failure |
+| `suite: <name>`, one per package | `tools/ci/run_suite.ps1` for `rackpal_core` (untimed), `rackpal_text`, `rackpal_export`, `rackpal_pdfium`, `rackpal_ui` and `apps/rackpal` | Any test fails, **or** a suite falls below its non-vacuity floor, recorded in `$SuiteFloors` in `run_suite.ps1` and nowhere else. The floor counts **non-skipped** cases, so silencing a flaky batch cannot buy a green run |
+| `suite: rackpal_core_timed` | `run_suite.ps1 -Tests timed` in `rackpal_core`, after every suite | A test tagged `perf` misses its stopwatch budget, run one test at a time. The core suite runs `-Tests untimed` and leaves those tests to this step ([DR-178](canonical-decisions.md)), so a budget never shares the machine with its own suite |
+| `flutter build windows --release`, then `windows release output` | `tools/ci/verify_windows_build.ps1` | The build fails, or the release output has a plugin DLL removed, the exe missing, a packaged starter CRLF-corrupted, or a `dartjni.dll` **planted** (it must not be there) |
 
-**Gates 4 and 5 differ deliberately, and [DR-017](canonical-decisions.md) is why.** Gate 4 is a ratchet rather than `--fatal-infos` because 195 infos on the day CI was stood up would have made `main` permanently red, and a permanently red `main` trains people to ignore output. Gate 5 is absolute because formatting is mechanical: it has one correct answer and the gate's own remedy is the same command. Documenting the two as one question was this section's original error. Clearing the remaining 173 and switching gate 4 to `--fatal-infos` stays available and is nobody's scheduled work (DR-017 §11.16.4).
+**Definition 2, `RackPal CI (macOS)`** ([`azure-pipelines-macos.yml`](../azure-pipelines-macos.yml), [DR-255](canonical-decisions.md) §11.254) runs the same gates on a Microsoft-hosted `macOS-15` image, as an **optional** PR check that **may never be made blocking**. It reads the Flutter pin from `azure-pipelines.yml` rather than restating it, leaves out the timed budgets (a shared hosted VM measures the VM), and **also builds `RackPal.app`**: `flutter build macos --release`, then `tools/ci/verify_macos_build.ps1`, then an archive round-tripped through `ditto` and checked with `codesign --verify`. Its suite floors differ from Windows only where `$SuiteFloorsMacOS` in `run_suite.ps1` says, and each difference names its cause.
 
-**Caching.** The Flutter SDK and `~/.pub-cache`, keyed on `pubspec.lock`. Do not cache `build/`: a stale plugin registrant costs more debugging time than a cold build costs wall time.
+**The analyzer gate and the formatter differ deliberately, and [DR-017](canonical-decisions.md) is why.** The analyzer gate is a ratchet rather than `--fatal-infos` because 195 infos on the day CI was stood up would have made `main` permanently red, and a permanently red `main` trains people to ignore output. The formatter is absolute because formatting is mechanical: it has one correct answer and the gate's own remedy is the same command. Documenting the two as one question was this section's original error. Clearing the remaining infos (the pin in `tools/ci/analyze_info_baseline.txt` says how many) and switching the analyzer gate to `--fatal-infos` stays available and is nobody's scheduled work (DR-017 §11.16.4).
+
+**Caching.** The Flutter SDK (keyed on the exact pinned version, and skipped when the agent already has it) and `~/.pub-cache`, keyed on the committed `pubspec.lock`. Do not cache `build/`: a stale plugin registrant costs more debugging time than a cold build costs wall time.
 
 **Artifacts.** The raw `dart test` JSON streams and the converted JUnit documents on every run, for forensics, plus the archived Windows release on a successful build.
 
 **Designed and NOT built.** Kept here because they are the intent, and marked because the section above is a claim about what exists:
 
-- **A goldens job.** There are zero goldens: no `matchesGoldenFile`, no `goldens/` directory, no `@Tags(['golden'])`, no `flutter_test_config.dart` registering Jost. §3.1's one-platform rule applies the day the first one is written. The pipeline deliberately has neither a `--tags golden` step nor an `--exclude-tags golden` one, so the first golden somebody writes runs immediately rather than being silently skipped.
-- **Linux and macOS agents.** DR-009 puts macOS in v1; [docs/13](13-macos-debt-register.md) is the work list. Today the pipeline is Windows only.
+- **A pixel-goldens job.** There are no pixel goldens: no `matchesGoldenFile`, no `goldens/` directory, no `@Tags(['golden'])`, no `flutter_test_config.dart` registering Jost. The byte and text goldens of DR-253 exist and run inside the suites that hold them, with no tag. §3.1's one-platform rule applies the day the first pixel golden is written. The pipeline deliberately has neither a `--tags golden` step nor an `--exclude-tags golden` one, so the first golden somebody writes runs immediately rather than being silently skipped.
+- **A Linux agent, and a blocking macOS check.** DR-009 puts macOS in v1 and [docs/13](13-macos-debt-register.md) is the work list; the macOS pipeline exists as an optional check (above) and is never blocking (DR-255). A blocking macOS check would need a macOS agent that costs no hosted minutes, which is a later ruling. No Linux job exists or is planned.
 - **`flutter gen-l10n && git diff --exit-code`** (AC-058/D12). There is no `l10n/` and no generated Dart in the tree at all.
 - ~~**A `--tags perf` job.**~~ **Built on 2026-09-15 as a blocking step, not a job** ([DR-178](canonical-decisions.md)). Until then `schematic_perf_test.dart` ran inside the core suite, where on 2026-09-05 a budget read 20.877 ms under the suite's own load against 6.355 ms alone and failed a docs-only commit. The tests tagged `perf` now assert only a stopwatch reading and run after every suite, one at a time.
 - **A nightly `--tags pdf-pixel` job** needing `poppler-utils`.
@@ -387,7 +401,7 @@ the one anticipated. Followed by the person upgrading, not yet enforced by a gat
 
 Project additions on top of the base set:
 
-- **Errors and warnings gated at zero; infos ratcheted, not `--fatal-infos`.** The principle below is unchanged and is why the ratchet exists at all: an info-level lint that nobody fixes is a lint that trains people to ignore output. What the 2026-08-03 ruling changed is the enforcement, because switching on `--fatal-infos` against a 195-info tree would have made `main` red on the first push and taught the same lesson faster. The pin only moves down. See §7 gate 4 and `tools/ci/analyze_info_baseline.txt`.
+- **Errors and warnings gated at zero; infos ratcheted, not `--fatal-infos`.** The principle below is unchanged and is why the ratchet exists at all: an info-level lint that nobody fixes is a lint that trains people to ignore output. What the 2026-08-03 ruling changed is the enforcement, because switching on `--fatal-infos` against a 195-info tree would have made `main` red on the first push and taught the same lesson faster. The pin only moves down. See §7's analyzer gate and `tools/ci/analyze_info_baseline.txt`.
 - `public_member_api_docs` **on for `rackpal_core` only**. The core is the shared vocabulary; the UI package is not.
 - Generated code (`*.g.dart`, `l10n/`) excluded; nothing else is.
 - Custom naming is enforced by test rather than by lint, because no analyzer rule expresses it: N3 (types `UpperCamelCase`, JSON keys `lowerCamelCase`, registry IDs `lower.dotted.snake`, tokens `UPPER_SNAKE`, rule IDs `AAA-000`) and N4 (a serialized `weight` or `length` without a unit suffix or a unit type is a defect) are asserted over the codec layer in `naming_conventions_test.dart`.
@@ -400,7 +414,7 @@ Project additions on top of the base set:
 
 A change is done when all of the following are true. This list is the PR checklist and it is short on purpose.
 
-1. `pwsh -File tools/ci/run_local.ps1` is green: fourteen gates, including zero analyzer errors and warnings, an info count at or under the pin, and `dart format` clean.
+1. `pwsh -File tools/ci/run_local.ps1` is green: every gate it runs (§7; count them in the script), including zero analyzer errors and warnings, an info count at or under the pin, and `dart format` clean.
 2. New behaviour has a test at the **lowest tier that can express it**: a rule gets fixtures, not a widget test; a layout change gets a display-list golden, not a screenshot.
 3. A new rule ships with its `.bad`/`.near` fixture pair (AC-051). No exceptions; this is the gate that holds the catalogue to its size, and **it follows the rule rather than the list** (DR-154 §11.153.4), so it covers the plan band too and reports per band. `drc_corpus_test.dart` is where the coverage is asserted, and it is the only place a count of pairs is written down.
 4. A new command declares its `touches` mask and passes the epoch-coverage test (AC-014), and participates in the round-trip property test.
@@ -435,12 +449,12 @@ Named here so it is not rediscovered, and scheduled in [Roadmap](09-roadmap.md) 
 |---|---|---|
 | ~~Windows OV/EV certificate procurement~~ **Self-signing, with a timestamp** | M8: **not M6, and there is no procurement** | **Superseded by DR-006 (canon §12.9); owed edit paid 2026-08-03.** `New-SelfSignedCertificate` + `Set-AuthenticodeSignature` **with a timestamp server**, public `.cer` to `LocalMachine\Root` and `\TrustedPublisher`, ideally by GPO. **Microsoft Trusted Signing is the named fallback**, adoptable at M8, verify eligibility for an Individual Partner Center account before relying on it (#101). The lead time the old row defended against was OV/EV identity verification, the SmartScreen reputation ramp and hardware-token logistics; none attaches to either path DR-006 names |
 | Signed MSIX / installer, symbol archival | M8 | **The criterion SPLITS (canon §11.6.2).** Build-side gate: signed, timestamped, valid publisher in file properties, **and the signature still validates after the signing certificate has expired**. Distribution-side, documented and not gated: Local Intranet UNC or Intune/GPO, plus docs/14 §14.2's ZIP trap. **"No SmartScreen warning" is not a build-side property**: SmartScreen evaluates Mark-of-the-Web, which is how a file arrived, not what it is |
-| Vendored pdfium | **Built (DR-153, canon §11.152); the macOS binary is still owed** | Windows x64 is vendored under `third_party/pdfium/` and placed by a person; nothing fetches it (CR-100). It was scheduled here for M8 because the `printing` plugin's CMake downloads binaries at build time; DR-153 vendored the binary through `rackpal_pdfium` instead, and the export preview renders through it (DR-230 §11.229.1). The macOS binary and its loader are docs/13 D9's debt |
-| macOS notarisation and stapling | Not v1 unless §10.10 resolves for macOS | Costs `Cmd`/`Ctrl` keymap work across ~40 bindings, a second font-availability check, and a second print matrix, 3–5 weeks plus ongoing CI |
+| Vendored pdfium | **Built (DR-153, canon §11.152), for both platforms** | Windows x64 (`win-x64/pdfium.dll`) and macOS universal (`mac-univ/libpdfium.dylib`, #468) are vendored under `third_party/pdfium/` and placed by a person; nothing fetches either (CR-100). It was scheduled here for M8 because the `printing` plugin's CMake downloads binaries at build time; DR-153 vendored the binary through `rackpal_pdfium` instead, and the export preview renders through it (DR-230 §11.229.1). The macOS binary is in the app bundle's Frameworks copy phase and `tools/ci/verify_macos_build.ps1` gates it; what docs/13 D9 still carries is in that register |
+| macOS notarisation and stapling | **In v1 by DR-009; how it is done is unruled** (docs/13 D8) | DR-009 puts macOS in v1, so this is no longer conditional on §10.10. It is where the anonymity constraint costs most (DR-254 §11.253.2): Apple notarisation needs a Developer ID enrolled under a legal name. DR-256 ruled the hardened runtime on, which notarisation requires. The original row's estimate, kept as written and not re-measured: `Cmd`/`Ctrl` bindings across ~40 entries, a second font-availability check and a second print matrix, 3–5 weeks plus ongoing CI |
 | Reproducible signed builds | Post-v1 | A signed release is a supply-chain and reproducibility problem, not only a CI one |
 | In-app auto-update | **Not doing in v1** (RJ-014) | Signed installer plus a version-check ping. Auto-update is a security surface and a support burden before there are users |
 
-VERIFY: MSIX packaging versus a plain signed installer for a desktop app that registers a `.rppj` file association, the file-association path differs between the two and drives the choice. **Answered in part (2026-10-12, `#1056`):** the Store alpha (`#100`) packages as MSIX, and MSIX-7 (`#171`) registers the association in its manifest; a plain installer for copies outside the Store is still undecided.
+VERIFY: MSIX packaging versus a plain signed installer for a desktop app that registers a `.rppj` file association, the file-association path differs between the two and drives the choice. **Answered in part (2026-10-12, `#1056`):** the Store alpha (`#100`) packages as MSIX, and MSIX-7 (`#171`) registers the association in its manifest; a plain installer for copies outside the Store is still undecided. **Superseded in part (2026-10-17, DR-254 §11.253):** the Store alpha (`#100`) is **parked on M8** and `#171` moved to M8 with it, because the distribution route is not chosen. The user's direction (WinGet and a Homebrew cask) is recorded and not ruled; **anonymity, at least initially, is a stated constraint on distribution**, and the route is ruled at M8's decomposition after `DIST-0` (`#1105`) verifies the facts. DR-006 stands until then, and whether a self-signed certificate is compatible with the constraint is one of `#1105`'s questions.
 
 ---
 

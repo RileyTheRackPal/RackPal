@@ -64,7 +64,7 @@ date (`## 2026-10-12 (hundred-and-thirty-eighth entry)`), and a heading in that
 form is not a date as far as the validator is concerned, so it warns. The warnings
 never block, and they are the only ones the validator raises on this bundle.
 
-The choice (DR-097): **leave every existing heading as written, and use the ISO
+The choice: **leave every existing heading as written, and use the ISO
 form for new entries.** The log is record (DR-251), and rewriting its headings
 would edit history to quiet a warning. New entries are headed `## YYYY-MM-DD` and
 nothing else, so the number of warnings stops growing. The ordinal is still worth

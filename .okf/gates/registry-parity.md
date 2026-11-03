@@ -9,7 +9,7 @@ status: enforced
 ---
 
 `python tools/registry_parity.py`. Added by
-[DR-010](/decisions/dr-010-seeded-registries.md), one of the fourteen gates
+[DR-010](/decisions/dr-010-seeded-registries.md), one of the gates
 `run_local.ps1 -SkipBuild` runs.
 
 **An ordinal was what this line used to carry, and it rotted.** It read *"13th
