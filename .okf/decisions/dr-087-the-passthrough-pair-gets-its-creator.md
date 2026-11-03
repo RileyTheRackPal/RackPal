@@ -87,7 +87,7 @@ goes, and whoever needs it will find this paragraph.
 
 # Built 2026-08-25
 
-All four clauses ship (`#225`, `d60e961`). The action reports its OUTCOME as well
+All four clauses ship (`#225`, `e94c33c`). The action reports its OUTCOME as well
 as its refusals, which is new on this toolbar: *"Paired 12 ports. 12 rear ports
 had no partner left."* is the sentence that stops a person counting rows, and it
 is the LIU's shape arriving on a template somebody authored. A core case pins

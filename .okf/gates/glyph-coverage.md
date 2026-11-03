@@ -30,7 +30,7 @@ empty scan cannot pass vacuously. The `MIN_LITERALS` floor does the same for the
 
 # Why it was missing from the pipelines
 
-It was added on 2026-08-25 (`26c38321`, board `#772`); the pipeline's first run was
+It was added on 2026-08-25 (`2549c634`, board `#772`); the pipeline's first run was
 2026-08-27, with a step list written from the gates of the day. **No commit ever chose to
 leave it out**, and CI never ran it until 2026-10-18, found only because the step list
 was being copied for the macOS definition (DR-255).

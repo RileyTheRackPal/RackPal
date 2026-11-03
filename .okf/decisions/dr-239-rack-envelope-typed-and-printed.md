@@ -30,4 +30,4 @@ the question offered "depth inside" or "swing space", and the answer was both, w
 
 Canon §11.238 holds the full text.
 
-Built at `564b583b`, `5bf10711`, `c02b8cec` and `b81b1b44`; docs/12 §4.49 holds the evidence.
+Built at `10ade4d9`, `ae8d1a2a`, `5a994927` and `b598dd33`; docs/12 §4.49 holds the evidence.

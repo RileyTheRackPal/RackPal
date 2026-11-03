@@ -1,6 +1,6 @@
 # Feasibility · the Plan view
 
-**Written 2026-08-04, against the tree at `f181c67`.** Unlike the rest of this directory, this
+**Written 2026-08-04, against the tree at `f7ca698`.** Unlike the rest of this directory, this
 paper was not produced by the original research pass. It was written after M2 closed, against
 code that exists, in response to a user request for a feasibility check and an estimate. Where it
 cites a file and a line, that citation was read rather than recalled.

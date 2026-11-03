@@ -26,7 +26,7 @@ See [trade knowledge beats workflow reasoning](/practices/trade-knowledge-beats-
 
 Canon §11.236 holds the full text.
 
-Built at `d0e3920a`; docs/12 §4.48 holds the evidence.
+Built at `d9f4efd6`; docs/12 §4.48 holds the evidence.
 
 # What this does not rule
 

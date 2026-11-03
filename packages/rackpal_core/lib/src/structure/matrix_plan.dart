@@ -333,7 +333,7 @@ MatrixCellPlan _planPathwayCell({
     final names = <String>[];
     // Grown as the cell is planned, because `nextPathwayOrder` reads the
     // DOCUMENT and cannot see commands that have not been applied yet —
-    // the trap `14ae1e2` found on the drop line.
+    // the trap `daf1f81` found on the drop line.
     final plannedOrders = [for (final p in doc.pathways.values) p.order];
     for (var n = current; n < targetCount; n++) {
       // DR-032 §11.31.1's shape: the room and the medium, with a 1-based

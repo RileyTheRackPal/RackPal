@@ -32,4 +32,4 @@ defect. See [G4](/invariants/g4-unknowns-are-counted.md) for why a count that is
 
 Canon §11.240 holds the full text.
 
-Built at `1902eeef` (the inset) and `3862cd87` (the wrap); docs/12 §4.51 holds the evidence.
+Built at `7b5fd76a` (the inset) and `b29f94aa` (the wrap); docs/12 §4.51 holds the evidence.

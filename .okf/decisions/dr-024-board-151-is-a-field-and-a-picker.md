@@ -9,7 +9,7 @@ canon_section: "11.23"
 status: built
 ---
 
-Settled by the user on 2026-08-08, after board #150 closed at `23ea288`.
+Settled by the user on 2026-08-08, after board #150 closed at `044aef4`.
 
 # What #150 already delivered against #151's own brief
 
@@ -49,7 +49,7 @@ change, which a `String?` on the entity is not.
 
 **Not a migration, and CR-117 is not at risk.** The key is additive and
 absent when null, so the six named templates write nothing and re-encode
-byte for byte. A document written between `23ea288` and this change
+byte for byte. A document written between `044aef4` and this change
 carries the three grade entries without the key; reading yields null,
 writing omits it, and `write(read(bytes)) == bytes` holds. Same contract
 `tag` landed on in [DR-022](/decisions/dr-022-service-token-is-the-template-tag.md).

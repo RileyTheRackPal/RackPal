@@ -96,7 +96,7 @@ try {
     # section 4.1: adopt the formatter, keep the info ratchet. It was absent for
     # months because turning it on before the tree was formatted would have
     # made main permanently red, which is the same argument the ratchet rests
-    # on. The tree was formatted in 1d2c622; this is what stops it drifting
+    # on. The tree was formatted in fd732b7; this is what stops it drifting
     # back. Unlike every other gate here it needs no argument about what it
     # measures -- `dart format` is the definition of the answer.
     Invoke-Gate 'formatter' {

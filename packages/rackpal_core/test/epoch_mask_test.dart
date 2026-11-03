@@ -738,7 +738,7 @@ void main() {
 
     // ── M3-A's create/remove family (board #580) ──────────────────────
     //
-    // These four shipped in `eaaa3ed` with no case here at all, which is a
+    // These four shipped in `8e298ea` with no case here at all, which is a
     // hole in AC-014's "for every command type" rather than a decision.
     // `AddStructureCommand` is the interesting one: it is the only command
     // in the package that writes two top-level maps which are NOT a
@@ -917,7 +917,7 @@ void main() {
     });
 
     test('AddHomeRunCommand writes links AND its implicit net', () {
-      // `762bcef`'s command, also uncovered here. The net is part of the
+      // `ba05f2b`'s command, also uncovered here. The net is part of the
       // same `wires` epoch, which is what makes ONE declared mask correct
       // for two changed maps.
       final doc = _freshDoc();

@@ -127,7 +127,7 @@ if ($actualNative -contains 'dartjni.dll') {
 # --- the starters ---------------------------------------------------------
 # PACKAGED, not OPENED. See the header.
 $starterDir = Join-Path $ReleaseDir 'data/flutter_assets/assets/starters'
-# `.rppj` SINCE DR-179 (`#782`), and `.rmpj` since DR-015 (`ac64fcf`) before
+# `.rppj` SINCE DR-179 (`#782`), and `.rmpj` since DR-015 (`ffb6e72`) before
 # that. THIS LIST HAS NOW GONE STALE AT BOTH RENAMES, and the second time is
 # the reason to say so twice: at DR-015 it reported four missing starters that
 # no longer existed while the four that do exist shipped correctly (board

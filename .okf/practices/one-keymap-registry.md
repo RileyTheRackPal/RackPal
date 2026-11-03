@@ -111,4 +111,4 @@ needs it and can argue for it.
 [2] `docs/13-macos-debt-register.md` §3, §3.1
 [3] canonical-decisions.md §11.9.2 (the ordering argument), §11.11.6 (the
     shared-label retrofit [DR-011](/decisions/dr-011-connect-gesture.md) needs)
-[4] Commits `9dd514f`, `03df777`
+[4] Commits `906cc27`, `7afcdc8`

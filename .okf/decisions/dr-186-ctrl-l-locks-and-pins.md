@@ -35,7 +35,7 @@ Ruled by the user on 2026-09-18 on board `#913`.
 
 # Built
 
-`#913` landed it on 2026-09-18 in `389fcc11`: the two commands, the refusals, `Ctrl+L` on both canvases, the
+`#913` landed it on 2026-09-18 in `6bd18563`: the two commands, the refusals, `Ctrl+L` on both canvases, the
 inspector checkbox, the padlock and the pin badge, with eighteen core cases and twelve through the
 real screens. Three mutations, three kills.
 

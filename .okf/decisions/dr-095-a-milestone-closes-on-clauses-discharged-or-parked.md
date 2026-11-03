@@ -68,7 +68,7 @@ tracker: three milestones whose criteria were met and whose board rows still rea
 # Built
 
 The gate section 11.94.9 sequenced behind the normalisation shipped on 2026-09-15 as
-[milestone completeness](/gates/milestone-completeness.md) (`#780`, `16a0cbc`), after `#92`
-re-marked M3's clause table and gave M4 one (`cc10e75`). Re-marking found M3's `BUILT` rows already
+[milestone completeness](/gates/milestone-completeness.md) (`#780`, `28bf473`), after `#92`
+re-marked M3's clause table and gave M4 one (`24cceec`). Re-marking found M3's `BUILT` rows already
 demonstrated by a whole-drill test the table never cited, and the gate's first real run failed on
 M1's goal line, a row the prose said was not an exit clause.

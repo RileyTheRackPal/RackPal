@@ -26,7 +26,7 @@ The header of the Python said from M0 that it *"must be ported to rackpal_core"*
 **It never was until SFE-A**, and `contrast.dart` carried a paragraph lamenting that
 the port did not exist. The port was held to the Python before its rules were
 deleted: `pal1_test.dart` compares every triple and every cross-domain pair, limb
-by limb, against a dump the Python printed at `96664b10`, over the shipped palette
+by limb, against a dump the Python printed at `85a2dc13`, over the shipped palette
 AND two palettes known to fail. The shipped palette passes, so a comparison over it
 alone could only show the port agreeing that nothing ever fails.
 

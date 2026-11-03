@@ -68,4 +68,4 @@ explicitly left the question open rather than answering it.
 [2] `packages/rackmate_core/lib/src/model/pathway.dart`, `enum PathwayKind`
 [3] `packages/rackmate_core/lib/src/derived/structure_table.dart`,
     `pathwayKindLabel`
-[4] Built at `303dc2e`; reachable from the `[ Pathways ]` tab at `e3199a1`
+[4] Built at `f677621`; reachable from the `[ Pathways ]` tab at `137e9b9`

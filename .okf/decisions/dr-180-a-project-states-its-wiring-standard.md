@@ -39,7 +39,7 @@ DR-026 settled the pathway designator and the outlet's nominal run length. T568A
 
 # Built
 
-`#80` landed it on 2026-09-16 (``17387974``, ``91966c68``). The job's standard is a project setting
+`#80` landed it on 2026-09-16 (``17387974``, ``cdbb50db``). The job's standard is a project setting
 with a three-item row where unset is a CHOICE rather than a blank; a cable's override is an optional
 `WIRING` column in the Structure editor; and the resolved value prints in the Termination Schedule's
 `TERM` cell, behind the termination type and the punch position.

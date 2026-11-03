@@ -24,7 +24,7 @@ The file carried the sentence *"NO AZURE DEVOPS RUN HAS EVER EXECUTED IT"* for t
 half weeks. Because that sentence stood unedited, the gap was cheap to find rather than
 being something a reader had to infer.
 
-Build **20260827.1**, against `main` at `1fab087`: **passed first try**, all 24 steps,
+Build **20260827.1**, against `main` at `078c0f6`: **passed first try**, all 24 steps,
 22m01s, zero fixes. Six named unknowns became measurements in one run: the YAML schema was
 accepted unmodified, the pinned Flutter archive resolved, `windows-2022` still builds
 desktop Windows, and wall clock is 22 minutes rather than an estimate.

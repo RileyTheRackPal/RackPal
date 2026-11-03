@@ -77,7 +77,7 @@
 //    flag's whole purpose is that such a media type creates a `Pathway`
 //    instead of a `Link`, and NOTHING IN THIS PRODUCT COULD CREATE A
 //    `Pathway` AT ALL, so seeding it alone would have marked three types
-//    with a fact no code could act on. M3-E/4 (`8eaee44`) built the
+//    with a fact no code could act on. M3-E/4 (`08ad5aa`) built the
 //    creation path and the reason lapsed. **Reading the flag is the
 //    OTHER half and is not done here**: the drop line and the matrix
 //    still make `Link`s out of conduit, which docs/07 §5.2 shows the
