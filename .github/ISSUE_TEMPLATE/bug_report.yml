@@ -1,0 +1,55 @@
+name: Bug report
+description: Something RackPal did that it should not have, or did not do that it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for trying the alpha. One problem per report, please.
+
+        **Do not attach a real client's project file.** A `.rppj` carries site addresses, room
+        names and contact details. If the problem needs a file to show it, reproduce it in one of
+        the starter projects (the cards on RackPal's start screen) or a scratch project and attach that.
+  - type: input
+    id: version
+    attributes:
+      label: RackPal version
+      description: From `Help` ▸ `About RackPal…`, for example `0.6.60`.
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Windows version
+      description: For example `Windows 11 23H2`. Run `winver` if you are not sure.
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw. A screenshot helps, and so does the text of any message.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The shortest sequence that makes it happen, starting from opening RackPal.
+      placeholder: |
+        1. Open the Home Theatre starter from the start screen
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Diagnostic log (optional)
+      description: If RackPal showed an error, `Help` ▸ `Open diagnostics folder…` opens the folder its log is written to. Paste the relevant lines; the log records error types and code locations, not your project's contents.
+      render: text

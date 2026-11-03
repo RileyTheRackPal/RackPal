@@ -1,5 +1,15 @@
 # RackPal
 
+> **This is an alpha.** Version 0.6.x, pre-1.0, Windows only, and published to collect feedback from
+> people who design, build and document A/V racks. Expect gaps (the [user guide's §21.8](docs/21-user-guide.md)
+> lists the ones we know) and expect file formats to keep migrating forward.
+>
+> - **Try it:** download the Windows preview from [Releases](https://github.com/RileyTheRackPal/RackPal/releases),
+>   unzip it anywhere and run `rackpal.exe`, or [build it from source](#building-from-source).
+> - **Tell us:** [open an issue](https://github.com/RileyTheRackPal/RackPal/issues/new/choose). Workflow
+>   feedback ("this is not how I do it") is as welcome as bug reports. Pull requests are not accepted
+>   during the alpha; [CONTRIBUTING](CONTRIBUTING.md) says why.
+
 RackPal is a desktop application for designing A/V equipment racks for custom-integration work, **residential-CI-first, commercial-capable** (DR-002): you enter a rack height in rack units, populate the rack from a seeded catalog of generic archetypes, wire the gear together on a schematic canvas, and export a PDF sheet set containing both the drawing and the cable schedule. The repository holds the specification (the canonical decision record, the documents derived from it, and the working papers they were adjudicated from) **and a Flutter application that builds and runs on Windows**.
 
 ## Status: IN BUILD
@@ -7,7 +17,7 @@ RackPal is a desktop application for designing A/V equipment racks for custom-in
 | | |
 |---|---|
 | Phase | [docs/12 §1](docs/12-milestone-board.md#1-the-board-at-a-glance) is the one place that says which milestones have met their exit criteria, which is open now, and what is not started. This page does not restate it, because a status written here went stale at M3 |
-| Platform | Windows. macOS ships in v1 (DR-009) and is not built yet; the debt is enumerated in [docs/13](docs/13-macos-debt-register.md) |
+| Platform | Windows. macOS ships in v1 (DR-009): it builds on CI but cannot yet open or save a file, so it is not usable; the remaining debt is enumerated in [docs/13](docs/13-macos-debt-register.md) |
 | Tests and gates | Counted by the code, not by this page. The gates are the `Invoke-Gate` calls in `tools/ci/run_local.ps1`, the suite floors are in `tools/ci/run_suite.ps1`, and the analyzer ratchet is pinned in `tools/ci/analyze_info_baseline.txt` |
 | Next step | The open milestone on the board above; the plan it belongs to is the [Roadmap](docs/09-roadmap.md) |
 | Cost to v1 | Stated as relative sizes, not weeks (DR-182 §11.181.2): [docs/09 §6](docs/09-roadmap.md#6-what-this-costs-in-sizes) carries the sizes and what the closed milestones actually took |
@@ -44,7 +54,7 @@ Read [00-overview](docs/00-overview.md) first, then [canonical-decisions](docs/c
 | [docs/03-architecture.md](docs/03-architecture.md) | Five packages, the command stack, the drawing IR, the derived pipeline |
 | [docs/04-rack-editor.md](docs/04-rack-editor.md) | Elevation authoring: placement, quick-add, staging, compaction, locks |
 | [docs/05-schematic-editor.md](docs/05-schematic-editor.md) | The wiring canvas, drag-to-connect, layout and routing, the live schedule |
-| [docs/06-device-builder.md](docs/06-device-builder.md) | Template authoring, the port grid, the three doors, `.rmdev` |
+| [docs/06-device-builder.md](docs/06-device-builder.md) | Template authoring, the port grid, the three doors, `.rpdx` templates and `.rpda` libraries |
 | [docs/07-structure-device.md](docs/07-structure-device.md) | Structured wiring entering the rack: outlets, home runs, dual labels |
 | [docs/08-pdf-export.md](docs/08-pdf-export.md) | The sheet set, schedule presets, the PDF backend, greyscale and print tests |
 | [docs/09-roadmap.md](docs/09-roadmap.md) | M0–M9, exit criteria, relative sizes, and the release bands of §2 (read them there, they have grown more than once) |
@@ -63,15 +73,19 @@ Read [00-overview](docs/00-overview.md) first, then [canonical-decisions](docs/c
 | [docs/22-riley-plate-plan.md](docs/22-riley-plate-plan.md) | **Proposed, not ruled.** Where Riley's art goes in the user guide: scenes, slot sizes, a budget for the visor |
 | [docs/canonical-decisions.md](docs/canonical-decisions.md) | **Normative.** The full decision record: the `CR`, `AC`, `RJ` and `DR` rulings, canonical naming, the data model, the registry, the scope ruling and the milestone plan. Every other document defers to this one |
 | [docs/catalog/seed-devices.md](docs/catalog/seed-devices.md) | The seeded archetypes. **The only place a template count is stated** (CR-061) |
+| [docs/m1-implementation-log.md](docs/m1-implementation-log.md) | A build record of M1's stages. History, not a spec |
+| [docs/proposed-output-exception.md](docs/proposed-output-exception.md) | **Proposed, not in force.** The draft output exception, kept for review before v1.0 (DR-259) |
+| [docs/reference/keymap-windows.md](docs/reference/keymap-windows.md) | Every keyboard shortcut, generated from the keymap the app runs on |
+| [docs/reference/keystone/](docs/reference/keystone/README.md) | What the real keystone straps and plates measured, for DR-007 §11.7 |
 | [docs/research/](docs/research/) | The raw working papers: research briefs, design documents, critiques and a feasibility study (listed in [its README](docs/research/README.md)). **Non-normative rationale.** They explain *why*, and they are wrong wherever [canonical-decisions](docs/canonical-decisions.md) contradicts them |
 
 ## Target platforms
 
 | Platform | v1 | Notes |
 |---|---|---|
-| Windows 11 desktop | Full editor | The only target built so far |
-| macOS desktop | Full editor, in v1 (DR-009) | Not built yet. DR-009 overturned §10.10's recommendation of Windows only; the work is the list in [docs/13](docs/13-macos-debt-register.md) |
-| iOS / Android / tablet | Read-only | Exactly three surfaces (rack elevation, schedule table, exported PDF) and the app says so rather than shipping a squeezed editor (AC-056) |
+| Windows 10/11 desktop | Full editor | The only usable target today, and the only preview build |
+| macOS desktop | Full editor, in v1 (DR-009) | Builds on CI as `RackPal.app` (DR-255, DR-256) but has no native file dialog or data folder yet, so it cannot open or save. DR-009 overturned §10.10's recommendation of Windows only; the remaining work is the list in [docs/13](docs/13-macos-debt-register.md) |
+| iOS / Android / tablet | Read-only, not built | Exactly three surfaces (rack elevation, schedule table, exported PDF) and the app says so rather than shipping a squeezed editor (AC-056) |
 | Web | No | One `kIsWeb` guard exists in the export path; a read-only viewer is a v2 distribution question |
 
 Mobile is read-only by confirmed product decision. The architecture must not preclude touch, which is why `CanvasIntent{beginDrag, updateDrag, commitDrag, cancel}` is built first and no editor logic branches on `PointerDeviceKind` (AC-016 #23).
@@ -84,27 +98,40 @@ Mobile is read-only by confirmed product decision. The architecture must not pre
 | UI | Flutter desktop | Single codebase across the desktop target and the read-only mobile shell |
 | State / DI | No package. Constructor injection plus hand-rolled `Listenable`s | One `AppServices` is built in `main` and passed down; the document lives in a plain-Dart `DocumentController`, and `DocEpochs` holds seven `SimpleNotifier<int>` counters that painters subscribe to directly. `flutter_riverpod` was accepted by ADR-011 and never built; **DR-088** ratifies what exists and rejects the dependency (docs/03 §4.1) |
 | PDF | `pdf` ^3.13.0 | Pure Dart, therefore isolate-safe; Apache-2.0. `pw.Widget` for schedules, `PdfGraphics` for vector diagram output |
-| Print preview | `printing` ^5.15.0 | Behind an explicit "Verify output" button only; primary preview uses the screen renderer and has no native dependency. pdfium is vendored, never downloaded at build time (CR-100) |
+| PDF preview | vendored pdfium over `dart:ffi` (`rackpal_pdfium`, DR-153) | The preview renders the real exported PDF, so what you see is what prints. The binary is committed under `third_party/pdfium/` with its licences and never downloaded at build time (CR-100) |
 | IDs | `uuid` ^4.6.0 | UUIDv7: time-ordered, so creation order needs no extra field |
 | File dialogs | first-party `IFileDialog`, no package | `file_selector` was removed: it cannot set `FOS_DONTADDTORECENT`, without which every open and save writes the project file name into `HKCU\…\ComDlg32\OpenSavePidlMRU`. ~150 lines of COM in the Windows runner. Half a fix, and the other half is bounded rather than listed: RackPal's own code writes no registry key, but **the shell writes values under ComDlg32 that RackPal does not control**: at minimum `LastVisitedPidlMRU` (this executable plus the last folder browsed) and `CIDSizeMRU` (this executable, written even on a cancelled dialog), measured examples and not an inventory. So a portable build leaves shell-owned HKCU entries naming this executable and folders browsed, and no project file names (docs/03 §10.1) |
 | Window | `window_manager` ^0.5.2 | `setPreventClose` for the save prompt is the load-bearing API |
 | Persistence | Hand-written JSON codecs | Plain, pretty-printed, key-sorted UTF-8 JSON. No `freezed`, no `json_serializable`, the migration chain and byte-round-trip contract need explicit control (CR-091, CR-092) |
 | Lints | `very_good_analysis` 11.0.0, exact (DR-248) | Strictest widely-used set; `flutter_lints` ^6.0.0 is the fallback if it proves noisy |
 
-VERIFY: every version above is taken from the design corpus and has not been re-checked against pub.dev at the time of writing.
+The versions above are indicative. The committed `pubspec.lock` is what builds, and where this table and the lock differ, the lock is right.
 
-## Running it
+## Building from source
 
-The application builds and runs on Windows:
+**Prerequisites, on Windows 10 or 11 (x64):**
+
+- **Flutter at exactly the version pinned in [`azure-pipelines.yml`](azure-pipelines.yml)** (the `flutterVersion` variable; the pin lives there and nowhere else, DR-248). A different version may build, and its output is not what the tests hold.
+- **Visual Studio 2022** with the **Desktop development with C++** workload (Flutter's Windows toolchain).
+- Git. Nothing else: pdfium is already in `third_party/`, and no build step downloads a binary.
+
+**Build and run:**
 
 ```text
-flutter pub get
-flutter run -d windows          # from apps/rackpal
-dart test                       # pure-Dart tests in core / text / export
-flutter test                    # widget and golden tests in ui / app
+git clone https://github.com/RileyTheRackPal/RackPal.git
+cd RackPal
+flutter pub get --enforce-lockfile   # at the repository root: it is a pub workspace
+cd apps/rackpal
+flutter run -d windows
 ```
 
+**Run the tests from each package's own directory**, not the root: several read fixtures relative to the working directory. `dart test` in `packages/rackpal_core`, `rackpal_text`, `rackpal_export` and `rackpal_pdfium`; `flutter test` in `packages/rackpal_ui` and `apps/rackpal`. Or run every gate at once, as described below.
+
+**A portable folder** like the preview release: `pwsh -File tools/release/make_portable.ps1` writes `dist/RackPal-portable/`, which runs from anywhere and installs nothing ([docs/14](docs/14-deployment.md)).
+
 ## Continuous integration
+
+CI runs on a private Azure DevOps project; this GitHub repository carries the same history. So the pipeline and the board that the corpus cites (definition numbers, build numbers, `#nnn` items) are not visible from here, and every gate it runs can be run locally with the commands below.
 
 **The pipeline runs.** It first executed on 2026-08-27 (build `20260827.1`, definition 1, `RackPal CI (Windows)`), and [docs/12 §4.1](docs/12-milestone-board.md#41-discharged-2026-08-27-the-pipeline-runs-and-it-has-been-red) records what that run proved, what it did not, and the runs since that have gone red. This page used to carry a box saying no run had ever happened; it was true when written and is not now. `main` is protected by a build-validation policy, so work lands by pull request. `azure-pipelines.yml`'s header says which of its claims are verified and which are not, and where the build agent runs.
 
@@ -152,6 +179,7 @@ RackPal/
 ├─ assets/
 │  └─ catalog/            seeded templates + sources.md (a cited source for
 │                         every numeric field in every shipped template)
+├─ third_party/pdfium/    the vendored pdfium binaries and their licences
 ├─ tools/ci/              the gate scripts, runnable locally
 ├─ .okf/                  the knowledge bundle — rulings, invariants, gates
 │                         and practices, maintained as changes land
@@ -176,6 +204,8 @@ One concept has one name everywhere, Dart identifier, JSON key, UI label, prose,
 
 ## Licence
 
-**AGPLv3-or-later** for the application code (DR-189 §11.188.1, which reverses DR-036's GPLv3); **CC0 1.0** for the community device catalog, which is deliberately not copyleft (DR-036 §11.35.3). **This line read "TBD … under consideration" until 2026-09-23, six weeks after DR-036 answered the question**, which is why it now names the ruling rather than the state of a deliberation. **THERE IS NO `LICENSE` FILE YET AND THAT IS THE OUTSTANDING WORK**: DR-036 §11.35.4 requires an explicit output exception, that a document produced by RackPal is the user's own work and not a derivative of RackPal, to be stated in `LICENSE` and here rather than inferred, and it goes to a qualified reviewer before any public push (DR-189 §11.188.6). A dependency sweep on 2026-07-31 found the tree clean for it (81 packages, 58 BSD / 18 MIT / 5 Apache-2.0, zero copyleft) with the Apache-2.0 members closing GPLv2 but not GPLv3.
+**AGPLv3-or-later** for the application code, in [`LICENSE`](LICENSE) (DR-189 §11.188.1, which reverses DR-036's GPLv3); **CC0 1.0** for the community device catalog, which is deliberately not copyleft (DR-036 §11.35.3). **This line read "TBD … under consideration" until 2026-09-23, six weeks after DR-036 answered the question**, which is why it now names the ruling rather than the state of a deliberation.
+
+**The output exception is proposed and NOT in force.** DR-036 §11.35.4 asks for an explicit statement that a document produced by RackPal is the user's own work and not a derivative of RackPal. A draft is at [docs/proposed-output-exception.md](docs/proposed-output-exception.md); it goes to a qualified reviewer before v1.0 (DR-259 §11.258.2.1, which moved that review from *"before any public push"*), and until then `LICENSE` alone is the licence. **This paragraph said there was no `LICENSE` file until 2026-11-03**, five weeks after one was committed. A dependency sweep on 2026-07-31 found the tree clean for it (81 packages, 58 BSD / 18 MIT / 5 Apache-2.0, zero copyleft) with the Apache-2.0 members closing GPLv2 but not GPLv3.
 
 Third-party licences are surfaced through `Help ▸ About RackPal…`, which opens Flutter's `showLicensePage` over the whole `LicenseRegistry`, and RackPal's own `LICENSE` is registered into it from `main` so the page lists this application beside its dependencies. **THIS SENTENCE CLAIMED THAT WAS ALREADY TRUE AND IT WAS NOT**: until 2026-09-23 neither `LicenseRegistry` nor `showLicensePage` appeared anywhere in the tree, so the portable folder shipped MIT, BSD-3 and Apache-2.0 code without reproducing the notices all three require. The licence asset is a gated copy of the root `LICENSE` (`test/session/license_asset_parity_test.dart`), because Flutter asset paths cannot escape the package directory and the alternative is the application showing terms the repository does not grant. **The shipped font is Jost, SIL OFL 1.1**: it supersedes CR-080's IBM Plex, which the ruling has not yet been amended for (docs/12 §4.6).

@@ -1,0 +1,45 @@
+name: Workflow feedback
+description: How RackPal fits, or does not fit, the way you actually design and document racks.
+labels: [feedback]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is the feedback the alpha exists to collect. Trade knowledge beats our guesses: if
+        RackPal assumes something about how racks are designed, built or handed over that is not
+        how you work, that is worth a report even if nothing crashed.
+  - type: dropdown
+    id: role
+    attributes:
+      label: What do you do?
+      options:
+        - Integrator (design and sell)
+        - Installer or technician
+        - System designer or engineer
+        - Programmer
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: trying
+    attributes:
+      label: What were you trying to do?
+      description: The job, not the button. For example "document the home runs from a second-floor closet".
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: How do you do it today?
+      description: The tool or method you use now, and what it gets right.
+  - type: textarea
+    id: friction
+    attributes:
+      label: Where RackPal got in the way, or what it is missing
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: RackPal version
+      description: From `Help` ▸ `About RackPal…`.

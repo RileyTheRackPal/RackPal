@@ -75,7 +75,9 @@ void main() {
 
   test('THE OUTPUT EXCEPTION IS PRESENT AND IS MARKED NOT IN FORCE, so the '
       'repository and the About box cannot disagree', () {
-    final exception = File('../../LICENSE-EXCEPTION.md');
+    // At the repository root until DR-259 moved it to docs/, so that a
+    // draft at the root could not be read as part of the licence.
+    final exception = File('../../docs/proposed-output-exception.md');
     expect(
       exception.existsSync(),
       isTrue,
@@ -86,8 +88,8 @@ void main() {
       text,
       contains('NOT IN FORCE'),
       reason:
-          'DR-189 §11.188.6 sends this text to a qualified reviewer before '
-          'any public push. The About box says the same thing, and a '
+          'DR-189 §11.188.6 sends this text to a qualified reviewer, before '
+          'v1.0 since DR-259. The About box says the same thing, and a '
           'banner removed here without the dialog changing would leave '
           'the product and the repository making different claims. When '
           'counsel signs it off, BOTH change in one commit.',

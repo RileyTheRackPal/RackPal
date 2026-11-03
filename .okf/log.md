@@ -1,5 +1,32 @@
 # Update Log
 
+## 2026-11-03
+
+Entry 151.
+
+* **Added**: [DR-259](decisions/dr-259-the-public-alpha.md), the public alpha (`#1288`): source under plain AGPL with
+  the exception's review moved to before v1.0, vendor files removed from every commit, issues only, and a
+  self-signed Windows preview that is not the distribution route. Changed:
+  [DR-028](decisions/dr-028-keystone-cell-is-the-front-nose.md)'s footnote, whose vendor sheets are gone.
+* **Note**: **THE EXIF NAMED THE OWNER.** A metadata pass over every committed image, run to look for a location,
+  found a copyright holder instead, and that is how 73 files were found to be someone else's. Scan the metadata of
+  anything a repository is about to publish, for what it says as well as what it leaks.
+
+Entry 150.
+
+* **Changed**: a pre-release audit's stale pages. [The pipeline itself](gates/the-pipeline-itself.md) said nothing
+  had ever failed on the service in its description while its body recorded the reds; it now separates run 1's
+  record from today and lists the gates added since. [The macOS pipeline](gates/the-macos-pipeline.md) and
+  [the Windows release build](gates/windows-release-build.md) no longer say macOS is unbuilt.
+  [Registry parity](gates/registry-parity.md) and [identity](gates/identity.md) lose numbers they should not carry,
+  [getting started](getting-started.md) loses a ruling ID that resolved to the wrong ruling, the
+  [decisions index](decisions/index.md)'s "not yet written up" list shrinks to the one ruling with no section, and two
+  dead links in [a new field is erased by every rebuilder](practices/a-new-field-is-erased-by-every-rebuilder.md)
+  become plain text.
+* **Note**: **TWO AUDITORS DISAGREED AND THE FILE SETTLED IT.** One said CLAUDE.md still claimed two gates were
+  missing from the pipelines; another said it had been corrected. Reading the file took one command. A finding is a
+  hypothesis until somebody opens the line it cites.
+
 ## 2026-11-02
 
 Entry 149.

@@ -25123,6 +25123,59 @@ offset on exactly the 1,467 the census of §11.256.1 had counted, two independen
 header, and a check for it would have to name it. Tags, which no ref here creates. How a commit that has
 already reached a remote is mended, which is a history rewrite and a ruling of its own.
 
+### 11.258 DR-259 · RackPal goes public as an alpha: source under plain AGPL, issues only, and a Windows preview that is not the distribution route
+
+**Settled by the user on 2026-11-03**, from `#1288` (REL-0). The user is releasing RackPal publicly in
+its current state to gather feedback at scale. A pre-release audit (five agents on the corpus, the KB
+and the repository, a scan of every historical object for secrets, the metadata of every committed
+image and PDF, and the full local gate with the release build) found four things that only a ruling
+could settle. Each was put as a question with its cost, and each was answered on the recommendation.
+
+**11.258.1 THE FACTS.** No secret, key or credential in any of 22,917 objects reachable from `main`,
+and the live service token's value nowhere. No location or camera data in any image. All 23 local
+gates green, the Windows release build and its output check included. Against that:
+
+1. **DR-189 §11.188.6 forbade the release.** It rules that `LICENSE` and the output exception *"go to a
+   qualified reviewer before any public push"*, and the exception's own banner said *"Do not publish
+   RackPal while this banner is present."*
+2. **`docs/reference/keystone/` held 73 files the project had no right to redistribute**: retailer
+   product photographs (one set's EXIF names its copyright holder) and manufacturer drawings, supplied
+   for DR-007 §11.7 and committed in every version since 2026-07-28.
+3. **DR-036 §11.35.1 clause 4 and DR-258 collide.** Contributions arrive under a DCO sign-off, and the
+   identity gate refuses any commit whose author is not this project's one identity.
+4. **DR-254 parks distribution on M8**, and integrators will not install a toolchain to try an alpha.
+
+**11.258.2 RULED BY THE USER, EACH ON THE RECOMMENDATION.**
+
+1. **The source goes public now under plain `AGPL-3.0-or-later`.** §11.188.6's review moves from
+   *"before any public push"* to before v1.0, where M8's AC-058/D7 licence deliverable already put it
+   (§12.62). The draft exception leaves the repository root for
+   `docs/proposed-output-exception.md`, marked proposed and not in force, so nobody reads a draft as a
+   grant; the About box says the same. The cost, stated in the question: until it is reviewed and in
+   force, whether a document RackPal produces is a derivative of RackPal is legally unsettled, which a
+   feedback alpha can carry and a v1.0 cannot.
+2. **The vendor files leave every commit.** The history was rewritten a second time with DR-257's
+   tooling, before GitHub had ever been public; the README in that directory stays as the record of
+   what the parts measured, naming its sources in words, and `.gitignore` now refuses anything but
+   markdown under `docs/reference/`. The self-hosted agent's machine name left in the same pass,
+   written `{agent-host}`. GitHub receives the result in a newly created repository, because a
+   force-push leaves unreachable commits retrievable by hash. Not taken: deleting them from the tree
+   only, which would have published them in history.
+3. **The alpha takes issues, not pull requests.** Feedback is the point of the release and code
+   contributions are not, so DR-036 clause 4's DCO waits until contributions open, and DR-258 stands
+   unchanged (§12.62). `CONTRIBUTING.md` and the issue templates say so. Not taken: narrowing the gate to
+   admit outside authors now, which needs its own ruling.
+4. **A Windows preview build is published as a pre-release, and it is not DR-254's distribution
+   route.** It is the portable folder of docs/14, signed as DR-006 already rules with a self-signed
+   certificate whose subject is a pseudonym, zipped, and marked pre-release with the steps past
+   SmartScreen's warning. M8 still rules the route (§11.253.3.4), and nothing here installs, registers
+   file types or updates itself. **macOS gets no build**: it builds on CI but cannot open or save a file
+   until docs/13 D2 and D3 close.
+
+**What this does not rule.** The copyright holder named in the Windows and macOS runner metadata, which
+DR-256 left to a later ruling. Whether, when or how contributions open. The distribution route, the
+installer and notarisation, which stay M8's.
+
 ---
 
 ## 12. Superseded rulings
@@ -25962,6 +26015,14 @@ close and a reopen.
 | Ruling | What it said | What now governs |
 |---|---|---|
 | **DR-096 §11.95.6**, the remote's URL | Named the Azure DevOps organisation in full as the host of `origin` | **The URL reads `https://{org}.visualstudio.com/...`**, rewritten in every version of the file by the history rewrite (§11.256.2.4). Nothing is renamed: the organisation, project, repository and area path keep their names, and §11.95.6's ruling that they are not part of the sweep stands. |
+
+### 12.62 Amended by DR-259 (the alpha goes public)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-189 §11.188.6**, the review's timing | *"the `LICENSE` file and its exception go to a qualified reviewer before any public push"* | **Before v1.0** (§11.258.2.1), where M8's AC-058/D7 already put the licence deliverable. The source is public under `LICENSE` alone until then; the draft is `docs/proposed-output-exception.md`, marked not in force. |
+| **DR-036 §11.35.1 clause 4**, contributions | *"Contributions arrive under a DCO sign-off"* | **Deferred**: the alpha accepts issues and no pull requests (§11.258.2.3), so no contribution arrives to sign. The clause governs again when contributions open, which needs a ruling that also reconciles DR-258. |
+| **DR-254 §11.253.3**, the parked route | Distribution waits on M8 | **Stands.** A self-signed Windows preview zip marked pre-release (§11.258.2.4) is not that route and decides nothing about it. |
 
 ## 13. Resolved §10 questions
 

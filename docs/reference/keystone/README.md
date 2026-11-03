@@ -2,11 +2,11 @@
 
 Physical reference for **DR-007 §11.7** (keystone strap geometry, M3).
 
-## What belongs here
+## What this was, and why the pictures are gone
 
-Photographs or drawings of the real parts, so that plate rendering is built
-against objects rather than against a description of them. The user supplied
-a set on **2026-07-28** covering:
+Photographs and drawings of the real parts, gathered so that plate rendering
+is built against objects rather than against a description of them. The user
+supplied a set on **2026-07-28** covering:
 
 * keystone straps, **1, 2, 3, 4 and 6 port** (no 5-port part exists, which is
   the prediction `W ∈ {1,2} × H ∈ {1,2,3}` makes, DR-007 §11.7.1)
@@ -16,7 +16,14 @@ A second batch followed on the same day covering the **occupants**: Cat6
 couplers, an F-type barrel, an HDMI right-angle coupler, a 3.5 mm/IR module,
 blank inserts, and a speaker binding post.
 
-All of it is now in this directory.
+**The files themselves are no longer in the repository, in any version.**
+They were retailer product photographs and manufacturer drawings, which the
+project has no right to redistribute, and DR-259 §11.258.2.2 removed them from
+every commit before the source went public. What they established is recorded
+below and in DR-007 §11.7.8, which is what the work needs. The sources, by
+name: product listings from several retailers; the On-Q decorator strap sheets
+(WP3411 to WP3414); a Hubbell keystone frame drawing (C773248); and RJ45 and
+F-type connector drawings, all from their manufacturers' public sites.
 
 ## What the reference settled, and what it did not
 
@@ -56,15 +63,15 @@ renderer needs only `(connector type, colour)`.
 
 ## Third batch, 2026-08-09: manufacturer drawings and a supplier palette
 
-`technical drawings/` holds vendor drawings for the 1, 2, 3, 4 and 6 port
-straps plus the RJ45 and F-type connectors. `wirepath color palatte/` holds
-the finish range of the supplier the user's own company buys from.
+A `technical drawings/` folder held vendor drawings for the 1, 2, 3, 4 and 6
+port straps plus the RJ45 and F-type connectors, and a palette folder held one
+supplier's finish range. Both left the repository with the photographs.
 
-**Read them with `pypdfium2`, not with the Read tool.** The PDFs are vector
-with the text converted to outlines, so they carry **no extractable strings**:
-`pdftoppm` is not installed and a text extractor returns zero runs. Rendering
-is `pdf[0].render(scale=8).to_pil()`. Incidentally that means **pdfium reads
-these fine**, which is a small corroboration of DR-029's costing, since pdfium
+**Had they been read with the Read tool, they would have said nothing.** The PDFs were vector
+with the text converted to outlines, so they carried **no extractable strings**:
+a text extractor returned zero runs, and they were read by rendering with
+`pypdfium2` (`pdf[0].render(scale=8).to_pil()`). Incidentally that meant **pdfium read
+them fine**, which is a small corroboration of DR-029's costing, since pdfium
 is the rasteriser that ruling names for the Plan view.
 
 ### What the drawings state

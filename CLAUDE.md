@@ -53,6 +53,19 @@ until M5-G4 added the AC-051 pair gate and made it sixteen. Count the
 - **Stale `build/unit_test_assets` and `build/flutter_assets` cause phantom asset
   failures.** Delete both if a rootBundle test fails for no reason.
 
+## The public repository (DR-259)
+
+**GitHub, `RileyTheRackPal/RackPal`, is public** and carries the same history as Azure
+DevOps; Azure DevOps stays `origin`, with CI, the board and pull requests. Pushing to
+GitHub is **the user's act**: an agent's push to it is refused by the auto-mode
+classifier, so hand the user the command. It is reached over an SSH host alias
+(`git@github-riley:RileyTheRackPal/RackPal.git`), never over HTTPS with a token.
+**Nothing old-history may ever reach it** (DR-257, DR-258). The alpha takes issues and
+**no pull requests** (`CONTRIBUTING.md`), so a GitHub PR is closed with thanks and its
+idea, if good, becomes a board item. **Never commit vendor or client material**:
+everything under `docs/reference/` that is not markdown is ignored on purpose, and the
+history was rewritten twice to get it out.
+
 ## CI, which now exists
 
 `azure-pipelines.yml` is registered as **definition 1, `RackPal CI (Windows)`**, and
