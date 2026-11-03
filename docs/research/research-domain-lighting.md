@@ -1,7 +1,7 @@
 # Research · centralized lighting: panels, modules, processors and wireless links
 
 **Written 2026-10-09 for LIGHT-0 (`#1041`), under DR-246** (canon §11.245), against `main` at
-`91ae0c94`. Every source was retrieved on 2026-10-09. Unlike the original research pass, this paper
+`edc3c4f5`. Every source was retrieved on 2026-10-09. Unlike the original research pass, this paper
 says how each fact was obtained, because the difference matters when a figure becomes a rule:
 
 - **[read]** means the manufacturer's own document was opened and the figure taken from its text.

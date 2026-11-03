@@ -65,7 +65,7 @@ can see and disagree with, and CR-017 reserves refusal for the five tier-1
 topology rules, whose escape docs/02 §5 gives as *"None. There is nothing to
 escape to."* Wanting a device gone is not that.
 
-# Built at `d0cd0f9` (board #95), and what building it found
+# Built at `732502f` (board #95), and what building it found
 
 `derived/device_removal.dart` computes the plan; `RemoveDeviceCommand` consumes
 the SAME function so the dialog's number and the edit cannot drift;

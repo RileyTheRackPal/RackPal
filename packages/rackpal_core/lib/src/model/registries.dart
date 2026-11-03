@@ -331,7 +331,7 @@ final class ConnectorTypeDef {
 /// **`isPathwayOnly` HAS ARRIVED** (M3-E/1). It was held out for one
 /// reason and that reason is gone: the flag's whole purpose is that such
 /// a media type creates a `Pathway` instead of a `Link`, and until
-/// M3-E/4 (`8eaee44`) NOTHING IN THIS PRODUCT COULD CREATE A `Pathway`
+/// M3-E/4 (`08ad5aa`) NOTHING IN THIS PRODUCT COULD CREATE A `Pathway`
 /// AT ALL. Seeding it earlier would have marked three types with a fact
 /// no code could act on.
 final class MediaTypeDef {
@@ -373,7 +373,7 @@ final class MediaTypeDef {
   /// The declared maximum for this medium, and **the field DR-020
   /// §11.19.2(4) calls "a new `maxLength` on the media registry"**. It is
   /// neither new nor called that; canon §11.19.7 is the census, and
-  /// M3-C/6 seeded it at `f2e1fea`.
+  /// M3-C/6 seeded it at `3a45d81`.
   ///
   /// `LEN-002` READS THIS ONE. Seven of the 38 shipped types declare a
   /// length and thirty-one are deliberately null, because canon §6.5's

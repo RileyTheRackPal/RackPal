@@ -105,7 +105,7 @@ is not authority to cross it.
 It also does not rule where a location may be deleted from. The panel is board
 #145's question.
 
-# Built at `ca0a23c` (board #84), and what building it found
+# Built at `b23007d` (board #84), and what building it found
 
 `derived/location_tree.dart` reads the shape, `derived/location_removal.dart`
 computes the cost, `commands/location_commands.dart` writes it, and

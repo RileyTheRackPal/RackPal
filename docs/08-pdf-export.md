@@ -332,7 +332,7 @@ Four things this buys:
 3. `Widget won't fit into the page` overflow becomes structurally impossible.
 4. Deterministic row counts, so the progress reporter quotes an exact page count before it starts.
 
-~~**`maxPages` is set explicitly to 2000**: the default is 20 and throws beyond it.~~ **Not so (2026-10-12, `#1056`):** nothing in the export uses `MultiPage`, and in `pdf` 3.13.1 the `maxPages` check sits inside an `assert`, so it would not hold in a release build either. The dry run warns above 40 sheets (`kLargeSetSheets`) and **refuses past 2000** (`kMaxExportSheets`, `ExportTooManySheets`), before a page is emitted, as DR-230 §11.229.2 rules: built in `3ba307ac` (`#352`) and held by `export_sheet_cap_test.dart`. **This line said that refusal was not built (`#1058`) for one commit, which was wrong**: a census grep cut short by `head` hid the real hit, and the follow-up searched for a guessed name.
+~~**`maxPages` is set explicitly to 2000**: the default is 20 and throws beyond it.~~ **Not so (2026-10-12, `#1056`):** nothing in the export uses `MultiPage`, and in `pdf` 3.13.1 the `maxPages` check sits inside an `assert`, so it would not hold in a release build either. The dry run warns above 40 sheets (`kLargeSetSheets`) and **refuses past 2000** (`kMaxExportSheets`, `ExportTooManySheets`), before a page is emitted, as DR-230 §11.229.2 rules: built in `0c85f515` (`#352`) and held by `export_sheet_cap_test.dart`. **This line said that refusal was not built (`#1058`) for one commit, which was wrong**: a census grep cut short by `head` hid the real hit, and the follow-up searched for a guessed name.
 
 **Long-token protection.** Model strings and labels like `RK1-HDMI-OUT-07-TO-DISPLAY-MSTR-BR` are exactly the shape that overflows or silently disappears in `pw.Text`. Sanitise on the way in, then hard-truncate with a measured ellipsis using the shared `TextMeasurer` (§7.5) rather than trusting the widget:
 
@@ -1297,7 +1297,7 @@ Every item below is cheap to confirm with a 30-line spike and expensive to disco
 | ~~3~~ | **Confirmed (2026-10-12, `#1056`):** `buildBackground` and `buildForeground` | All sheet furniture attaches here |
 | ~~4~~ | **Answered (2026-10-12, `#1056`)** by `packages/rackpal_core/test/draw/text_rotation_test.dart`, written for this question | Render a 45°-rotated string on both backends and overlay them. Sign errors here are invisible until someone rotates a rail label |
 | 5 | `Printing.layoutPdf` on Windows without fetched pdfium; `forceCustomPrintPaper` for 11×17 | Gates whether the OS print dialog can ship in v1.1 (CR-100) |
-| ~~6~~ | **Answered (2026-10-12, `#1056`), against the plan:** the check is inside an `assert`, so it does not run in release; nothing uses `MultiPage`. **The cap holds anyway**: the dry run refuses past 2000 (`kMaxExportSheets`, `3ba307ac`, `export_sheet_cap_test.dart`); `#1058` said otherwise and was wrong | The 2000 cap must actually hold |
+| ~~6~~ | **Answered (2026-10-12, `#1056`), against the plan:** the check is inside an `assert`, so it does not run in release; nothing uses `MultiPage`. **The cap holds anyway**: the dry run refuses past 2000 (`kMaxExportSheets`, `0c85f515`, `export_sheet_cap_test.dart`); `#1058` said otherwise and was wrong | The 2000 cap must actually hold |
 
 ### 11.2 Test gates
 

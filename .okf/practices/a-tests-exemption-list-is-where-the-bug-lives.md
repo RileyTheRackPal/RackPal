@@ -105,7 +105,7 @@ that exposes it. A round-trip property enumerates its own cases.
 [3] `packages/rackpal_core/test/builder/quick_add_test.dart`: the bank count
 [4] `packages/rackpal_core/test/builder/quick_add_test.dart`: the
     render/parse round trip
-[5] Commits `5d521a4`, `e804201`, `c01ccba`
+[5] Commits `e12b973`, `88f05c9`, `604c516`
 [6] [Assert the artifact, not the
     mechanism](/practices/assert-the-artifact-not-the-mechanism.md), of which
     this is the failure mode from the other side

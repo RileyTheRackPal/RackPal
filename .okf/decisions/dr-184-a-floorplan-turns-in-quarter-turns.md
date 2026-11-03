@@ -62,7 +62,7 @@ multiple of 90 refuses the lift, and the page goes to the renderer like any othe
 
 # Built
 
-`#911` landed it on 2026-09-18 in `5f51af9a`: the field, `PlanTurn`, the scene and sheet, the lift,
+`#911` landed it on 2026-09-18 in `7bf70eb1`: the field, `PlanTurn`, the scene and sheet, the lift,
 the picker, the rail buttons and the two keys, with 34 core cases and 6 ui cases. Five mutations were
 run and each was killed; the two on the canvas each reddened exactly the case written for them.
 

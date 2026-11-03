@@ -91,7 +91,7 @@ folder, not as a product.
 
 | | |
 |---|---|
-| Platform | **Windows only.** macOS is planned and not started |
+| Platform | **Windows only.** A macOS build exists on the build server but cannot yet open or save a file (no native file dialog, no data folder), so this guide describes Windows alone for now |
 | Delivery | A **portable folder**. There is no installer, no auto-update, no crash reporter |
 | Your data | Projects are ordinary files you choose the location of. Nothing is uploaded anywhere. There are no accounts and no telemetry |
 | Licence | **AGPLv3 or later**, with the device catalog under CC0. The output exception, under which the drawings you produce are your own work, is drafted and **not yet in force** pending legal review. `Help` ▸ `About RackPal…` says so too |
@@ -333,6 +333,9 @@ reachable (a disconnected share, a stick that is not plugged in).
 - **A file saved by a newer version of RackPal** opens read-only, under a
   banner that cannot be dismissed. You can still edit and export; `Save a
   copy…` keeps your changes in a new file and leaves the original untouched.
+  **The copy keeps only what this version understands**: anything the newer
+  version added that this one does not know is left out of the copy, so do not
+  treat it as a lossless conversion.
 
 #### Undo
 
@@ -365,7 +368,10 @@ checked and approved the set. These print in the title block on every sheet
 **Legend**: the abbreviations and general notes (§21.7). A field saves when you
 leave it or press Enter, and each change can be undone from `Edit`. Leave a field
 empty and its line is left off the sheet; the project name is the exception, and
-clearing it is refused, because it heads every sheet.
+clearing it is refused, because it heads every sheet. **There are no revision
+or issue-date fields here**, and none anywhere else in this version (§21.8): on a
+project you start, the cover prints `REVISION` with a dash (the starters carry
+sample revisions in their files), and the issue date is always the day you export.
 
 **Your logo.** Under the company lines, `Choose logo…` takes a PNG, JPEG, PDF or
 SVG. A PDF gives its first page, and a transparent background becomes white. The
@@ -1513,7 +1519,7 @@ floorplan import.
 
 | Sheet | When |
 |---|---|
-| **Cover** (`T0.00`) | Always, first. The project name, client and site, drawing number, revision and issue date, your scope paragraph, your company, and who drew, checked and approved the set, all from `File` ▸ `Sheet set…`. Along the foot, one line per rack: its size, how many active devices (blanks, vents, shelves and other passives are not counted), the rack units used on the front and the rear, weight, VA and BTU/hr, with how many devices are missing a value. Down the right, the drawing index: every sheet in the file, with both its number in the set and its sheet number, and a schedule that runs to several pages as one line. A very large set flows into two or three narrower columns |
+| **Cover** (`T0.00`) | Always, first. The project name, client and site, drawing number, your scope paragraph, your company, and who drew, checked and approved the set, all from `File` ▸ `Sheet set…`. It also prints a `REVISION` line, which reads with a dash on a project you start because this version has no way to record a revision (the starters carry sample revisions), and an `ISSUED` date, which is the day you export and is entered nowhere. Along the foot, one line per rack: its size, how many active devices (blanks, vents, shelves and other passives are not counted), the rack units used on the front and the rear, weight, VA and BTU/hr, with how many devices are missing a value. Down the right, the drawing index: every sheet in the file, with both its number in the set and its sheet number, and a schedule that runs to several pages as one line. A very large set flows into two or three narrower columns |
 | **Exceptions and Acknowledgements** (`T0.02`) | Always, third, on as many pages as it needs. First, any rule you have switched off or muted for the whole project, with its reason. Then every open finding from the validation drawer, errors first, each with its rule, where it is, and what it says. Then every finding you acknowledged, with your reason, who and when, including any acknowledgement whose problem has since gone away, marked so. A section with nothing in it says so in words |
 | **Symbol Legend** (`T0.01`) | Always, second. Every cable type in colour and in greyscale side by side (the ten named types every time, then any other type your cables use); the device marks and plan markers in your set; an annotated device block; the border and hatch conventions; your ID formats worked through; abbreviations and general notes, which you can change in `File` ▸ `Sheet set…`. Every other sheet says `SYMBOL LEGEND: SEE SHEET T0.01` |
 | **Device Location Plan** | Automatically, one per floorplan that has at least one item pinned to it |
@@ -1573,7 +1579,8 @@ else.
 
 **Issuing for construction.** `File` ▸ `Export for construction…` is the same
 export with every sheet stamped `ISSUED FOR CONSTRUCTION` and the date, in a box
-above the revision history. It stamps only when the validation drawer has no
+above the revision history, which reads `NO REVISIONS RECORDED` on a project
+you start, where a sheet carries one (§21.8). It stamps only when the validation drawer has no
 open error. If it has any, you still get the file, unstamped, and the status
 line says how many errors are open and which sheet lists them. Acknowledging an
 error counts as dealing with it. Nothing is remembered: the next `Export PDF…`
@@ -1600,16 +1607,25 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
 - **No installer.** Portable folder only, and no auto-update.
 - **No crash reporter.** If it dies, it dies silently, and we only learn about
   it if you tell us. (Your work is still protected: §21.5.1.)
-- **Windows only.** macOS is planned, not begun.
+- **Windows only.** A macOS build exists on the build server, but it cannot
+  yet open or save a file: it has no native file dialog and no data folder.
+  Nothing in this guide has been checked against it.
 - **No localisation.** English only, and no accessibility work has been done
   beyond keyboard reach.
 - **No DXF or DWG export.** DXF is planned for a later release.
 - **No Rear Panel view.** `Ctrl+3` does nothing; it is reserved for it. The
   rear panel prints on the rear elevation today; it is just not interactively
   editable.
-- **Staging Bin: the edges.** The bin is built (§21.5.4). What is not: paste
-  and duplicate do not overflow into it, and the advisory that would name a
-  non-empty bin is held back to a later release.
+- **Staging Bin: the edges.** The bin is built (§21.5.4). What is not: the
+  advisory that would name a non-empty bin is held back to a later release.
+- **A rack cannot be deleted yet.** There is no delete-rack command and no menu
+  item for one: what to do with the devices in it has not been decided. You can
+  resize a rack or leave it empty, but you cannot remove it from the project.
+- **No revision history.** Nothing in this version can record a revision, so
+  the cover's `REVISION` line prints a dash, a sheet's revision block reads
+  `NO REVISIONS RECORDED`, and the issue date is simply the day you export.
+  `File` ▸ `Sheet set…` has no revision or date fields. A file that already
+  carries a revision list would print it, but nothing in the app edits one.
 - **Circuits cannot be created.** The rack inspector lists a rack's circuits
   and says creation arrives with the power stage.
 
@@ -1656,10 +1672,20 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
 >
 > Seated at a tablet, beside the reader rather than in front of them.
 
+**Reports go to the project's issue tracker on GitHub**,
+[RileyTheRackPal/RackPal](https://github.com/RileyTheRackPal/RackPal/issues/new/choose),
+which offers two forms: a bug report, and workflow feedback for "this is not how
+I work". Issues are public, so read the first item below before you attach
+anything. A security problem goes by email instead, as the repository's
+`SECURITY.md` says.
+
 What makes a report useful here, in rough order:
 
-1. **The project file**, if you can share it. It is a single file and it
-   carries everything, including the version that wrote it.
+1. **A project file that shows the problem, but never a client's.** A project
+   is a single file and it carries everything, including the version that
+   wrote it, which is exactly why a real one must not be posted: it holds site
+   addresses, room names and contact details. Reproduce the problem in a
+   starter or a scratch project and attach that.
 2. **What you expected**, in trade terms. "The elevation should show the shelf
    occupant" tells us more than "the elevation is wrong".
 3. **Whether it is in §21.8.** If you are not sure, say so and report it

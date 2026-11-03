@@ -4,10 +4,12 @@ title: The pipeline, and what a green run does not prove
 description: >-
   azure-pipelines.yml is definition 1 on Azure DevOps and it runs. It ran first on
   2026-08-27 and passed first try, which is what mutation-testing every gate script
-  locally buys. What it still cannot tell you is whether it can report a failure,
-  because nothing has ever failed on the service.
+  locally buys. The service can report a failure: it has gone red on this definition
+  for environmental reasons, and the macOS definition's first run failed test cases
+  that all reached the Tests tab. What has not happened is a failing test on this
+  definition. The gate set and figures below are run 1's unless a note says otherwise.
 tags: [gate, ci, azure-devops, pipeline, non-vacuity, dr-017, m0, m8]
-timestamp: 2026-08-27T00:00:00Z
+timestamp: 2026-11-03T00:00:00Z
 status: live
 ---
 
@@ -24,19 +26,23 @@ The file carried the sentence *"NO AZURE DEVOPS RUN HAS EVER EXECUTED IT"* for t
 half weeks. Because that sentence stood unedited, the gap was cheap to find rather than
 being something a reader had to infer.
 
-Build **20260827.1**, against `main` at `1fab087`: **passed first try**, all 24 steps,
+Build **20260827.1**, against `main` at `078c0f6`: **passed first try**, all 24 steps,
 22m01s, zero fixes. Six named unknowns became measurements in one run: the YAML schema was
 accepted unmodified, the pinned Flutter archive resolved, `windows-2022` still builds
 desktop Windows, and wall clock is 22 minutes rather than an estimate.
 
-**A 541-line pipeline passing on attempt one is not luck.** Every gate script had been
+**A pipeline of that size (541 lines on run 1; it has grown since) passing on attempt one is not luck.** Every gate script had been
 mutation-tested on a developer machine first: deliberately broken, observed to fail, then
 restored. The cost was paid before the run, which is why the run was boring.
 
 Build **20260827.2** then took the branches run 1 could not, hitting both caches (Flutter
 install 104s to 7s) and running against a non-`main` branch.
 
-## What it defends
+## What it defended on run 1, and what has been added since
+
+The table is **run 1's, kept as record** (2026-08-27). It is not the current gate set: read
+that from the `Gate:` and `Test:` steps in `azure-pipelines.yml`, and the floors from
+`$SuiteFloors` in `tools/ci/run_suite.ps1`.
 
 | Gate | Evidence from run 1 |
 |---|---|
@@ -44,17 +50,29 @@ install 104s to 7s) and running against a non-`main` branch.
 | Formatter (DR-017) | clean |
 | PAL-1, palette parity, registry parity | pass |
 | JUnit converter self-test | pass, and it runs **before** the suites |
-| Five suites | **5,609 cases, 0 failed, 0 errored, 0 skipped** |
+| The suites that existed then | **5,609 cases, 0 failed, 0 errored, 0 skipped** |
 | Non-vacuity floors | every suite **"exactly at it"** |
 | Windows release output | passes over what the build actually produced |
 
-**"Exactly at it" on all five floors is the number worth keeping.** Zero slack means the
+**"Exactly at it" on every floor is the number worth keeping.** Zero slack means the
 next deleted test fails the gate on the next run, rather than accumulating until somebody
 goes looking, which is what `#764` had to do after finding 3,247 tests of slack.
 
+**Gates the definition runs now that run 1 did not**, each with its own page:
+
+* [Milestone completeness](milestone-completeness.md), roadmap section 8.9 as a check.
+* [Rule review pack](rule-review-pack.md) grouping.
+* [Glyph coverage](glyph-coverage.md), after a step that installs hash-pinned Python
+  dependencies.
+* [AC-051 pair coverage](ac-051-pair-coverage.md), as a named step.
+* [Identity](identity.md), the DR-258 gate: every reachable commit is the DR-257 identity at +0000.
+
+Two more steps are not gates but belong to the run: the `rackpal_pdfium` suite, and the
+timed budgets in `rackpal_core`, run one at a time.
+
 ## What it deliberately does not defend
 
-* **Goldens.** There are none, and standing them up inside a CI task would produce a corpus
+* **Pixel goldens.** There are none (the byte and text goldens DR-253 means by the word run in the ordinary suites), and standing them up inside a CI task would produce a corpus
   blessed by nobody. There is deliberately no `--exclude-tags golden` either, so the first
   golden anybody writes runs in the ordinary suites rather than being silently skipped.
 * **"The app opens the four starter projects."** Not runnable headless without an
@@ -75,9 +93,9 @@ tab with their messages, and `PublishTestResults` failed its step on them. The c
 the publish task are the same files in both definitions, so the reporter's red path is now
 observed. What has still never happened is a failing TEST on definition 1.
 
-**Nothing has ever gone red on the service.** Every gate script was mutation-tested
-*locally*, but no Azure DevOps run has ever failed, so the service-side reporting path is
-exercised in the green direction only.
+**As written on 2026-08-27 (history, no longer true): nothing had ever gone red on the
+service.** Every gate script was mutation-tested *locally*, but no Azure DevOps run had ever
+failed, so the service-side reporting path was exercised in the green direction only.
 
 Green over a broken reporter and green over a healthy one look identical from here. This is
 the same shape as the non-vacuity problem the floors exist to solve, one level up: a run
@@ -106,4 +124,4 @@ protects the branch itself, so one policy does both jobs and `trigger:` is not
 covering a hole. **The error is kept here rather than quietly replaced**: it was written
 confidently, repeated in three files, and survived because nobody tried the push it
 described. See [a confident paragraph is a
-tell](/practices/two-documents-agreeing-is-not-verification.md).
+tell](/practices/a-confident-paragraph-is-a-tell.md).

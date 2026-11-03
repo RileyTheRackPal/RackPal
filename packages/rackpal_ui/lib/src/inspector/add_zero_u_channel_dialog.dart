@@ -162,7 +162,7 @@ class _AddZeroUChannelDialogState extends State<AddZeroUChannelDialog> {
         // than to zero, which `planAddZeroUChannel` would refuse with a
         // sentence about a channel nobody described. Zero is also the
         // value CR-025 forbids, so defaulting to it would reintroduce the
-        // defect `da60884` removed.
+        // defect `decf050` removed.
         startU: _intOr(_start, 1),
         endU: _intOr(_end, widget.rack.heightU),
         name: _name.text.trim(),

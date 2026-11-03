@@ -181,6 +181,7 @@ commits, canon §12); it is not a promise that nothing has moved since.
 * [DR-256, the macOS bundle identity](dr-256-the-macos-bundle-identity.md) - D1 (#453): com.rackpal.rackpal as Windows already implies, RackPal.app, no App Sandbox with the hardened runtime; an identifier is effectively permanent once shipped.
 * [DR-257, one pseudonymous identity](dr-257-one-pseudonymous-identity.md) - SCRUB-0 (#1286): every commit and tag rewritten to Riley at +0000, the sample drafter renamed at the same byte lengths, the organisation named per machine; a header-only rewrite would have left five of seven leaks in place.
 * [DR-258, the identity gate](dr-258-the-identity-gate.md) - SCRUB-1 (#1287): every commit reachable from HEAD is the DR-257 identity at +0000, locally and in both pipelines; a shallow clone fails it, and a PR build skips only the service's own merge.
+* [DR-259, the public alpha](dr-259-the-public-alpha.md) - REL-0 (#1288): source public under plain AGPL with the exception's review moved to before v1.0, vendor files removed from every commit, issues only and no pull requests, and a self-signed Windows preview that is not the distribution route.
 * [DR-050, plan geometry fills the room estimate](dr-050-plan-geometry-fills-the-room-estimate.md) - room dimensions drawn on the plan fill Location.estimatedRunLengthFromRack, a field that already exists, already ranks below outletNominal and already sums, so ScheduleLengthSource gains NOTHING: the rollup forbids a BOUND and an estimate is not the same object. The figure is the farthest corner of a closed polygon plus the rise, measured from the rack this room's runs land in, which is DR-147 transferred in substance because the field is read PER RUN in the length ladder. Two head ends take the LARGER figure rather than refusing, because a refused estimate buys ZERO wire in the takeoff. No margin is folded in. Built as LEN-A, where a census found the ruling had priced a tree that was not there: the vertices it assumed existed never did, and the field it fills had no editor anywhere since M3-D.
 * [DR-036, public GPLv3 project, CC0 catalog, nothing priced](dr-036-public-gplv3-cc0-catalog.md) - reverses DR-006 and discharges DR-033's precondition; the licence names matter less than the two clauses copy-on-place forced, a catalog that is deliberately not copyleft and an output exception putting every document the app emits outside the GPL.
 * [DR-037, the Plan view's exit criterion](dr-037-plan-view-exit-criterion.md) - a stranger finds every drop from a printed set, because an author cannot test legibility to somebody else; three of its four decisions came from code that contradicted the design, including an alpha path row 9 was too narrowly worded to forbid.
@@ -282,28 +283,6 @@ commits, canon §12); it is not a promise that nothing has moved since.
 
 # Not yet written up
 
-DR-002 (residential primary), DR-003 (device builder in v1), DR-004 (multi-sheet
-never), DR-005 (schematic is a client deliverable), DR-007 (keystone geometry
-ships in M3), DR-016 (editable rack presets), DR-017 (`dart format` is a gate),
-DR-018 (the Plan view moves to v1.1), DR-019 (the plan container sniffs) and
-DR-020 (a plan may not predict a route). All are in
-`docs/canonical-decisions.md` §11; concepts here are pending. A missing link is
-not-yet-written knowledge, not an error.
-
-**DR-020 is the one that now costs the most by its absence**, and the gap has
-widened rather than closed: it is cited by DR-026, DR-029, DR-031 (which
-discharges its §11.19.4 outright) and the footage rollup alike, and DR-032 and
-DR-035 both reason from its *"the route is discovered, not designed"* without
-being able to link it. DR-007 and DR-018 are next, for DR-028 and DR-029.
-
-**DR-006 was on this list while its own concept sat two lines above**, which is
-the drift a list of absences invites: it names what is missing, so nothing fails
-when an entry stops being true.
-
-**AND THE LIST STOPPED BEING THE WHOLE ANSWER ON 2026-09-05.** It enumerates
-early rulings whose concepts were never written, and reads as though that is the
-only gap. It is not: **DR-104 through DR-125 have no concepts here either**,
-twenty-two of them, because the bundle was last updated on 2026-08-30 and six
-days of M5 landed after it. DR-126 is written because it was written as the work
-landed; the twenty-two behind it are owed. A list of absences that is itself
-incomplete is worse than no list, since it invites the reader to believe it.
+Only DR-016 (editable rack presets) has no concept of its own: it has no §11
+heading in `docs/canonical-decisions.md` either, because canon rules it inside
+§10.12(c). DR-176 carries its follow-through.

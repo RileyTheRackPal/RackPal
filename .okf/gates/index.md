@@ -13,7 +13,7 @@ gate's blind spot is as worth knowing as its coverage.
 * [Catalog port order](catalog-port-order.md) - declared order must equal ranked order; FracIndex sorts as a string and 678 of 727 ports were scrambled.
 * [Release signature](release-signature.md) - signed, timestamped, and still valid after the certificate expires; canon's recipe for the last one has an unstated precondition.
 * [The pipeline itself](the-pipeline-itself.md) - it runs, it passed first try, and every suite sits exactly at its floor; whether it could report a failing test was open until build 481 on the macOS pipeline showed it can.
-* [The macOS pipeline](the-macos-pipeline.md) - definition 2, an optional PR check on a hosted image (DR-255): every Windows gate but the timed budgets and the build, floors lower only by named cases, and never blocking, because one free job of 1,800 minutes must not decide what merges.
+* [The macOS pipeline](the-macos-pipeline.md) - definition 2, an optional PR check on a hosted image (DR-255): every Windows gate but the timed budgets, plus its own `RackPal.app` build and output gate (since D1), floors lower only by named cases, and never blocking, because one free job of 1,800 minutes must not decide what merges.
 
 * [Callbacks have callers](callbacks-have-callers.md) - every function-typed `*Actions` member in `rackpal_ui` must be invoked somewhere; 18 callbacks, one hole on its first run, and two false positives it must not report.
 * [Dependency table parity](dependency-table-parity.md) - docs/03 §10.1 and the five pubspecs must agree in BOTH directions; a documented package nobody installed hid for five milestones, and an installed one nobody documented cited the table it was missing from.
@@ -23,7 +23,7 @@ gate's blind spot is as worth knowing as its coverage.
 * [AC-051 pair coverage](ac-051-pair-coverage.md) - every rule in both bands has a known-bad that fires exactly that rule and a near-miss that does not; the subject is the catalogue, because three enum-driven coverage tests could all pass over a rule with no pair.
 * [Glyph coverage](glyph-coverage.md) - every non-ASCII character a Dart literal can draw exists in both bundled Jost weights, read from the font binary because both backends emit identical ops for a missing glyph. It was in `run_local.ps1` for two months and in neither pipeline: it is the one gate that imports a third-party Python package, so the pipelines install a hash-pinned fontTools first.
 * [The formatter gate](formatter.md) - `dart format` finds nothing to change (DR-017); it has one correct answer, which is why it is absolute where the analyzer is a ratchet. Dart only, and only as right as the configuration it can resolve.
-* [The Windows release build](windows-release-build.md) - the one step that compiles the application the way it ships, on the pinned SDK; it does not run the result, and it builds Windows only.
+* [The Windows release build](windows-release-build.md) - the one step that compiles the application the way it ships, on the pinned SDK; it does not run the result, and it is the Windows build only (the macOS build is on [the macOS pipeline](the-macos-pipeline.md)).
 * [The Windows release output](windows-release-output.md) - the folder the build produced holds a real executable, exactly the expected native libraries and the packaged starters; written after an Android bridge DLL shipped inside a green build.
 
 # Steps that have no concept of their own

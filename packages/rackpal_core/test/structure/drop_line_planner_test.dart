@@ -243,7 +243,7 @@ void main() {
       // M3-A's exit criterion in one assertion. That issue opens with
       // "AC-018 is currently unreachable BY CONSTRUCTION ... the work is
       // producing the drops, not teaching the schedule" — M2-B taught the
-      // schedule already, and `70cb8d5` verified it over whole_house.
+      // schedule already, and `198f878` verified it over whole_house.
       // What nothing asserted until now is that drops produced by THIS
       // path arrive there, which is the whole of what M3-A was for.
       //

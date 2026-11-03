@@ -71,7 +71,7 @@ that means something is a composite key wearing a different hat.
 
 # Built 2026-08-25
 
-All three clauses ship (`#223`, `87e8034`, `9c9c31d`). `Mirror bank` is on a menu
+All three clauses ship (`#223`, `f331613`, `82f63a1`). `Mirror bank` is on a menu
 built once by `bankMenuItems` and hung off two places: the rail's bank tree and
 the grid's band header. `mirrorBankImpact` reads its `after` column off the port
 the command will actually add, so the preview that names the untouched rows

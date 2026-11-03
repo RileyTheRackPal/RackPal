@@ -1,9 +1,9 @@
 ---
 type: CI Gate
 title: The macOS pipeline, and why it may never block
-description: azure-pipelines-macos.yml is definition 2, an optional PR check on a Microsoft-hosted macOS image (DR-255). It runs every Windows gate but the timed budgets and the build, and its first run predicted-then-proved the platform's whole debt, case for case.
+description: azure-pipelines-macos.yml is definition 2, an optional PR check on a Microsoft-hosted macOS image (DR-255). It runs every Windows gate but the timed budgets, builds and gates RackPal.app since D1, and its first run predicted-then-proved the platform's whole debt, case for case.
 tags: [gate, ci, macos, azure-pipelines, hosted-minutes, floors, dr-255, dr-009, dr-153, d4, d5]
-timestamp: 2026-10-17T00:00:00Z
+timestamp: 2026-10-19T00:00:00Z
 resource: azure-pipelines-macos.yml
 status: enforced
 ---
@@ -21,7 +21,7 @@ not a second job: a blocking macOS check would let a minute counter decide what 
 
 # What it runs, and what it does not
 
-Every step of [the pipeline itself](the-pipeline-itself.md) except one:
+Every gate and suite of [the pipeline itself](the-pipeline-itself.md) except one:
 
 * **The timed budgets.** Their limits are wall clock calibrated on one machine; on a
   shared VM they would measure the VM.

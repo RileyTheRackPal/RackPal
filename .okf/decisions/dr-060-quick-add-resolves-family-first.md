@@ -108,4 +108,4 @@ available proof that nothing else moved.
     for widening it
 [3] `packages/rackmate_core/lib/src/catalog/seed_registries.dart`
 [4] `packages/rackmate_core/test/catalog/signal_family_alias_test.dart`
-[5] Commits `edd5e68`, `e0838ae`, `18f30c3`, `3947192`
+[5] Commits `eb7d395`, `f7b5565`, `e453750`, `3947192`

@@ -17,9 +17,9 @@ M2-A and each blocked a specific step. Settled by the user on 2026-07-28.
 
 | Clause | Rule | Built in |
 |---|---|---|
-| §11.8.1 | A jumper is a `Link` with **both ends in the same rack**. Nothing else. | `f43a2da`, `2aa8c20` |
-| §11.8.2 | A user-set `linkClass` **survives** a document change that would re-classify it, and the disagreement stays visible. | `904a721` |
-| §11.8.3 | `atomicConnect` on mismatched sets **connects what fits**, leaves the remainder open, and warns. | `4531fd2` |
+| §11.8.1 | A jumper is a `Link` with **both ends in the same rack**. Nothing else. | `4a48c6f`, `95e0c2b` |
+| §11.8.2 | A user-set `linkClass` **survives** a document change that would re-classify it, and the disagreement stays visible. | `25f0240` |
+| §11.8.3 | `atomicConnect` on mismatched sets **connects what fits**, leaves the remainder open, and warns. | `735b208` |
 
 # Why §11.8.1 struck two limbs of AC-026
 

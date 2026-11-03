@@ -84,7 +84,7 @@ lines in this repository, and those citations were read.
 
 | File | Subject | Written |
 | --- | --- | --- |
-| [feasibility-plan-view.md](feasibility-plan-view.md) | A floorplan underlay with field devices placed on it, driving the pull schedule. Feasibility, cost and the two risks. Ruled at DR-018 | 2026-08-04, against `f181c67` |
+| [feasibility-plan-view.md](feasibility-plan-view.md) | A floorplan underlay with field devices placed on it, driving the pull schedule. Feasibility, cost and the two risks. Ruled at DR-018 | 2026-08-04, against `f7ca698` |
 
 ### Critiques
 

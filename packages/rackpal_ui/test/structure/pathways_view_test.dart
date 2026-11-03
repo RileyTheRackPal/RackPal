@@ -527,7 +527,7 @@ void main() {
     ) async {
       // NOT A CASCADE. Nothing lives inside a pathway, so the run
       // survives having lost its recorded route, which is the state every
-      // drop in this product was in until `8eaee44`.
+      // drop in this product was in until `08ad5aa`.
       final doc = _project();
       final id = _pathway(doc, 'pth-a', 'PW-1');
       final linkId = _link(doc, 'W1', pathwayId: id);

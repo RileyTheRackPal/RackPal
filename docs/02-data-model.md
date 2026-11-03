@@ -1014,7 +1014,7 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
 
 **This example is an illustration of the file's shape, not a fixture the codec reads.** Its two envelope integers, `schemaVersion` and `minReaderVersion`, are those of an early version of the format and do not track the codec: a file written by a current build stamps `kSchemaVersion` and `kMinReaderVersion` from `packages/rackpal_core/lib/src/units/constants.dart` (or `kPlanMinReaderVersion` where the document carries plan data), and §7 says why each moved. The checked-in starters under `apps/rackpal/assets/starters/` are the files that stay byte-true to the live format (CR-117).
 
-**Presentation note.** The codec key-sorts every object, which would place the enormous `document` value between `createdAt` and `generator`. It is shown last here so the envelope reads as a unit. Port arrays inside templates are elided with an explicit sentinel string. This listing is therefore *derived from* `test/fixtures/v1_sample.rmpj` and is not itself byte-identical to it.
+**Presentation note.** The codec key-sorts every object, which would place the enormous `document` value between `createdAt` and `generator`. It is shown last here so the envelope reads as a unit. Port arrays inside templates are elided with an explicit sentinel string. This listing is therefore illustrative and is not byte-identical to any real document. The byte-exact goldens are the files under `packages/rackpal_core/test/fixtures/` ([Testing and quality](11-testing-and-quality.md) §2.5); the `test/fixtures/v1_sample.rmpj` this note once named as its source does not exist.
 
 ```json
 {
@@ -1836,7 +1836,7 @@ Five commitments made on day one:
 
 1. **Migrations are pure functions on raw `Map<String, Object?>`, never on typed objects.** Migrate the map fully, *then* deserialize. Typed migration requires keeping every historical class shape alive in the codebase forever.
 2. **`schemaVersion` + `minReaderVersion` together** give both directions, forward-readable and explicitly-refused, rather than one blunt gate.
-3. **Golden fixture corpus.** `test/fixtures/v1_sample.rmpj`, `v2_sample.rmpj`, … Every release, one test opens *every* historical fixture and asserts it migrates to a valid current document. A fixture is added the day each version ships. Highest value-per-line test in the project; see [Testing and quality](11-testing-and-quality.md).
+3. **Golden fixture corpus.** The corpus is flat files in `packages/rackpal_core/test/fixtures/`, one migration input per schema step (`v1_templates_and_power.rmpj.json`, `v2_ports_with_positions.rmpj.json`, and so on), opened as bytes by `migration_corpus_test.dart`. The `.rmpj.json` names carry the earlier extension and are kept because the tests read them by path; the extension written today is `.rppj` (DR-179). Every historical fixture is asserted to migrate to a valid current document. A fixture is added the day each version ships. Highest value-per-line test in the project; see [Testing and quality](11-testing-and-quality.md).
 4. **Enums are strings, never ordinals.** `"rackEars"`, not `3`. Unknown enum values fall back to an `unknown(raw)` variant that round-trips rather than throwing.
 5. **Additive-only within a major.** Deprecate, never remove or rename. Unknown keys are routed to `unknown` on read and re-emitted verbatim on write, so a v1.0 app opening a v1.4 file round-trips without destroying newer data.
 

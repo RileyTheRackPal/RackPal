@@ -70,7 +70,7 @@ second project is not the first time they have seen the app.
 
 # What shipped
 
-**Three of the four are built as of `13758ff`.** §11.12.1's chain-draw is
+**Three of the four are built as of `01165c6`.** §11.12.1's chain-draw is
 `chainOutputFor` in `derived/connect_rules.dart`, placed there rather than
 beside its own type because it has to ask whether a candidate output is FULL,
 and `portConductorCount` lives there; the dependency between rules and targets
@@ -82,7 +82,7 @@ three marks and one ships.
 
 ~~**§11.12.2's multi-draw is the deferred one**, split into its own board item
 rather than built~~, **built on 2026-08-01 across `8876261`, `4840307` and
-`bcb19a4`.** The ranking was ruled and waiting, and the ruling turned out to be
+`95fee80`.** The ranking was ruled and waiting, and the ruling turned out to be
 the part that was worth having twice over: the census taken to check that
 `bankKey` was reachable is what found
 [the catalog order defect](/gates/catalog-port-order.md), and the rank the

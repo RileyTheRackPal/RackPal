@@ -14,7 +14,7 @@
 // top of the token. The field saw `NET-NEN006`.
 //
 // THE ERROR IS THE GLYPH'S REAL WIDTH — A CONSTANT — so no amount of
-// padding closes it, which is why em-scaling the inset (`1c4824f`) did
+// padding closes it, which is why em-scaling the inset (`8172211`) did
 // not.
 //
 // ═════════════════════════════════════════════════════════════════════

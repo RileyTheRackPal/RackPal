@@ -35,16 +35,16 @@ const String kAppDisplayName = 'RackPal';
 
 /// The licence line the About box shows and the licence page heads with.
 ///
-/// **IT NAMES THE DRAFT STATUS OF THE EXCEPTION, DELIBERATELY.** DR-189
-/// §11.188.6 rules that the output exception goes to a qualified reviewer
-/// before any public push, and `LICENSE-EXCEPTION.md` carries a DRAFT
-/// banner. An About box implying the exception is in force would be the
-/// product asserting something the repository denies.
+/// **IT NAMES THE PROPOSED STATUS OF THE EXCEPTION, DELIBERATELY.** DR-189
+/// §11.188.6 sends the output exception to a qualified reviewer, before v1.0
+/// since DR-259 §11.258.2.1, and `docs/proposed-output-exception.md` carries
+/// a NOT IN FORCE banner. An About box implying the exception is in force
+/// would be the product asserting something the repository denies.
 const String kLegalese =
     'GNU Affero General Public License v3 or later.\n\n'
     'The output exception, under which documents you produce with RackPal '
-    'are your own work, is DRAFTED BUT NOT YET IN FORCE and is pending '
-    'legal review. See LICENSE-EXCEPTION.md.\n\n'
+    'are your own work, is PROPOSED BUT NOT YET IN FORCE and is pending '
+    'legal review. See docs/proposed-output-exception.md in the source.\n\n'
     'The device catalog is CC0 1.0 and is not copyleft.';
 
 /// Registers RackPal's own licence with the registry Flutter builds, so

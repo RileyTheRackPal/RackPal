@@ -15,9 +15,9 @@
 // stamped with, so the two cannot drift.
 //
 // **AND THE LEGALESE IS ASSERTED FOR WHAT IT REFUSES TO CLAIM.** DR-189
-// §11.188.6 rules that the output exception goes to a reviewer before any
-// public push, and `LICENSE-EXCEPTION.md` carries a DRAFT banner. An About
-// box implying the exception is in force would have the product asserting
+// §11.188.6 sends the output exception to a reviewer (before v1.0, DR-259),
+// and `docs/proposed-output-exception.md` carries a NOT IN FORCE banner. An
+// About box implying the exception is in force would have the product asserting
 // something the repository denies, which is worse than silence.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

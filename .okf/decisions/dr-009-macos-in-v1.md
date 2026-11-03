@@ -66,4 +66,4 @@ question, and it is cheap to measure once a macOS CI job exists.
 
 [1] canonical-decisions.md §11.9 (`docs/canonical-decisions.md`)
 [2] docs/13-macos-debt-register.md (`docs/13-macos-debt-register.md`)
-[3] Commit `c35f00b`
+[3] Commit `429cae5`

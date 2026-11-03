@@ -1,6 +1,6 @@
-# RackPal output exception
+# RackPal output exception (proposed)
 
-> # ⚠ DRAFT. NOT IN FORCE. NOT REVIEWED BY COUNSEL.
+> # ⚠ PROPOSED. NOT IN FORCE. NOT REVIEWED BY COUNSEL.
 >
 > **This file is not part of RackPal's licence terms today.** `LICENSE` (the GNU
 > Affero General Public License, version 3) is the whole of the licence as it
@@ -11,10 +11,13 @@
 > only in a decision document. **It was written by a language model, which is
 > not a source of legal advice.**
 >
-> **Do not publish RackPal while this banner is present.** DR-189 §11.188.6
-> rules that this text goes to a qualified reviewer before any public push.
-> When it has been reviewed, the surviving wording moves into `LICENSE` as an
-> additional permission and this banner comes off.
+> **RackPal is public under `LICENSE` alone while this banner is present.**
+> DR-189 §11.188.6 ruled that this text goes to a qualified reviewer before any
+> public push; DR-259 §11.258.2.1 moved that review to before v1.0, so the
+> source could go public as an alpha, and moved this file out of the
+> repository root so that nobody reads a draft as a grant. When it has been
+> reviewed, the surviving wording moves into `LICENSE` as an additional
+> permission and this banner comes off.
 
 ---
 
@@ -92,3 +95,5 @@ from the sketch below.
 - **DR-189 §11.188.5 and §11.188.6**, canon, which carry the exception across
   the move from GPLv3 to AGPLv3 and rule that this text goes to a reviewer
   before any public push.
+- **DR-259 §11.258.2.1**, canon, which moved that review to before v1.0 and
+  this file to `docs/`.

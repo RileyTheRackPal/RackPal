@@ -211,8 +211,8 @@ final class Pathway {
   ///
   /// SET BY EVERY SURFACE THAT CREATES A PATHWAY FROM A MEDIUM
   /// (DR-035 §11.34.2). This comment used to say the flag did not exist
-  /// and the drop line could not reach here; `fc07fb3` added
-  /// `MediaTypeDef.isPathwayOnly`, `14ae1e2` made `Office: 1x ENT` build
+  /// and the drop line could not reach here; `4ffb9b8` added
+  /// `MediaTypeDef.isPathwayOnly`, `daf1f81` made `Office: 1x ENT` build
   /// a `Pathway`, and DR-035 made that act record which medium it was.
   ///
   /// WITHOUT THIS FIELD THE MATRIX CELL COULD NOT COUNT ITS OWN WORK.

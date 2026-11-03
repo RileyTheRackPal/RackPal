@@ -69,4 +69,4 @@ a per-family glyph lands. §11.10.4 kept that out of scope deliberately.
 [1] canonical-decisions.md §11.10 (`docs/canonical-decisions.md`)
 [2] `packages/rackmate_core/lib/src/catalog/seed_registries.dart`
 [3] `docs/catalog/seed-devices.md` §4.3 / §4.4, the transcribed content
-[4] Commits `9b68843` (ruling), `ec746e8` (implementation)
+[4] Commits `4992f0b` (ruling), `8893b4a` (implementation)

@@ -16,7 +16,7 @@ family.
 
 | Was | Is | State |
 |---|---|---|
-| `.rackmate` | **`.rmpj`** project | Built, `ac64fcf` |
+| `.rackmate` | **`.rmpj`** project | Built, `ffb6e72` |
 | `.rmdev` | **`.rmdx`** device | Spec only: nothing constructs one |
 | `.rmlib` | **`.rmda`** device archive | Ruled, not built |
 

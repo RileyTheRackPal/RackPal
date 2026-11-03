@@ -95,5 +95,5 @@ one figure it left open. **M3-H/2 is unblocked.**
 
 [1] canonical-decisions.md §11.27 (`docs/canonical-decisions.md`)
 [2] canonical-decisions.md §11.7.8 and §11.7.9 B (DR-007)
-[3] `docs/reference/keystone/technical drawings/`, vendor sheets committed at
-    `2508018`
+[3] `docs/reference/keystone/README.md`, which records what the vendor sheets
+    stated; the sheets themselves were removed from every commit by DR-259

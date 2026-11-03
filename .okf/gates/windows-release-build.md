@@ -45,8 +45,10 @@ real one.
   [the release-output gate](windows-release-output.md), which exists because a
   successful build proved nothing about the contents of the folder: an Android
   bridge DLL once shipped inside a green build.
-- **It builds Windows only.** macOS is ruled into v1 (DR-009), and no step builds
-  it; the debt that leaves is itemised in `docs/13-macos-debt-register.md`.
+- **It is the Windows build only.** macOS is ruled into v1 (DR-009) and is built by
+  its own step, in its own definition, with its own output gate: see
+  [the macOS pipeline](the-macos-pipeline.md). `run_local.ps1` picks the build by
+  host (`$IsMacOS`), so a Mac runs the macOS build and a Windows machine this one.
 - **It does not sign or package.** The pipeline archives the Release directory and
   nothing more: no installer, no signature. See
   [the release signature gate](release-signature.md) for what is checked on a

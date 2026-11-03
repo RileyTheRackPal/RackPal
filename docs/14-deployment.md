@@ -5,6 +5,14 @@
 > installer, no MSIX, no crash reporter, no cold-start budget and no `.rppj` file association;
 > those are M8's exit criterion and are untouched. See `docs/12-milestone-board.md` §5.7.
 
+> **Distribution status (2026-11-03).** The distribution route is **unruled until M8**: DR-254
+> (canon §11.253) parked the Microsoft Store alpha on M8, recorded the user's direction (WinGet and
+> a Homebrew cask) without ruling it, and made **anonymity, at least initially, a stated constraint
+> on distribution**. Everything below is the internal portable build under DR-006, which DR-254
+> leaves standing. The macOS app, which this document does not cover, is `com.rackpal.rackpal`,
+> named `RackPal.app`, unsandboxed with the hardened runtime (DR-256, canon §11.255); its signing
+> and notarisation are unruled for the same reason (docs/13 D8).
+
 > **This is a scope edit, and it is recorded as one.** DR-006 consequence 4 says plainly that a
 > portable output before M8 is not something the ruling grants: *"All release-engineering
 > deliverables remain at M8. If a portable output is ever wanted earlier, that is a scope edit under
@@ -86,6 +94,11 @@ pwsh -File tools/release/verify_signatures.ps1 -Path dist/RackPal-portable -Expe
 ```
 
 The certificate is minted **once** and reused; the other three run per release.
+
+**The publisher name is the certificate's subject, and it is public in every signed file's
+properties.** Under DR-254's anonymity constraint it must not be a legal identity (a person's name
+or an employer's): choose a name that names neither. Whether a self-signed certificate is compatible
+with that constraint at all is one of `DIST-0`'s (`#1105`) open questions.
 
 ---
 

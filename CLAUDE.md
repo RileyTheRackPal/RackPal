@@ -53,11 +53,24 @@ until M5-G4 added the AC-051 pair gate and made it sixteen. Count the
 - **Stale `build/unit_test_assets` and `build/flutter_assets` cause phantom asset
   failures.** Delete both if a rootBundle test fails for no reason.
 
+## The public repository (DR-259)
+
+**GitHub, `RileyTheRackPal/RackPal`, is public** and carries the same history as Azure
+DevOps; Azure DevOps stays `origin`, with CI, the board and pull requests. Pushing to
+GitHub is **the user's act**: an agent's push to it is refused by the auto-mode
+classifier, so hand the user the command. It is reached over an SSH host alias
+(`git@github-riley:RileyTheRackPal/RackPal.git`), never over HTTPS with a token.
+**Nothing old-history may ever reach it** (DR-257, DR-258). The alpha takes issues and
+**no pull requests** (`CONTRIBUTING.md`), so a GitHub PR is closed with thanks and its
+idea, if good, becomes a board item. **Never commit vendor or client material**:
+everything under `docs/reference/` that is not markdown is ignored on purpose, and the
+history was rewritten twice to get it out.
+
 ## CI, which now exists
 
 `azure-pipelines.yml` is registered as **definition 1, `RackPal CI (Windows)`**, and
 **it runs**. First execution was 2026-08-27 (build 20260827.1) against `main` at
-`1fab087`: it passed first try, all 24 steps, 22m01s, no fixes. Run 2 took the
+`078c0f6`: it passed first try, all 24 steps, 22m01s, no fixes. Run 2 took the
 warm-cache path at 18m28s.
 
 - **`main` has a blocking build-validation policy** (policy id 1), and it protects
@@ -163,7 +176,7 @@ warm-cache path at 18m28s.
     busy one.
 - **THE DIAGNOSTIC, WHICH COSTS ONE QUERY.** A red on `refs/heads/main` whose commit
   passed as a `refs/pull/*/merge` build is **the environment, not the tree**: the same
-  bytes were green minutes earlier. `195` was `793839e`, PR 94's merge, whose own policy
+  bytes were green minutes earlier. `195` was `052cda9`, PR 94's merge, whose own policy
   build passed and whose two successors on `main` passed. Check that before reading a
   single log line, and do not reach for a load or contention theory that the failure's
   own signature does not support.
@@ -172,7 +185,7 @@ warm-cache path at 18m28s.
   the PR completes**, not instantly. On 2026-09-12 that gap was polled for about two
   minutes after each of two merges, found empty, and reported first as a broken trigger
   and then as *"a pattern rather than a hiccup"*. **Both builds existed**: `210` on
-  `484c01f1` and `213` on `5cd09e97`, both `individualCI`, both queued shortly after
+  `b02e12df` and `213` on `a2e5934f`, both `individualCI`, both queued shortly after
   their merges, and a manual build was queued on the false premise and duplicated `210`
   for nothing. **Read `reason` on the newest build for that branch before concluding
   anything**: `individualCI` means the trigger fired and `manual` means a person did.
@@ -443,7 +456,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
   against each other and is structurally blind to all of them being stale together
   (no count is written here: this bullet gave one until `rackpal_pdfium` joined
   and made it wrong, which is the rule on second copies of a moving number). That
-  is how `v0.2.0` sat through thirty M3 tasks (`d250082`) and `v0.3.30` through
+  is how `v0.2.0` sat through thirty M3 tasks (`bc89b05`) and `v0.3.30` through
   forty-six M4 ones. **Derive the number in the commit message**, counted two
   ways that agree, so the next person can re-derive it rather than trust it.
   `M4-0`-style decomposition items are Issues and are not counted.

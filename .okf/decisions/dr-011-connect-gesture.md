@@ -100,7 +100,7 @@ two most dangerous ports in the taxonomy.
 
 # What shipped, and the two claims that died on the way
 
-**All seven clauses are built as of `13758ff`** (M2-F, six phases). §11.11.1's
+**All seven clauses are built as of `01165c6`** (M2-F, six phases). §11.11.1's
 port materialisation is in `ConnectPortsCommand.apply` AND, from Phase 4C, in
 `AtomicConnectCommand.apply`, which is where the finding above had SURVIVED:
 Phase 0 added a guard against the symptom whose own comment described the

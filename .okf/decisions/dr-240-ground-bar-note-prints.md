@@ -36,6 +36,6 @@ and the width of each wording through the real font.
 
 Canon §11.239 holds the full text.
 
-Built at `78239478` (the band) and `45a040bb` (the note); docs/12 §4.50 holds the evidence. The render that
+Built at `78239478` (the band) and `cca8190c` (the note); docs/12 §4.50 holds the evidence. The render that
 confirmed it also showed the band's text touching the drawing frame on every elevation, filed as `#1020`. [DR-241](/decisions/dr-241-elevation-inside-its-frame.md) fixed it, and amended the
 "summary keeps five rows" sentence: a too-long summary line now wraps onto the sixth row.
