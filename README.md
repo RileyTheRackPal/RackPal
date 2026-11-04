@@ -9,7 +9,32 @@
 >   feedback ("this is not how I do it") is as welcome as bug reports. Pull requests are not accepted
 >   during the alpha; [CONTRIBUTING](CONTRIBUTING.md) says why.
 
-RackPal is a desktop application for designing A/V equipment racks for custom-integration work, **residential-CI-first, commercial-capable** (DR-002): you enter a rack height in rack units, populate the rack from a seeded catalog of generic archetypes, wire the gear together on a schematic canvas, and export a PDF sheet set containing both the drawing and the cable schedule. The repository holds the specification (the canonical decision record, the documents derived from it, and the working papers they were adjudicated from) **and a Flutter application that builds and runs on Windows**.
+**RackPal is CAD-lite for A/V and low-voltage work**, built for custom-integration jobs: residential first, commercial-capable (DR-002). You model the job once (the rooms, the racks, the devices, the cables) and everything else is derived from that one model: the rack elevations, the wiring schematic, the cable schedules and a full PDF sheet set an installer can work from without phoning you. A device that moves in the rack moves on every sheet that names it, because there is only one of it, so the elevation and the schedule cannot drift apart the way a drawing and a spreadsheet always eventually do.
+
+It is exact where exactness pays (rack units, cable footage you can order from, a floorplan calibrated to real distance) and deliberately representative everywhere else. It is not a drafting package, a quoting tool or a replacement for the architectural set.
+
+## What it does today
+
+Everything below can be reached in the running application. [The user guide](docs/21-user-guide.md) is the manual, and the only document here that describes what the application does rather than what it should be.
+
+**Six views, in the order a job moves through them:**
+
+| View | What you do there |
+|---|---|
+| **Site** | Build the room tree. Import floorplans from a PNG, a JPEG or one page of a PDF (a page picker finds the plan inside a permit set), rotate them, and calibrate them with one known distance. Pin racks, outlets and field devices on the plan and outline the rooms; once a plan is calibrated and the rack pinned, lengths come off it |
+| **Device Manager** | Search the shipped catalogue of generic devices by name, model or port type, and author the devices that are not there: a full-window builder with a port grid and a Quick Add line that writes whole banks from one typed command (`24 rj45 pass both` is a patch panel). Templates are versioned, and travel between jobs as `.rpdx` files and `.rpda` libraries |
+| **Rack** | Any number of racks, front and rear, placed and moved by mouse or keyboard. 0U channels, a Staging Bin for gear not yet placed, enclosure and door clearances, per-device overrides, and a live metrics row of rack units, weight, VA and BTU/hr that counts what it could not include rather than guessing |
+| **Structured Wiring** | The part in the walls, table first: home runs, outlets, wall plates and pathways, typed on one entry line or imported from a contractor's spreadsheet with column mapping and a preview. A per-room matrix, landing runs at the rack, and a network view of addresses, MACs and VLANs |
+| **Schematic** | One sheet per project, laid out automatically and kept where you arrange it. Drag port to port, draw from the keyboard, or draw many cables at once. Cables read as net labels until you want the wires. A cable the checks dislike springs back with the reason and a remedy, and you can still connect it on purpose |
+| **Schedule** | The cable schedule, live as you wire: a Pull Sheet by room and a Termination Schedule by rack, panel and port, with total footage that says how much of it is measured, estimated or unknown |
+
+**Checking the job.** A validation drawer runs power, placement, cabling and labelling checks continuously and never blocks a save or an export. Every finding can be fixed, or acknowledged with a reason that prints in the set; `F8` walks you to each one.
+
+**The PDF sheet set.** `Export PDF…` previews the real pages before anything is saved: a cover with the drawing index and per-rack totals, a symbol legend in colour and greyscale, exceptions and acknowledgements, a device location plan per floorplan, front and rear elevations per rack, an interconnect sheet per signal domain, a pull sheet a crew can tick off, a termination schedule, unused home runs, an equipment list with materials and cable footage, a network/IP schedule, and plate and pinout details wherever something is wired unusually. `Export for construction…` stamps the set when no error is open. The same project exported twice on the same day is the same file, byte for byte.
+
+**Your work is safe.** A project is one `.rppj` file that carries everything, floorplans included. Edits can be undone, and autosave writes recovery snapshots into RackPal's own folder, never over your file.
+
+**What it does not do yet.** No installer, Windows only, no revision history, no DXF or DWG, and a rack cannot yet be deleted. [The user guide's §21.8](docs/21-user-guide.md#218-what-is-not-built) is the full list, and worth reading before reporting something as missing.
 
 ## Who made this, and how
 
@@ -51,29 +76,13 @@ RackPal runs on **Windows 10 or 11, 64-bit**. There is no installer: it is a por
 
 No week total is given here on purpose. A detailed design with no cost attached stalls, and one with a *wrong* cost attached stalls while also destroying trust in the plan (AC-017); the week total this page used to carry was written before any of it was built, and the milestones that have closed came in several times under it.
 
-## Features
-
-The seven core requirements of the brief, and what v1 does about each. All seven ship in v1, the scope ruling's first filter is "does one of the seven requirements fail without it?", and anything that fails it is in regardless of cost (per §7.0).
-
-| # | Requirement | v1 |
-|---|---|---|
-| 1 | Rack height in RU | Racks of 1–60 RU, 1-based bottom-origin `ruIndex`, per-rack numbering direction and rear-elevation mirroring (CR-038, CR-025, CR-026) |
-| 2 | GUI device builder with I/O | Three required fields (name, RU height, designator prefix) then the port grid, with fill-down, TSV paste, archetype generators and a pattern DSL (AC-049) |
-| 3 | Physical connections | Drag-to-connect on the Schematic with magnetic type-weighted snap, chain-draw and multi-draw; a `Link` is one physical cable carrying a list of `Service`s over `Conductor`s (CR-008, CR-010) |
-| 4 | Colour-coding by cable type | Hue = signal domain, dash + weight + tag = type; eight domains, per-family colour override, legend printed in colour and greyscale side by side (CR-078, AC-054) |
-| 5 | Schematic idiom | Net labels by default, drawn wires on domain filter, hover or focus (DR-001); Sugiyama phases 0–3 place the symbols and a deterministic layer-ordered orthogonal trace draws the wires; no route geometry is persisted, only symbol placement (DR-001, CR-013, CR-012) |
-| 6 | Structure device | A `DeviceInstance` with `kind == structure` rendering as an edge bank of off-page flags; `Outlet` is the creation atom, a home run is a `Link` carrying a `StructureOrigin` (CR-016, AC-019) |
-| 7 | PDF with diagram **and** schedule | Cover and drawing index, legend, exceptions page, front and rear elevations, **N interconnect sheets: one per domain partition of the single schematic `Sheet`**, Pull Sheet, Termination Schedule, Unused Home Runs, Equipment List and Materials, and plate/panel/pinout details where a non-standard pinout exists (AC-025, AC-055, CR-073, DR-005) |
-
-Beyond the seven: a live [Schedule](docs/05-schematic-editor.md) tab that fills in as you wire rather than appearing at export time (AC-035), validation rules that never block an export (CR-022; the catalogue and its count are [docs/02 §5](docs/02-data-model.md#5-the-v1-validation-rule-catalogue-three-tiers)), a Staging Bin, a project-level location tree, pathways, three separate cable-length fields, CSV import for structured wiring, and a [Plan view](docs/15-plan-view.md) that pins racks, outlets and field devices onto an imported floorplan and, once the plan is calibrated, measures lengths from it (DR-029).
-
 ## Documentation
 
 Read [00-overview](docs/00-overview.md) first, then [canonical-decisions](docs/canonical-decisions.md), the second is the authority every other document defers to. [10-decisions](docs/10-decisions.md) is the short-form ADR summary of it.
 
 | Document | What it covers |
 |---|---|
-| [docs/00-overview.md](docs/00-overview.md) | The product in one read: the core loop, the v1 line, who it is for |
+| [docs/00-overview.md](docs/00-overview.md) | The product in one read: the core loop, the v1 line, who it is for, and the brief's seven core requirements as acceptance criteria (§5) |
 | [docs/01-domain.md](docs/01-domain.md) | Rack and A/V trade concepts, the glossary, the signal and cable registry |
 | [docs/02-data-model.md](docs/02-data-model.md) | Entities, primitives, units, the `.rppj` envelope and migration chain |
 | [docs/03-architecture.md](docs/03-architecture.md) | Five packages, the command stack, the drawing IR, the derived pipeline |
