@@ -38,9 +38,11 @@ Everything below can be reached in the running application. [The user guide](doc
 
 ## Who made this, and how
 
-RackPal has one primary developer, and they are not a software developer in the usual sense: their own coding skills are minimal.
+RackPal has one primary developer, and they are not a software developer in the usual sense: their own coding skills are minimal. What they bring is the trade. They have worked in the A/V and low-voltage industry in one role or another for around a decade, from sales and design to installation and programming.
 
 **RackPal was built with Claude, Anthropic's AI model, at every stage**: the first design drafts, the research and critiques in [docs/research/](docs/research/), the decision record and the specification derived from it, and the application's code, tests and build tooling as they stand today. The developer's part is the direction: what the tool is for, what it must do, and the product decisions, which are recorded as rulings in [§11 of the decision record](docs/canonical-decisions.md) so that each one can be read and argued with.
+
+**No artwork was generated with AI.** What Claude produced is code and documentation. Riley, the mascot, is traced from artwork a person drew; the wordmark's letters are cut from a licensed typeface; the fonts are third-party; and the application icon is still Flutter's stock one. The rule is [DR-117 §11.116.2](docs/canonical-decisions.md#11116-dr-117--the-lockup-ships-arranging-supplied-art-is-not-generating-it-and-the-manual-is-a-games-manual): every mark the product ships traces to a human author, and an asset that cannot say so does not ship. The nearest Claude came to drawing is the schematic's handful of device symbols (a triangle, a fan, a battery outline), which are coordinates in code in the same way a cable's line is.
 
 If you read the code and find something no programmer would write, that is worth an issue too.
 
