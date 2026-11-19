@@ -131,6 +131,12 @@ const Map<String, String> _knownByteReaders = <String, String>{
       'only caller is tools/pal1_check.py sending its own FAMILIES table on '
       'stdin (DR-122 §11.121.4). A malformed request throws and the gate '
       'fails, which is the behaviour wanted',
+  // ── ADDED AT `#1292` (REL-3), BY THIS GATE ON ITS FIRST RUN ───────────
+  'apps/rackpal/tool/samples/two_storey_residence.dart':
+      'NOT an import path: the sample builder under tool/, never in the app, '
+      'reading only its own committed geometry JSON and the two plan PNGs '
+      'beside it, which tools/samples/draw_residence_plans.py drew. Bad '
+      'input throws and the generator fails, which is the behaviour wanted',
 };
 
 String _repoRoot() {
