@@ -3,6 +3,7 @@
 Working conventions that earned their place; each is here because it was tested
 by something going wrong.
 
+* [A full-sized job finds what a fixture cannot](a-full-sized-job-finds-what-a-fixture-cannot.md) - the first whole-house sample found six defects behind green gates, each needing the job's size or a modelled field end, the two things every starter lacks; read the exported pages as images.
 * [A field added beside a documented one inherits nothing](a-field-beside-a-documented-one-inherits-nothing.md) - the comment explaining the neighbour's contract is four lines up and applies word for word, so nobody asks which lines ENFORCE it; a live draw survived a switch to another plan for four chapters.
 * [A test that asserts an absence names its due date](a-test-that-asserts-an-absence-names-its-due-date.md) - three came due in one task and cost five minutes between them, because each comment said which item would retire it.
 * [A deferred action needs a frame](defer-past-the-gesture.md) - addPostFrameCallback queues but does not schedule, and a TabBarView settles the page under a tab switch made mid-click.

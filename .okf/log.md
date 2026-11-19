@@ -1,5 +1,16 @@
 # Update Log
 
+## 2026-11-18
+
+Entry 152.
+
+* **Added**: [A full-sized job finds what a fixture cannot](practices/a-full-sized-job-finds-what-a-fixture-cannot.md),
+  from REL-3 (`#1292`): a two-storey sample built only from the seed catalogue and the product's connect rules
+  exported 22 sheets and surfaced six defects (`#1293` to `#1298`) and a catalogue gap list (`#1299`).
+* **Note**: **THE REFERENCE PLAN FORBADE REPUBLICATION IN ITS OWN TITLE BLOCK.** The sample's floorplans are
+  therefore block plans drawn from room positions, and the reference is in no committed file. Read the small print
+  on any drawing before it goes into a public screenshot, for the same reason entry 151 read the EXIF.
+
 ## 2026-11-03
 
 Entry 151.
