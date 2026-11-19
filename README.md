@@ -36,6 +36,40 @@ Everything below can be reached in the running application. [The user guide](doc
 
 **What it does not do yet.** No installer, Windows only, no revision history, no DXF or DWG, and a rack cannot yet be deleted. [The user guide's §21.8](docs/21-user-guide.md#218-what-is-not-built) is the full list, and worth reading before reporting something as missing.
 
+## Screenshots
+
+Every picture below is of one job: [a two-storey residence](docs/samples/two-storey-residence/README.md) built from the shipped catalogue, with a living room 5.1 system on its own rack, eight zones of distributed audio, bedroom streamers returned over audio baluns, and the network behind them. Open [the project file](docs/samples/two-storey-residence/two-storey-residence.rppj) in RackPal to walk it yourself, or read [the PDF sheet set it exports](docs/samples/two-storey-residence/two-storey-residence.pdf), unedited. The floorplans are block plans drawn for the sample.
+
+**In the application**
+
+<table>
+<tr>
+<td width="50%"><a href="docs/screenshots/rack-elevation.png"><img src="docs/screenshots/rack-elevation.png" alt="The Rack view: the primary rack's front elevation, with the live metrics row and the project's own templates in the palette"></a><br><b>Rack.</b> The primary rack, front face, with rack units, weight, VA and outlets counted live.</td>
+<td width="50%"><a href="docs/screenshots/site-ground-floor.png"><img src="docs/screenshots/site-ground-floor.png" alt="The Site view: the ground floor plan, calibrated, with racks, speakers, the TV and access points pinned"></a><br><b>Site.</b> The ground floor, calibrated, every rack and field device pinned.</td>
+</tr>
+<tr>
+<td width="50%"><a href="docs/screenshots/site-upper-floor.png"><img src="docs/screenshots/site-upper-floor.png" alt="The Site view: the upper floor plan with bedroom speakers, touchscreens, streamers and terrace speakers"></a><br><b>Site.</b> The upper floor: bedrooms, terraces and the access points.</td>
+<td width="50%"><a href="docs/screenshots/structured-wiring.png"><img src="docs/screenshots/structured-wiring.png" alt="The Structured Wiring view: the home-run table grouped by room"></a><br><b>Structured Wiring.</b> Every home run by room, with its field and rack labels.</td>
+</tr>
+<tr>
+<td width="50%"><a href="docs/screenshots/pull-sheet.png"><img src="docs/screenshots/pull-sheet.png" alt="The Schedule view: the Pull Sheet by room, with cable to order including waste"></a><br><b>Schedule.</b> The Pull Sheet, with the cable to order per type, waste included.</td>
+<td width="50%"><a href="docs/screenshots/device-manager.png"><img src="docs/screenshots/device-manager.png" alt="The Device Manager: the catalogue of generic devices with how many of each the job uses"></a><br><b>Device Manager.</b> The catalogue, and how many of each device this job uses.</td>
+</tr>
+</table>
+
+**On paper**, from the same project's export:
+
+<table>
+<tr>
+<td width="50%"><a href="docs/screenshots/pdf-device-location-plan.png"><img src="docs/screenshots/pdf-device-location-plan.png" alt="Exported sheet T1.01: the ground floor Device Location Plan with its device schedule"></a><br><b>T1.01</b> Device Location Plan</td>
+<td width="50%"><a href="docs/screenshots/pdf-interconnect-digital-video.png"><img src="docs/screenshots/pdf-interconnect-digital-video.png" alt="Exported sheet T6.01: the Digital Video interconnect, from the sources through the receiver and HDBaseT to the TV"></a><br><b>T6.01</b> Interconnect, Digital Video</td>
+</tr>
+<tr>
+<td width="50%"><a href="docs/screenshots/pdf-rack-elevation.png"><img src="docs/screenshots/pdf-rack-elevation.png" alt="Exported sheet T2.01: the primary rack's front elevation with its weight ladder"></a><br><b>T2.01</b> Rack Elevation, Front</td>
+<td width="50%"><a href="docs/screenshots/pdf-pull-sheet.png"><img src="docs/screenshots/pdf-pull-sheet.png" alt="Exported sheet T6.10: the Pull Sheet, grouped by room, with sign-off boxes"></a><br><b>T6.10</b> Pull Sheet</td>
+</tr>
+</table>
+
 ## Who made this, and how
 
 RackPal has one primary developer, and they are not a software developer in the usual sense: their own coding skills are minimal. What they bring is the trade. They have worked in the A/V and low-voltage industry in one role or another for around a decade, from sales and design to installation and programming.
@@ -113,6 +147,7 @@ Read [00-overview](docs/00-overview.md) first, then [canonical-decisions](docs/c
 | [docs/proposed-output-exception.md](docs/proposed-output-exception.md) | **Proposed, not in force.** The draft output exception, kept for review before v1.0 (DR-259) |
 | [docs/reference/keymap-windows.md](docs/reference/keymap-windows.md) | Every keyboard shortcut, generated from the keymap the app runs on |
 | [docs/reference/keystone/](docs/reference/keystone/README.md) | What the real keystone straps and plates measured, for DR-007 §11.7 |
+| [docs/samples/two-storey-residence/](docs/samples/two-storey-residence/README.md) | A worked sample job, its exported PDF set, and what building it found in the catalogue and the application. The source of the screenshots above |
 | [docs/research/](docs/research/) | The raw working papers: research briefs, design documents, critiques and a feasibility study (listed in [its README](docs/research/README.md)). **Non-normative rationale.** They explain *why*, and they are wrong wherever [canonical-decisions](docs/canonical-decisions.md) contradicts them |
 
 ## Target platforms

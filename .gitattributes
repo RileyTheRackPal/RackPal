@@ -64,6 +64,15 @@
 *.rackmate  text eol=lf
 *.rmdev     text eol=lf
 
+# A PROJECT THAT CARRIES A FLOORPLAN IS A ZIP, under the same extension.
+# `writeContainerBytes` writes bare JSON when a document has no members,
+# which is every starter, and a ZIP container when it has any, which is
+# every project with a floorplan page. `*.rppj text eol=lf` above is right
+# for the first and corrupts the second: REL-3's sample (`#1292`) was
+# committed through it once, locally, and its blob no longer unzipped.
+# Later lines win, so the samples are binary.
+docs/samples/**/*.rppj  binary
+
 *.png    binary
 *.jpg    binary
 *.ico    binary

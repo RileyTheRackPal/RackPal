@@ -1,0 +1,50 @@
+{
+  "comment": "Room outlines for the two-storey residence sample, in metres, origin top-left, y down. A block plan drawn for RackPal from room positions only: no architectural linework is reproduced. Read by tools/samples/draw_residence_plans.py (the PNGs) and apps/rackpal/tool/samples/two_storey_residence.dart (outlines, pins, calibration), so the picture and the model cannot disagree.",
+  "transform": "Drawn with the front of the house to the right: image x = margin + (y - origin[0]) * pxPerMetre, image y = margin + (houseWidthMetres - x - origin[1]) * pxPerMetre.",
+  "pxPerMetre": 100,
+  "houseWidthMetres": 14.0,
+  "originMetres": [0.2, 0.45],
+  "marginPx": 40,
+  "sizePx": [1700, 1500],
+  "scaleBarPx": [[40, 1420], [540, 1420]],
+  "pages": [
+    {
+      "key": "L1",
+      "title": "GROUND FLOOR",
+      "rooms": [
+        {"code": "RTR", "name": "Rear Terrace", "outdoor": true, "poly": [[0.9, 0.6], [8.8, 0.6], [8.8, 3.4], [0.9, 3.4]]},
+        {"code": "KIT", "name": "Kitchen", "poly": [[3.65, 3.4], [8.55, 3.4], [8.55, 7.15], [3.65, 7.15]]},
+        {"code": "DIN", "labelAt": [4.05, 9.3], "labelWidth": 1.2, "name": "Dining Room", "poly": [[3.65, 7.15], [6.75, 7.15], [6.75, 9.95], [3.65, 9.95]]},
+        {"code": "HAL1", "name": "Hall", "labelAt": [8.1, 8.8], "labelWidth": 1.6, "poly": [[6.75, 7.15], [8.55, 7.15], [8.55, 7.6], [9.5, 7.6], [9.5, 9.95], [6.75, 9.95]]},
+        {"code": "LAU", "name": "Laundry", "poly": [[8.55, 2.95], [11.4, 2.95], [11.4, 5.45], [8.55, 5.45]]},
+        {"code": "MCH", "name": "Mechanical", "label": "MECH", "poly": [[11.4, 2.95], [12.3, 2.95], [12.3, 5.45], [11.4, 5.45]]},
+        {"code": "EQ", "name": "Equipment Room", "poly": [[8.55, 5.45], [11.0, 5.45], [11.0, 7.6], [8.55, 7.6]]},
+        {"code": "BA1", "name": "Bath", "poly": [[11.0, 5.45], [12.3, 5.45], [12.3, 7.6], [11.0, 7.6]]},
+        {"code": "STR1", "name": "Stair", "poly": [[9.5, 7.6], [12.3, 7.6], [12.3, 9.95], [9.5, 9.95]]},
+        {"code": "PWD", "name": "Powder", "poly": [[12.3, 7.6], [13.15, 7.6], [13.15, 9.95], [12.3, 9.95]]},
+        {"code": "LIV", "labelAt": [10.75, 12.35], "labelWidth": 2.2, "name": "Living Room", "poly": [[9.25, 9.95], [12.3, 9.95], [12.3, 13.6], [9.25, 13.6]]},
+        {"code": "LOB", "name": "Lobby", "poly": [[6.75, 9.95], [9.25, 9.95], [9.25, 13.6], [6.75, 13.6]]},
+        {"code": "GAR", "name": "Garage", "poly": [[0.9, 9.95], [6.75, 9.95], [6.75, 15.7], [0.9, 15.7]]},
+        {"code": "POR", "name": "Porch", "outdoor": true, "poly": [[6.75, 13.6], [9.75, 13.6], [9.75, 15.7], [6.75, 15.7]]}
+      ]
+    },
+    {
+      "key": "L2",
+      "title": "UPPER FLOOR",
+      "rooms": [
+        {"code": "PTR", "name": "Primary Terrace", "outdoor": true, "poly": [[1.0, 0.7], [3.65, 0.7], [3.65, 6.7], [1.0, 6.7]]},
+        {"code": "PBR", "name": "Primary Bedroom", "poly": [[3.65, 1.65], [8.65, 1.65], [8.65, 5.45], [3.65, 5.45]]},
+        {"code": "PCL", "name": "Primary Closet", "poly": [[8.65, 2.65], [10.8, 2.65], [10.8, 5.45], [8.65, 5.45]]},
+        {"code": "PBA", "name": "Primary Bath", "poly": [[10.8, 2.65], [12.4, 2.65], [12.4, 5.45], [10.8, 5.45]]},
+        {"code": "BR2", "name": "Bedroom 2", "poly": [[3.65, 5.45], [7.75, 5.45], [7.75, 8.85], [3.65, 8.85]]},
+        {"code": "BA2", "name": "Bath 2", "poly": [[8.65, 5.45], [12.4, 5.45], [12.4, 7.6], [8.65, 7.6]]},
+        {"code": "HAL2", "name": "Upper Hall", "labelAt": [8.85, 9.1], "labelWidth": 1.4, "poly": [[7.75, 5.45], [8.65, 5.45], [8.65, 7.6], [9.65, 7.6], [9.65, 9.95], [8.05, 9.95], [8.05, 8.85], [7.75, 8.85]]},
+        {"code": "STR2", "name": "Stair", "poly": [[9.65, 7.6], [13.15, 7.6], [13.15, 9.95], [9.65, 9.95]]},
+        {"code": "BR3", "labelAt": [6.85, 9.7], "labelWidth": 1.6, "name": "Bedroom 3", "poly": [[3.65, 8.85], [8.05, 8.85], [8.05, 12.25], [3.65, 12.25]]},
+        {"code": "B3C", "name": "Bedroom 3 Closet", "label": "CL", "parent": "BR3", "poly": [[7.3, 9.8], [8.05, 9.8], [8.05, 12.25], [7.3, 12.25]]},
+        {"code": "OTB", "name": "Open to Below", "void": true, "poly": [[9.65, 9.95], [12.4, 9.95], [12.4, 13.55], [9.65, 13.55]]},
+        {"code": "TER", "name": "Upper Terrace", "labelAt": [3.9, 14.0], "labelWidth": 2.6, "outdoor": true, "poly": [[1.0, 9.8], [3.65, 9.8], [3.65, 12.25], [6.9, 12.25], [6.9, 15.9], [1.0, 15.9]]}
+      ]
+    }
+  ]
+}
